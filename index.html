@@ -422,11 +422,47 @@ textarea.form-control{min-height:80px;resize:vertical}
       <span style="font-size:11px">(Albaranes, certificados, informes, fotos)</span>
     </div>
   </div>
-  <div class="btn-group"><button class="btn btn-primary" onclick="closeModal('modal-mensaje')">Enviar Mensaje</button><button class="btn btn-outline" onclick="closeModal('modal-mensaje')">Cancelar</button></div>
+  <div class="btn-group"><button class="btn btn-primary" onclick="enviarMensajeFAB()">Enviar Mensaje</button><button class="btn btn-outline" onclick="closeModal('modal-mensaje')">Cancelar</button></div>
 </div>
 </div>
 
 <script>
+// ====== PERSISTENCE ENGINE (localStorage) ======
+var AgroStore={
+  _prefix:'agro_',
+  save:function(key,data){try{localStorage.setItem(this._prefix+key,JSON.stringify(data))}catch(e){console.warn('Storage full',e)}},
+  load:function(key,fallback){try{var d=localStorage.getItem(this._prefix+key);return d?JSON.parse(d):fallback}catch(e){return fallback}},
+  remove:function(key){try{localStorage.removeItem(this._prefix+key)}catch(e){}},
+  clear:function(){try{Object.keys(localStorage).filter(function(k){return k.startsWith('agro_')}).forEach(function(k){localStorage.removeItem(k)})}catch(e){}},
+  exportAll:function(){var out={};try{Object.keys(localStorage).filter(function(k){return k.startsWith('agro_')}).forEach(function(k){out[k.replace('agro_','')]=JSON.parse(localStorage.getItem(k))})}catch(e){}return out},
+  importAll:function(data){var self=this;Object.keys(data).forEach(function(k){self.save(k,data[k])})}
+};
+// Notify modules data was saved
+function notifySaved(msg){
+  var el=document.getElementById('save-toast');
+  if(!el){el=document.createElement('div');el.id='save-toast';el.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;font-family:Inter,sans-serif';document.body.appendChild(el)}
+  el.textContent='\u2713 '+(msg||'Datos guardados');el.style.opacity='1';
+  setTimeout(function(){el.style.opacity='0'},1800);
+}
+
+// FAB Message handler
+window.enviarMensajeFAB=function(){
+ var modal=document.getElementById('modal-mensaje');
+ var selects=modal.querySelectorAll('select');
+ var inputs=modal.querySelectorAll('input[type="text"]');
+ var textarea=modal.querySelector('textarea');
+ var dest=selects[0]?selects[0].value:'';
+ var canal=selects[1]?selects[1].value:'';
+ var asunto=inputs[0]?inputs[0].value:'';
+ var texto=textarea?textarea.value:'';
+ if(!asunto||!texto){alert('Completa asunto y mensaje');return}
+ var msgs=AgroStore.load('mensajes_fab',[]);
+ msgs.unshift({dest:dest,canal:canal,asunto:asunto,texto:texto,fecha:new Date().toISOString(),leido:true});
+ AgroStore.save('mensajes_fab',msgs);
+ closeModal('modal-mensaje');
+ notifySaved('Mensaje enviado a '+dest);
+};
+
 // SPLASH SCREEN
 setTimeout(function(){document.getElementById('splash').classList.add('hidden')},2200);
 
@@ -1474,7 +1510,10 @@ M.innerHTML+=`<div class="page" id="page-procesos">
     var kg=document.getElementById('rec-kg').value;
     var finca=document.getElementById('rec-finca').value.split(' - ')[0];
     var now=new Date();var num='ALB-'+now.getFullYear()+'-'+String(Math.floor(Math.random()*9000)+1000);
-    alert('Albar\u00e1n generado: '+num+'\n'+prod+' | '+kg+' kg | '+finca+'\n\n(En producci\u00f3n se generar\u00eda un PDF descargable)');
+    var txt='ALBAR\u00c1N DE ENTRADA\n========================\nN\u00famero: '+num+'\nFecha: '+now.toLocaleDateString('es-ES')+' '+now.toLocaleTimeString('es-ES')+'\n\nProducto: '+prod+'\nCantidad: '+kg+' kg\nFinca: '+finca+'\nResponsable: David Miquel Jord\u00e1\n\nFruitum 2016 SL - Orihuela, Alicante\n';
+    var blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+    var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=num+'.txt';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
   };
 
   // Create confection order
@@ -1583,13 +1622,24 @@ M.innerHTML+=`<div class="page" id="page-procesos">
 
   window.generarCMR=function(){
     var ped=document.getElementById('exp-pedido').value.split(' ')[0];
-    alert('\u{1F4C4} CMR generado para '+ped+'\n(En producci\u00f3n se generar\u00eda un PDF descargable con la carta de porte)');
+    var pallets=document.getElementById('exp-pallets')?document.getElementById('exp-pallets').value:'';
+    var peso=document.getElementById('exp-peso')?document.getElementById('exp-peso').value:'';
+    var mat=document.getElementById('exp-matricula')?document.getElementById('exp-matricula').value:'';
+    var now=new Date();
+    var txt='CARTA DE PORTE CMR\n========================\nPedido: '+ped+'\nFecha: '+now.toLocaleDateString('es-ES')+'\n\nRemitente: Fruitum 2016 SL\nDirecci\u00f3n: Calle Mayor 15, Orihuela, 03300 Alicante\n\nPallets: '+(pallets||'-')+'\nPeso bruto: '+(peso||'-')+' kg\nMatr\u00edcula: '+(mat||'-')+'\n\nFirmado: ________________\n';
+    var blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+    var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='CMR-'+ped+'.txt';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
   };
 
   window.generarEtiquetaPallet=function(){
     var ped=document.getElementById('exp-pedido').value.split(' ')[0];
-    var pallets=document.getElementById('exp-pallets').value;
-    alert('\u{1F3F7}\ufe0f '+pallets+' etiquetas de pallet generadas para '+ped+'\n(En producci\u00f3n se generar\u00edan etiquetas imprimibles para cada pallet)');
+    var pallets=parseInt(document.getElementById('exp-pallets').value)||1;
+    var lines=['ETIQUETAS DE PALLET','========================','Pedido: '+ped,'Fecha: '+new Date().toLocaleDateString('es-ES'),''];
+    for(var i=1;i<=pallets;i++){lines.push('--- Pallet '+i+'/'+pallets+' ---');lines.push('C\u00f3digo: '+ped+'-P'+String(i).padStart(2,'0'));lines.push('Fruitum 2016 SL | Orihuela');lines.push('')}
+    var blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
+    var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='Etiquetas-'+ped+'.txt';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
   };
 
   // Update checklist progress
@@ -4079,8 +4129,31 @@ function renderCuaderno(){
   c.innerHTML=h;
 }
 
-window.exportarCuaderno=function(){alert('Generando PDF del Cuaderno de Campo...\\n\\n(En producci\u00f3n se generar\u00eda un PDF descargable con todos los registros fitosanitarios)')};
-window.exportarSIEX=function(){alert('Exportando datos a formato SIEX (XML)...\\n\\n(En producci\u00f3n se generar\u00eda el fichero XML compatible con la plataforma SIEX del MAPA)')};
+window.exportarCuaderno=function(){
+ var siexRegs=intervenciones.filter(function(i){return i.siex});
+ var headers=['Fecha','Finca','Parcela','Plaga/Motivo','Producto','Mat. Activa','Dosis','Superficie (ha)','Cantidad Total','Plazo Seg.','Lote','Operario'];
+ var rows=[headers.join(';')];
+ siexRegs.forEach(function(i){
+  var prod=productos.find(function(p){return p.nombre===i.producto});
+  rows.push([i.fecha,i.finca,i.parcela,i.desc,i.producto,prod?prod.materia:'-',i.dosis,i.superficie,i.cantidadTotal,i.plazoSeg+'d',i.lote,i.operario].join(';'));
+ });
+ var csv=rows.join('\n');
+ var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+ var url=URL.createObjectURL(blob);
+ var a=document.createElement('a');a.href=url;a.download='cuaderno_campo_'+new Date().toISOString().slice(0,10)+'.csv';
+ document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+};
+window.exportarSIEX=function(){
+ var data={explotacion:'Fruitum 2016 SL',fecha_export:new Date().toISOString(),registros:intervenciones.filter(function(i){return i.siex}).map(function(i){
+  var prod=productos.find(function(p){return p.nombre===i.producto});
+  return {fecha:i.fecha,finca:i.finca,parcela:i.parcela,plaga:i.desc,producto:i.producto,materia_activa:prod?prod.materia:'',dosis:i.dosis,superficie:i.superficie,cantidad_total:i.cantidadTotal,plazo_seguridad:i.plazoSeg,lote:i.lote,operario:i.operario};
+ })};
+ var json=JSON.stringify(data,null,2);
+ var blob=new Blob([json],{type:'application/json'});
+ var url=URL.createObjectURL(blob);
+ var a=document.createElement('a');a.href=url;a.download='siex_export_'+new Date().toISOString().slice(0,10)+'.json';
+ document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+};
 
 // ---- RESUMEN ----
 function renderResumen(){
@@ -7660,12 +7733,12 @@ setTimeout(initSeguimiento,380);
 })();
 
 // ==================== SIEX ====================
-// ====== SIEX ENGINE ======
+// ====== SIEX ENGINE (Enhanced) ======
 (function(){
 
-/* ── DATOS SIEX ── */
+/* ── DATOS SIEX con persistencia ── */
 
-var explotaciones=[
+var _defaultExplotaciones=[
  {id:1,nombre:'Fruitum 2016 SL',cif:'B12345678',rea:'46/12345',sigpac:'46-123-0-0-1',
   titular:'David Miquel Jord\u00e1',nif:'12345678A',
   domicilio:'Calle Mayor 15, Orihuela, 03300 Alicante',
@@ -7685,8 +7758,9 @@ var explotaciones=[
   certificaciones:['CAECV Ecol\u00f3gico','GlobalGAP'],
   fechaAlta:'2018-06-01',estado:'activa'}
 ];
+var explotaciones=AgroStore.load('siex_explotaciones',_defaultExplotaciones);
 
-var parcelas=[
+var _defaultParcelas=[
  {id:1,expId:1,nombre:'El Rinc\u00f3n',sigpac:'46-900-0-0-45',ref_catastral:'46900A01500045',
   municipio:'Orihuela',poligono:15,parcela:45,recinto:1,
   supSigpac:8.5,supCultivada:8.2,cultivo:'Granado Mollar',variedad:'Mollar de Elche',
@@ -7728,8 +7802,9 @@ var parcelas=[
   sistemaRiego:'Goteo',uso:'Tierra arable - Frutal',
   eco:false,fechaAlta:'2020-11-15',estado:'activa'}
 ];
+var parcelas=AgroStore.load('siex_parcelas',_defaultParcelas);
 
-var cuadernoDigital=[
+var _defaultCuadernoDigital=[
  {id:1,tipo:'tratamiento',fecha:'2026-02-28',parcela:'El Rinc\u00f3n',cultivo:'Granado Mollar',
   producto:'Azufre Mojable 80%',numRegistro:'ES-00123',materiaActiva:'Azufre 80% [WP]',
   dosis:'3 kg/ha',supTratada:8.2,metodo:'Pulverizaci\u00f3n',equipo:'Atomizador Fede',
@@ -7788,8 +7863,9 @@ var cuadernoDigital=[
   cantidad:'48.500 kg',calidad:'Cat. I: 78%, Cat. II: 18%, Destrío: 4%',
   registrado:true,estado:'completado'}
 ];
+var cuadernoDigital=AgroStore.load('siex_cuaderno',_defaultCuadernoDigital);
 
-var certificaciones=[
+var _defaultCertificaciones=[
  {id:1,nombre:'GlobalGAP v6',organismo:'Aenor',numero:'GG-2024-ES-0456',
   fechaEmision:'2024-06-15',fechaCaducidad:'2025-06-14',
   alcance:'Fruitum 2016 SL - Todas las parcelas convencionales',
@@ -7826,8 +7902,9 @@ var certificaciones=[
   hallazgos:[],
   documentos:['Informe GRASP 2024.pdf']}
 ];
+var certificaciones=AgroStore.load('siex_certificaciones',_defaultCertificaciones);
 
-var obligacionesSIEX=[
+var _defaultObligacionesSIEX=[
  {id:1,nombre:'Declaraci\u00f3n SIEX Anual',organismo:'MAPA / GVA',
   periodicidad:'Anual',fechaLimite:'2026-03-31',
   estado:'pendiente',ultimaDeclaracion:'2025-03-28',
@@ -7877,8 +7954,9 @@ var obligacionesSIEX=[
   estado:'pendiente',ultimaDeclaracion:'2025-04-15',
   descripcion:'Calculo y registro huella GEI en Registro MITECO'}
 ];
+var obligacionesSIEX=AgroStore.load('siex_obligaciones',_defaultObligacionesSIEX);
 
-var alertas=[
+var _defaultAlertas=[
  {id:1,tipo:'urgente',titulo:'Registro Tratamiento Pendiente',
   desc:'Clorpirifos 48% en Camino Viejo (10/03) sin registrar en CUE. Plazo m\u00e1x: 30 d\u00edas.',
   vence:'2026-04-09',estado:'activa'},
@@ -7904,6 +7982,87 @@ var alertas=[
   desc:'Todos los BCAM y RLG verificados en \u00faltima inspecci\u00f3n. Sin no-conformidades.',
   vence:null,estado:'info'}
 ];
+var alertas=AgroStore.load('siex_alertas',_defaultAlertas);
+
+/* ── BCAM/RLG Checklist Data ── */
+var bcamChecklist=AgroStore.load('siex_bcam',[
+ {id:'BCAM1',nombre:'BCAM 1 - Mantenimiento pastos permanentes',cumple:true,notas:'No aplica - sin pastos'},
+ {id:'BCAM2',nombre:'BCAM 2 - Protecci\u00f3n humedales y turberas',cumple:true,notas:'No hay humedales en parcelas'},
+ {id:'BCAM3',nombre:'BCAM 3 - Prohibici\u00f3n quema rastrojos',cumple:true,notas:'Se tritura, no se quema'},
+ {id:'BCAM4',nombre:'BCAM 4 - Franjas protecci\u00f3n cursos de agua',cumple:true,notas:'5m buffer en Camino Viejo'},
+ {id:'BCAM5',nombre:'BCAM 5 - Gesti\u00f3n labranza (erosi\u00f3n)',cumple:true,notas:'M\u00ednimo laboreo, cubiertas vegetales'},
+ {id:'BCAM6',nombre:'BCAM 6 - Cobertura m\u00ednima del suelo',cumple:true,notas:'Cubierta vegetal invierno en frutales'},
+ {id:'BCAM7',nombre:'BCAM 7 - Rotaci\u00f3n de cultivos en tierra arable',cumple:true,notas:'Rotaci\u00f3n alcachofa/br\u00f3coli en Huerta Baja'},
+ {id:'BCAM8',nombre:'BCAM 8 - Superficie no productiva (4%)',cumple:true,notas:'M\u00e1rgenes + setos = 5.2% en Fruitum'},
+ {id:'BCAM9',nombre:'BCAM 9 - Pastos sensibles (no aplica)',cumple:true,notas:'No aplica'},
+ {id:'RLG1',nombre:'RLG 1 - Biodiversidad: aves silvestres',cumple:true,notas:'Nidales instalados en setos'},
+ {id:'RLG2',nombre:'RLG 2 - Biodiversidad: h\u00e1bitats naturales',cumple:true,notas:'Zona buffer r\u00edo mantenida'},
+ {id:'RLG3',nombre:'RLG 3 - Aguas subterr\u00e1neas (nitratos)',cumple:true,notas:'170 kg N/ha respetado'},
+ {id:'RLG4',nombre:'RLG 4 - Lodos depuradora',cumple:true,notas:'No se aplican lodos'},
+ {id:'RLG5',nombre:'RLG 5 - Nitratos (zona vulnerable)',cumple:true,notas:'Plan abonado presentado feb-2026'},
+ {id:'RLG6',nombre:'RLG 6 - Productos fitosanitarios',cumple:true,notas:'ROPO activo, todos productos autorizados'},
+ {id:'RLG7',nombre:'RLG 7 - Seguridad alimentaria',cumple:true,notas:'GlobalGAP + trazabilidad ok'},
+ {id:'RLG8',nombre:'RLG 8 - Hormonas y sustancias prohibidas',cumple:true,notas:'No aplica (vegetal)'},
+ {id:'RLG9',nombre:'RLG 9 - Bienestar animal',cumple:true,notas:'No aplica'},
+ {id:'RLG10',nombre:'RLG 10 - Salud p\u00fablica',cumple:true,notas:'Protocolos COVID + SST ok'},
+ {id:'RLG11',nombre:'RLG 11 - Sanidad vegetal',cumple:true,notas:'Pasaporte fitosanitario en vigor'}
+]);
+
+/* ── Helper: save SIEX data ── */
+function saveSiex(){
+ AgroStore.save('siex_cuaderno',cuadernoDigital);
+ AgroStore.save('siex_parcelas',parcelas);
+ AgroStore.save('siex_certificaciones',certificaciones);
+ AgroStore.save('siex_obligaciones',obligacionesSIEX);
+ AgroStore.save('siex_alertas',alertas);
+ AgroStore.save('siex_bcam',bcamChecklist);
+}
+
+/* ── Helper: auto-generate alerts from data ── */
+function autoGenerateAlerts(){
+ var hoy=new Date();var generated=[];
+ // Unregistered treatments > 7 days old
+ cuadernoDigital.forEach(function(r){
+  if(!r.registrado){
+   var fd=new Date(r.fecha);var dias=Math.ceil((hoy-fd)/(86400000));
+   if(dias>7){
+    generated.push({id:900+r.id,tipo:'urgente',titulo:'Registro Pendiente: '+r.producto,
+     desc:r.parcela+' ('+r.fecha+') sin registrar. '+dias+' d\u00edas transcurridos. Plazo m\u00e1x 30 d\u00edas.',
+     vence:new Date(fd.getTime()+30*86400000).toISOString().slice(0,10),estado:'activa',auto:true});
+   }
+  }
+ });
+ // Expiring certifications (< 90 days)
+ certificaciones.forEach(function(c){
+  if(c.fechaCaducidad){
+   var cad=new Date(c.fechaCaducidad);var dias=Math.ceil((cad-hoy)/86400000);
+   if(dias>0&&dias<=90){
+    generated.push({id:800+c.id,tipo:'aviso',titulo:'Renovar: '+c.nombre,
+     desc:c.nombre+' caduca en '+dias+' d\u00edas ('+c.fechaCaducidad+'). Programar renovaci\u00f3n.',
+     vence:c.fechaCaducidad,estado:'activa',auto:true});
+   } else if(dias<=0){
+    generated.push({id:800+c.id,tipo:'urgente',titulo:'CADUCADO: '+c.nombre,
+     desc:c.nombre+' caduc\u00f3 el '+c.fechaCaducidad+'. Renovar urgentemente.',
+     vence:c.fechaCaducidad,estado:'activa',auto:true});
+   }
+  }
+ });
+ // Pending obligations with upcoming deadlines
+ obligacionesSIEX.forEach(function(o){
+  if(o.estado==='pendiente'&&o.fechaLimite&&o.fechaLimite!=='Continuo'){
+   var fl=new Date(o.fechaLimite);var dias=Math.ceil((fl-hoy)/86400000);
+   if(dias<=30&&dias>0){
+    generated.push({id:700+o.id,tipo:'aviso',titulo:'Plazo pr\u00f3ximo: '+o.nombre,
+     desc:o.nombre+' vence en '+dias+' d\u00edas ('+o.fechaLimite+'). Preparar documentaci\u00f3n.',
+     vence:o.fechaLimite,estado:'activa',auto:true});
+   }
+  }
+ });
+ // Merge: keep manual alerts, replace auto-generated ones
+ var manual=alertas.filter(function(a){return !a.auto});
+ alertas=manual.concat(generated);
+ saveSiex();
+}
 
 /* ── RENDER PRINCIPAL ── */
 
@@ -7930,6 +8089,8 @@ M.innerHTML+=`<div class="page" id="page-siex">
 <div style="display:flex;gap:8px;margin:18px 0;flex-wrap:wrap">
  <button class="btn" onclick="mostrarTabSiex('cuaderno')" id="tabsiex-cuaderno">Cuaderno Digital</button>
  <button class="btn btn-outline" onclick="mostrarTabSiex('parcelas')" id="tabsiex-parcelas">Parcelas SIGPAC</button>
+ <button class="btn btn-outline" onclick="mostrarTabSiex('nitrogeno')" id="tabsiex-nitrogeno">Balance N</button>
+ <button class="btn btn-outline" onclick="mostrarTabSiex('bcam')" id="tabsiex-bcam">BCAM / RLG</button>
  <button class="btn btn-outline" onclick="mostrarTabSiex('certificaciones')" id="tabsiex-certificaciones">Certificaciones</button>
  <button class="btn btn-outline" onclick="mostrarTabSiex('obligaciones')" id="tabsiex-obligaciones">Obligaciones</button>
  <button class="btn btn-outline" onclick="mostrarTabSiex('alertas')" id="tabsiex-alertas">Alertas & Avisos</button>
@@ -7943,7 +8104,7 @@ M.innerHTML+=`<div class="page" id="page-siex">
 /* ── TABS ── */
 
 window.mostrarTabSiex=function(tab){
- ['cuaderno','parcelas','certificaciones','obligaciones','alertas'].forEach(function(t){
+ ['cuaderno','parcelas','nitrogeno','bcam','certificaciones','obligaciones','alertas'].forEach(function(t){
   var b=document.getElementById('tabsiex-'+t);
   if(b){b.className=t===tab?'btn':'btn btn-outline';}
  });
@@ -7951,6 +8112,8 @@ window.mostrarTabSiex=function(tab){
  if(!box)return;
  if(tab==='cuaderno') renderTabCuaderno(box);
  else if(tab==='parcelas') renderTabParcelas(box);
+ else if(tab==='nitrogeno') renderTabNitrogeno(box);
+ else if(tab==='bcam') renderTabBCAM(box);
  else if(tab==='certificaciones') renderTabCertificaciones(box);
  else if(tab==='obligaciones') renderTabObligaciones(box);
  else if(tab==='alertas') renderTabAlertas(box);
@@ -7960,11 +8123,13 @@ window.mostrarTabSiex=function(tab){
 
 function renderTabCuaderno(box){
  var h='<div class="section-title">Cuaderno Digital de Explotaci\u00f3n (CUE)</div>';
- h+='<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">';
+ h+='<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">';
  h+='<select id="siex-filtro-tipo" onchange="filtrarCuaderno()" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;font-size:13px"><option value="todos">Todos los tipos</option><option value="tratamiento">Tratamientos</option><option value="fertilizacion">Fertilizaciones</option><option value="riego">Riegos</option><option value="laborCultural">Labores culturales</option><option value="cosecha">Cosechas</option></select>';
  h+='<select id="siex-filtro-estado" onchange="filtrarCuaderno()" style="padding:8px 12px;border-radius:8px;border:1px solid #ddd;font-size:13px"><option value="todos">Todo estado</option><option value="completado">Completados</option><option value="pendiente">Pendientes</option></select>';
- h+='<button class="btn" onclick="nuevoRegistroCUEModal()" style="margin-left:auto">\u2795 Nuevo Registro</button>';
- h+='</div>';
+ h+='<div style="margin-left:auto;display:flex;gap:6px">';
+ h+='<button class="btn btn-outline" onclick="exportarCuadernoCSV()" style="font-size:12px">\u{1F4E5} Exportar CSV</button>';
+ h+='<button class="btn" onclick="nuevoRegistroCUEModal()">\u2795 Nuevo Registro</button>';
+ h+='</div></div>';
  h+='<div id="siex-cuaderno-lista"></div>';
  box.innerHTML=h;
  filtrarCuaderno();
@@ -7986,7 +8151,7 @@ window.filtrarCuaderno=function(){
 
  var iconoTipo={tratamiento:'\u{1F489}',fertilizacion:'\u{1F33F}',riego:'\u{1F4A7}',laborCultural:'\u{1F527}',cosecha:'\u{1F34A}'};
  var labelTipo={tratamiento:'Tratamiento Fito',fertilizacion:'Fertilizaci\u00f3n',riego:'Riego',laborCultural:'Labor Cultural',cosecha:'Cosecha'};
- var h2='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f8f9fa;border-bottom:2px solid #e0e0e0"><th style="padding:10px;text-align:left">Fecha</th><th style="text-align:left">Tipo</th><th style="text-align:left">Parcela</th><th style="text-align:left">Producto / Acci\u00f3n</th><th style="text-align:left">Sup.</th><th style="text-align:left">Operario</th><th style="text-align:center">CUE</th><th style="text-align:center">Acci\u00f3n</th></tr></thead><tbody>';
+ var h2='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f8f9fa;border-bottom:2px solid #e0e0e0"><th style="padding:10px;text-align:left">Fecha</th><th style="text-align:left">Tipo</th><th style="text-align:left">Parcela</th><th style="text-align:left">Producto / Acci\u00f3n</th><th style="text-align:left">Sup.</th><th style="text-align:left">Operario</th><th style="text-align:center">CUE</th><th style="text-align:center">Acciones</th></tr></thead><tbody>';
  items.sort(function(a,b){return b.fecha.localeCompare(a.fecha)});
  items.forEach(function(r){
   var icon=iconoTipo[r.tipo]||'\u{1F4CB}';
@@ -8000,7 +8165,7 @@ window.filtrarCuaderno=function(){
   h2+='<td>'+(r.supTratada?r.supTratada+' ha':'—')+'</td>';
   h2+='<td>'+(r.operario||'—')+'</td>';
   h2+='<td style="text-align:center">'+regBadge+'</td>';
-  h2+='<td style="text-align:center"><button class="btn btn-outline" onclick="event.stopPropagation();verRegistroCUE('+r.id+')" style="font-size:11px;padding:4px 10px">Ver</button></td>';
+  h2+='<td style="text-align:center;white-space:nowrap"><button class="btn btn-outline" onclick="event.stopPropagation();verRegistroCUE('+r.id+')" style="font-size:11px;padding:4px 8px">Ver</button> <button class="btn btn-outline" onclick="event.stopPropagation();editarRegistroCUE('+r.id+')" style="font-size:11px;padding:4px 8px">\u270F\ufe0f</button> <button onclick="event.stopPropagation();eliminarRegistroCUE('+r.id+')" style="font-size:11px;padding:4px 8px;background:#fce4ec;color:#c62828;border:1px solid #f8bbd0;border-radius:6px;cursor:pointer">\u{1F5D1}</button></td>';
   h2+='</tr>';
  });
  h2+='</tbody></table>';
@@ -8086,16 +8251,31 @@ function renderTabCertificaciones(box){
 /* ── TAB: OBLIGACIONES ── */
 
 function renderTabObligaciones(box){
+ var hoy=new Date();
  var h='<div class="section-title">Obligaciones Normativas & Plazos</div>';
  var estados={completado:{bg:'#e8f5e9',col:'#2e7d32',label:'COMPLETADO'},al_dia:{bg:'#e3f2fd',col:'#1565c0',label:'AL D\u00cdA'},en_tramite:{bg:'#fff8e1',col:'#f57f17',label:'EN TR\u00c1MITE'},pendiente:{bg:'#fce4ec',col:'#c62828',label:'PENDIENTE'}};
- h+='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f8f9fa;border-bottom:2px solid #e0e0e0"><th style="padding:10px;text-align:left">Obligaci\u00f3n</th><th>Organismo</th><th>Periodicidad</th><th>Fecha L\u00edmite</th><th style="text-align:center">Estado</th><th>\u00daltima Decl.</th></tr></thead><tbody>';
+ h+='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f8f9fa;border-bottom:2px solid #e0e0e0"><th style="padding:10px;text-align:left">Obligaci\u00f3n</th><th>Organismo</th><th>Periodicidad</th><th>Fecha L\u00edmite</th><th style="text-align:center">Cuenta atr\u00e1s</th><th style="text-align:center">Estado</th><th>\u00daltima Decl.</th></tr></thead><tbody>';
  obligacionesSIEX.forEach(function(o){
   var e=estados[o.estado]||estados.pendiente;
+  var countdown='';
+  if(o.fechaLimite&&o.fechaLimite!=='Continuo'&&o.fechaLimite.indexOf('d\u00edas')<0){
+   var fl=new Date(o.fechaLimite);var dias=Math.ceil((fl-hoy)/86400000);
+   if(o.estado==='completado'){countdown='<span style="color:#2e7d32;font-size:11px">\u2705 Hecho</span>';}
+   else if(dias<0){countdown='<span style="color:#c62828;font-weight:700;font-size:12px">\u{1F534} Vencido ('+Math.abs(dias)+' d)</span>';}
+   else if(dias<=14){countdown='<span style="color:#c62828;font-weight:700;font-size:12px">\u26a0\ufe0f '+dias+' d\u00edas</span>';}
+   else if(dias<=30){countdown='<span style="color:#f57f17;font-weight:600;font-size:12px">'+dias+' d\u00edas</span>';}
+   else{countdown='<span style="color:#666;font-size:12px">'+dias+' d\u00edas</span>';}
+  } else if(o.fechaLimite==='Continuo'){
+   countdown='<span style="color:#1565c0;font-size:11px">\u{1F504} Continuo</span>';
+  } else {
+   countdown='<span style="color:#888;font-size:11px">—</span>';
+  }
   h+='<tr style="border-bottom:1px solid #eee">';
   h+='<td style="padding:10px"><strong>'+o.nombre+'</strong><br><small style="color:#888">'+o.descripcion+'</small></td>';
   h+='<td>'+o.organismo+'</td>';
   h+='<td>'+o.periodicidad+'</td>';
   h+='<td>'+o.fechaLimite+'</td>';
+  h+='<td style="text-align:center">'+countdown+'</td>';
   h+='<td style="text-align:center"><span style="background:'+e.bg+';color:'+e.col+';padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600">'+e.label+'</span></td>';
   h+='<td>'+(o.ultimaDeclaracion||'—')+'</td>';
   h+='</tr>';
@@ -8160,8 +8340,87 @@ window.verRegistroCUE=function(id){
 window.registrarEnCUE=function(id){
  var r=cuadernoDigital.find(function(x){return x.id===id});
  if(r){r.registrado=true;r.estado='completado';}
+ saveSiex();notifySaved('Registrado en CUE');
  closeModal('modal-pedido');
  mostrarTabSiex('cuaderno');
+};
+
+/* ── EDITAR / ELIMINAR CUE ── */
+
+window.editarRegistroCUE=function(id){
+ var r=cuadernoDigital.find(function(x){return x.id===id});
+ if(!r)return;
+ var md=document.getElementById('modal-pedido-content');
+ var h='<h2 style="margin-bottom:16px">\u270F\ufe0f Editar Registro #'+r.id+'</h2>';
+ h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+ h+='<div><label style="font-size:12px;font-weight:600">Tipo</label><select id="er-tipo" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"><option value="tratamiento"'+(r.tipo==='tratamiento'?' selected':'')+'>Tratamiento</option><option value="fertilizacion"'+(r.tipo==='fertilizacion'?' selected':'')+'>Fertilizaci\u00f3n</option><option value="riego"'+(r.tipo==='riego'?' selected':'')+'>Riego</option><option value="laborCultural"'+(r.tipo==='laborCultural'?' selected':'')+'>Labor Cultural</option><option value="cosecha"'+(r.tipo==='cosecha'?' selected':'')+'>Cosecha</option></select></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Fecha</label><input type="date" id="er-fecha" value="'+r.fecha+'" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Parcela</label><select id="er-parcela" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px">';
+ parcelas.forEach(function(p){h+='<option value="'+p.nombre+'"'+(p.nombre===r.parcela?' selected':'')+'>'+p.nombre+'</option>';});
+ h+='</select></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Producto</label><input type="text" id="er-producto" value="'+(r.producto||'')+'" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">N\u00ba Registro</label><input type="text" id="er-numreg" value="'+(r.numRegistro||'')+'" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Mat. Activa</label><input type="text" id="er-matactiva" value="'+(r.materiaActiva||'')+'" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Dosis</label><input type="text" id="er-dosis" value="'+(r.dosis||'')+'" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Superficie (ha)</label><input type="number" id="er-sup" step="0.1" value="'+(r.supTratada||'')+'" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">M\u00e9todo</label><input type="text" id="er-metodo" value="'+(r.metodo||'')+'" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Equipo</label><input type="text" id="er-equipo" value="'+(r.equipo||'')+'" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Plazo seg. (d\u00edas)</label><input type="number" id="er-plazo" value="'+(r.plazo||0)+'" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Lote</label><input type="text" id="er-lote" value="'+(r.lote||'')+'" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div style="grid-column:1/3"><label style="font-size:12px;font-weight:600">Motivaci\u00f3n</label><input type="text" id="er-motiv" value="'+(r.motivacion||'')+'" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Operario</label><input type="text" id="er-operario" value="'+(r.operario||'')+'" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Estado CUE</label><select id="er-reg" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"><option value="si"'+(r.registrado?' selected':'')+'>Registrado</option><option value="no"'+(!r.registrado?' selected':'')+'>Pendiente</option></select></div>';
+ h+='</div>';
+ h+='<button class="btn" onclick="guardarEdicionCUE('+r.id+')" style="margin-top:16px;width:100%">\u{1F4BE} Guardar Cambios</button>';
+ md.innerHTML=h;
+ openModal('modal-pedido');
+};
+
+window.guardarEdicionCUE=function(id){
+ var r=cuadernoDigital.find(function(x){return x.id===id});
+ if(!r)return;
+ r.tipo=document.getElementById('er-tipo').value;
+ r.fecha=document.getElementById('er-fecha').value;
+ r.parcela=document.getElementById('er-parcela').value;
+ r.producto=document.getElementById('er-producto').value;
+ r.numRegistro=document.getElementById('er-numreg').value;
+ r.materiaActiva=document.getElementById('er-matactiva').value;
+ r.dosis=document.getElementById('er-dosis').value;
+ r.supTratada=parseFloat(document.getElementById('er-sup').value)||0;
+ r.metodo=document.getElementById('er-metodo').value;
+ r.equipo=document.getElementById('er-equipo').value;
+ r.plazo=parseInt(document.getElementById('er-plazo').value)||0;
+ r.lote=document.getElementById('er-lote').value;
+ r.motivacion=document.getElementById('er-motiv').value;
+ r.operario=document.getElementById('er-operario').value;
+ r.registrado=document.getElementById('er-reg').value==='si';
+ r.estado=r.registrado?'completado':'pendiente';
+ saveSiex();notifySaved('Registro actualizado');
+ closeModal('modal-pedido');
+ mostrarTabSiex('cuaderno');
+};
+
+window.eliminarRegistroCUE=function(id){
+ if(!confirm('\u00bfEliminar este registro del cuaderno digital? Esta acci\u00f3n no se puede deshacer.'))return;
+ cuadernoDigital=cuadernoDigital.filter(function(r){return r.id!==id});
+ saveSiex();notifySaved('Registro eliminado');
+ mostrarTabSiex('cuaderno');
+};
+
+/* ── EXPORTAR CSV CUE ── */
+
+window.exportarCuadernoCSV=function(){
+ var headers=['ID','Fecha','Tipo','Parcela','Cultivo','Producto','N\u00ba Registro','Mat. Activa','Dosis','Sup. (ha)','M\u00e9todo','Equipo','Plazo Seg.','Motivaci\u00f3n','Operario','Lote','Registrado','Estado'];
+ var rows=[headers.join(';')];
+ cuadernoDigital.forEach(function(r){
+  rows.push([r.id,r.fecha,r.tipo,r.parcela,r.cultivo||'',r.producto||'',r.numRegistro||'',r.materiaActiva||'',r.dosis||'',r.supTratada||'',r.metodo||'',r.equipo||'',r.plazo||0,r.motivacion||'',r.operario||'',r.lote||'',r.registrado?'S\u00ed':'No',r.estado].join(';'));
+ });
+ var csv=rows.join('\n');
+ var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+ var url=URL.createObjectURL(blob);
+ var a=document.createElement('a');a.href=url;a.download='cuaderno_digital_'+new Date().toISOString().slice(0,10)+'.csv';
+ document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+ notifySaved('CSV exportado');
 };
 
 window.verFichaParcelaSiex=function(id){
@@ -8232,44 +8491,160 @@ window.verFichaCert=function(id){
  openModal('modal-pedido');
 };
 
-/* ── MODALES CREACI\u00d3N ── */
+/* ── TAB: BALANCE NITR\u00d3GENO ── */
+
+function renderTabNitrogeno(box){
+ var h='<div class="section-title">\u{1F9EA} Calculadora Balance de Nitr\u00f3geno (Zona Vulnerable)</div>';
+ h+='<div style="padding:14px;background:rgba(59,130,246,.05);border-radius:10px;border-left:3px solid #3B82F6;margin-bottom:16px;font-size:13px">';
+ h+='<strong>\u{1F4CB} Normativa:</strong> RD 47/2022 + Zona Vulnerable a Nitratos (Vega Baja del Segura). L\u00edmite: <strong>170 kg N/ha/a\u00f1o</strong> en zona vulnerable.</div>';
+ // Calculate N balance per parcel from fertilization records
+ var nPorParcela={};
+ parcelas.forEach(function(p){nPorParcela[p.nombre]={sup:p.supCultivada,nTotal:0,regs:[]}});
+ cuadernoDigital.forEach(function(r){
+  if(r.tipo==='fertilizacion'&&nPorParcela[r.parcela]){
+   var nkg=0;
+   // Parse N from common fertilizers
+   if(r.producto&&r.producto.indexOf('Nitrato Am\u00f3nico')>=0) nkg=parseFloat(r.dosis)*0.335*(r.supTratada||0);
+   else if(r.producto&&r.producto.indexOf('Compost')>=0) nkg=parseFloat(r.dosis)*0.015*(r.supTratada||0);
+   else if(r.producto&&r.producto.indexOf('Humus')>=0) nkg=parseFloat(r.dosis)*0.02*(r.supTratada||0);
+   else if(r.materiaActiva&&r.materiaActiva.indexOf('N ')>=0){
+    var m=r.materiaActiva.match(/N\s+([\d.]+)%/);
+    if(m) nkg=parseFloat(r.dosis)*parseFloat(m[1])/100*(r.supTratada||0);
+   }
+   if(nkg>0){nPorParcela[r.parcela].nTotal+=nkg;nPorParcela[r.parcela].regs.push({fecha:r.fecha,prod:r.producto,dosis:r.dosis,nkg:nkg})}
+  }
+ });
+ h+='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f8f9fa;border-bottom:2px solid #e0e0e0"><th style="padding:10px;text-align:left">Parcela</th><th>Sup. (ha)</th><th>N Aplicado (kg)</th><th>N/ha</th><th>L\u00edmite</th><th style="text-align:center">Estado</th><th>% Usado</th></tr></thead><tbody>';
+ var totalN=0,totalSup=0;
+ Object.keys(nPorParcela).forEach(function(nom){
+  var p=nPorParcela[nom];if(!p.sup)return;
+  var nha=p.sup>0?Math.round(p.nTotal/p.sup):'—';
+  var pct=p.sup>0?Math.round(p.nTotal/p.sup/170*100):0;
+  var colEst=pct>100?'#c62828':pct>80?'#f57f17':'#2e7d32';
+  var labEst=pct>100?'\u{1F534} EXCESO':pct>80?'\u{1F7E1} ALERTA':'\u{1F7E2} OK';
+  totalN+=p.nTotal;totalSup+=p.sup;
+  h+='<tr style="border-bottom:1px solid #eee">';
+  h+='<td style="padding:10px;font-weight:600">'+nom+'</td>';
+  h+='<td>'+p.sup+'</td>';
+  h+='<td>'+Math.round(p.nTotal)+' kg</td>';
+  h+='<td style="font-weight:600">'+nha+' kg/ha</td>';
+  h+='<td>170 kg/ha</td>';
+  h+='<td style="text-align:center"><span style="color:'+colEst+';font-weight:600">'+labEst+'</span></td>';
+  h+='<td><div style="background:#eee;border-radius:4px;height:18px;width:100px;overflow:hidden"><div style="background:'+colEst+';height:100%;width:'+Math.min(pct,100)+'%;border-radius:4px"></div></div><small>'+pct+'%</small></td>';
+  h+='</tr>';
+ });
+ h+='</tbody></table>';
+ // Summary
+ var avgNha=totalSup>0?Math.round(totalN/totalSup):0;
+ h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px">';
+ h+='<div style="background:#fff;padding:16px;border-radius:10px;text-align:center;border:1px solid #e0e0e0"><div style="font-size:24px;font-weight:700;color:'+(avgNha>170?'#c62828':'#2e7d32')+'">'+avgNha+'</div><div style="font-size:12px;color:#888">kg N/ha media</div></div>';
+ h+='<div style="background:#fff;padding:16px;border-radius:10px;text-align:center;border:1px solid #e0e0e0"><div style="font-size:24px;font-weight:700;color:#1565c0">'+Math.round(totalN)+'</div><div style="font-size:12px;color:#888">kg N total aplicado</div></div>';
+ h+='<div style="background:#fff;padding:16px;border-radius:10px;text-align:center;border:1px solid #e0e0e0"><div style="font-size:24px;font-weight:700;color:#2e7d32">'+Math.round(totalSup*170-totalN)+'</div><div style="font-size:12px;color:#888">kg N disponible (l\u00edmite)</div></div>';
+ h+='</div>';
+ box.innerHTML=h;
+}
+
+/* ── TAB: BCAM / RLG CHECKLIST ── */
+
+function renderTabBCAM(box){
+ var h='<div class="section-title">\u2705 Condicionalidad Reforzada PAC 2023-2027</div>';
+ h+='<div style="padding:14px;background:rgba(76,149,108,.06);border-radius:10px;border-left:3px solid #4C956C;margin-bottom:16px;font-size:13px">';
+ h+='<strong>BCAM:</strong> Buenas Condiciones Agrarias y Medioambientales (9 normas) | <strong>RLG:</strong> Requisitos Legales de Gesti\u00f3n (11 normas). Cumplimiento obligatorio para cobro PAC.</div>';
+ var cumple=bcamChecklist.filter(function(b){return b.cumple}).length;
+ var total=bcamChecklist.length;
+ var pct=Math.round(cumple/total*100);
+ h+='<div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px"><span>Cumplimiento: '+cumple+'/'+total+'</span><span style="color:'+(pct===100?'#2e7d32':'#f57f17')+'">'+pct+'%</span></div>';
+ h+='<div style="background:#eee;border-radius:6px;height:10px;overflow:hidden"><div style="background:'+(pct===100?'#4C956C':'#f57f17')+';height:100%;width:'+pct+'%;border-radius:6px;transition:width .3s"></div></div></div>';
+ bcamChecklist.forEach(function(b,i){
+  var isBCAM=b.id.startsWith('BCAM');
+  if(i===0)h+='<div style="font-weight:700;font-size:14px;margin:12px 0 8px;color:#2C6E49">BCAM - Buenas Condiciones Agrarias</div>';
+  if(b.id==='RLG1')h+='<div style="font-weight:700;font-size:14px;margin:18px 0 8px;color:#3B82F6">RLG - Requisitos Legales de Gesti\u00f3n</div>';
+  h+='<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-radius:8px;margin-bottom:6px;border:1px solid '+(b.cumple?'#e8f5e9':'#fce4ec')+';cursor:pointer" onclick="toggleBCAM('+i+')">';
+  h+='<div style="width:24px;height:24px;border-radius:6px;background:'+(b.cumple?'#4C956C':'#e07a5f')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">'+(b.cumple?'\u2713':'\u2717')+'</div>';
+  h+='<div style="flex:1"><div style="font-weight:600;font-size:13px">'+b.nombre+'</div>';
+  h+='<div style="font-size:12px;color:#888;margin-top:2px">'+b.notas+'</div></div>';
+  h+='<input type="text" value="'+b.notas+'" onclick="event.stopPropagation()" onchange="actualizarNotaBCAM('+i+',this.value)" style="width:200px;padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:11px" placeholder="Notas...">';
+  h+='</div>';
+ });
+ box.innerHTML=h;
+}
+
+window.toggleBCAM=function(i){
+ bcamChecklist[i].cumple=!bcamChecklist[i].cumple;
+ saveSiex();
+ mostrarTabSiex('bcam');
+};
+
+window.actualizarNotaBCAM=function(i,val){
+ bcamChecklist[i].notas=val;
+ saveSiex();
+};
+
+/* ── MODALES CREACI\u00d3N (Enhanced) ── */
 
 window.nuevoRegistroCUEModal=function(){
  var md=document.getElementById('modal-pedido-content');
+ var hoy=new Date().toISOString().slice(0,10);
  var h='<h2 style="margin-bottom:16px">\u2795 Nuevo Registro CUE</h2>';
  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
- h+='<div><label style="font-size:12px;font-weight:600">Tipo</label><select id="nr-tipo" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"><option value="tratamiento">Tratamiento Fito</option><option value="fertilizacion">Fertilizaci\u00f3n</option><option value="riego">Riego</option><option value="laborCultural">Labor Cultural</option><option value="cosecha">Cosecha</option></select></div>';
- h+='<div><label style="font-size:12px;font-weight:600">Fecha</label><input type="date" id="nr-fecha" value="2026-03-04" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
- h+='<div><label style="font-size:12px;font-weight:600">Parcela</label><select id="nr-parcela" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px">';
- parcelas.forEach(function(p){h+='<option value="'+p.nombre+'">'+p.nombre+' ('+p.cultivo+')</option>';});
+ h+='<div><label style="font-size:12px;font-weight:600">Tipo *</label><select id="nr-tipo" onchange="toggleCUEFields()" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"><option value="tratamiento">Tratamiento Fito</option><option value="fertilizacion">Fertilizaci\u00f3n</option><option value="riego">Riego</option><option value="laborCultural">Labor Cultural</option><option value="cosecha">Cosecha</option></select></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Fecha *</label><input type="date" id="nr-fecha" value="'+hoy+'" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Parcela *</label><select id="nr-parcela" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px">';
+ parcelas.forEach(function(p){h+='<option value="'+p.nombre+'" data-cultivo="'+p.cultivo+'">'+p.nombre+' ('+p.cultivo+')</option>';});
  h+='</select></div>';
- h+='<div><label style="font-size:12px;font-weight:600">Producto / Acci\u00f3n</label><input type="text" id="nr-producto" placeholder="Nombre producto o labor" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Cultivo</label><input type="text" id="nr-cultivo" placeholder="Auto seg\u00fan parcela" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Producto / Acci\u00f3n *</label><input type="text" id="nr-producto" placeholder="Nombre producto o labor" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div id="nr-numreg-wrap"><label style="font-size:12px;font-weight:600">N\u00ba Registro Fito</label><input type="text" id="nr-numreg" placeholder="ES-XXXXX" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div id="nr-matactiva-wrap"><label style="font-size:12px;font-weight:600">Materia Activa</label><input type="text" id="nr-matactiva" placeholder="Ej: Azufre 80% [WP]" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
  h+='<div><label style="font-size:12px;font-weight:600">Dosis</label><input type="text" id="nr-dosis" placeholder="Ej: 3 kg/ha" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
  h+='<div><label style="font-size:12px;font-weight:600">Superficie (ha)</label><input type="number" id="nr-sup" step="0.1" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
- h+='<div><label style="font-size:12px;font-weight:600">Motivaci\u00f3n</label><input type="text" id="nr-motiv" placeholder="Motivo del tratamiento" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
- h+='<div><label style="font-size:12px;font-weight:600">Operario</label><input type="text" id="nr-operario" placeholder="Nombre operario" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">M\u00e9todo aplicaci\u00f3n</label><select id="nr-metodo" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"><option value="">Seleccionar...</option><option>Pulverizaci\u00f3n</option><option>Fertirrigaci\u00f3n</option><option>Incorporaci\u00f3n mec\u00e1nica</option><option>Goteo</option><option>Manual</option><option>Mec\u00e1nico</option><option>A\u00e9reo</option></select></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Equipo</label><input type="text" id="nr-equipo" placeholder="Ej: Atomizador Fede" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div id="nr-plazo-wrap"><label style="font-size:12px;font-weight:600">Plazo seguridad (d\u00edas)</label><input type="number" id="nr-plazo" value="0" min="0" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Lote producto</label><input type="text" id="nr-lote" placeholder="Ej: AZ-2026-015" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div style="grid-column:1/3"><label style="font-size:12px;font-weight:600">Motivaci\u00f3n / Plaga objetivo *</label><input type="text" id="nr-motiv" placeholder="Motivo del tratamiento o labor" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Operario *</label><input type="text" id="nr-operario" placeholder="Nombre operario" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"></div>';
+ h+='<div><label style="font-size:12px;font-weight:600">Registrado en CUE</label><select id="nr-registrado" style="width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;margin-top:4px"><option value="si">S\u00ed - Registrado</option><option value="no">No - Pendiente</option></select></div>';
  h+='</div>';
  h+='<button class="btn" onclick="crearRegistroCUE()" style="margin-top:16px;width:100%">\u{1F4BE} Guardar Registro</button>';
  md.innerHTML=h;
  openModal('modal-pedido');
 };
 
+window.toggleCUEFields=function(){
+ var tipo=document.getElementById('nr-tipo').value;
+ var fito=tipo==='tratamiento';
+ ['nr-numreg-wrap','nr-matactiva-wrap','nr-plazo-wrap'].forEach(function(id){
+  var el=document.getElementById(id);if(el)el.style.display=fito?'block':'none';
+ });
+};
+
 window.crearRegistroCUE=function(){
  var tipo=document.getElementById('nr-tipo').value;
  var fecha=document.getElementById('nr-fecha').value;
  var parcela=document.getElementById('nr-parcela').value;
+ var cultivo=document.getElementById('nr-cultivo').value||'';
  var producto=document.getElementById('nr-producto').value||'Sin especificar';
+ var numRegistro=(document.getElementById('nr-numreg')||{}).value||'';
+ var materiaActiva=(document.getElementById('nr-matactiva')||{}).value||'';
  var dosis=document.getElementById('nr-dosis').value||'N/A';
  var sup=parseFloat(document.getElementById('nr-sup').value)||0;
+ var metodo=(document.getElementById('nr-metodo')||{}).value||'';
+ var equipo=(document.getElementById('nr-equipo')||{}).value||'';
+ var plazo=parseInt((document.getElementById('nr-plazo')||{}).value)||0;
+ var lote=(document.getElementById('nr-lote')||{}).value||'';
  var motiv=document.getElementById('nr-motiv').value||'';
  var operario=document.getElementById('nr-operario').value||'Sin asignar';
+ var registrado=document.getElementById('nr-registrado').value==='si';
+ var maxId=cuadernoDigital.reduce(function(m,r){return Math.max(m,r.id)},0);
  cuadernoDigital.push({
-  id:cuadernoDigital.length+1,tipo:tipo,fecha:fecha,parcela:parcela,
-  cultivo:'',producto:producto,numRegistro:'',materiaActiva:'',
-  dosis:dosis,supTratada:sup,metodo:'',equipo:'',plazo:0,
-  motivacion:motiv,operario:operario,lote:'',
-  registrado:true,estado:'completado'
+  id:maxId+1,tipo:tipo,fecha:fecha,parcela:parcela,
+  cultivo:cultivo,producto:producto,numRegistro:numRegistro,materiaActiva:materiaActiva,
+  dosis:dosis,supTratada:sup,metodo:metodo,equipo:equipo,plazo:plazo,
+  motivacion:motiv,operario:operario,lote:lote,
+  registrado:registrado,estado:registrado?'completado':'pendiente'
  });
+ saveSiex();notifySaved('Registro CUE guardado');
  closeModal('modal-pedido');
  mostrarTabSiex('cuaderno');
 };
@@ -8307,13 +8682,15 @@ window.crearParcelaSiex=function(){
  var supcult=parseFloat(document.getElementById('np-supcult').value)||0;
  var cultivo=document.getElementById('np-cultivo').value||'Sin especificar';
  var eco=document.getElementById('np-eco').value==='si';
+ var maxId=parcelas.reduce(function(m,p){return Math.max(m,p.id)},0);
  parcelas.push({
-  id:parcelas.length+1,expId:expId,nombre:nombre,sigpac:sigpac,
+  id:maxId+1,expId:expId,nombre:nombre,sigpac:sigpac,
   ref_catastral:catastral,municipio:'Orihuela',poligono:pol,parcela:par,recinto:1,
   supSigpac:supsig,supCultivada:supcult,cultivo:cultivo,variedad:'',
   sistemaRiego:'Goteo',uso:'Tierra arable',eco:eco,
-  fechaAlta:'2026-03-04',estado:'activa'
+  fechaAlta:new Date().toISOString().slice(0,10),estado:'activa'
  });
+ saveSiex();notifySaved('Parcela guardada');
  closeModal('modal-pedido');
  mostrarTabSiex('parcelas');
 };
@@ -8322,7 +8699,7 @@ window.crearParcelaSiex=function(){
 
 function initSiex(){
  var el=document.getElementById('page-siex');
- if(!el){renderSiex();}
+ if(!el){autoGenerateAlerts();renderSiex();}
 }
 setTimeout(initSiex,420);
 
