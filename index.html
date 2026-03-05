@@ -1020,6 +1020,24 @@ function svgLineChart(data,w,h,color){
     svg+=`<text x="${x}" y="${h-pad.b+16}" text-anchor="middle" class="chart-label" style="font-size:10px">${d.n}</text>`});
   svg+=`</svg>`;return svg;
 }
+function svgProgressBar(pct,w,h,color,label){
+  const rp=Math.min(100,Math.max(0,pct));const rw=w*(rp/100);
+  let svg=`<svg viewBox="0 0 ${w} ${h+2}" style="display:block">`;
+  svg+=`<rect x="0" y="1" width="${w}" height="${h}" rx="${h/2}" fill="var(--border,#E8ECF0)"/>`;
+  if(rw>0)svg+=`<rect x="0" y="1" width="${rw}" height="${h}" rx="${h/2}" fill="${color}" opacity=".85"><animate attributeName="width" from="0" to="${rw}" dur=".6s" fill="freeze"/></rect>`;
+  if(label)svg+=`<text x="${w/2}" y="${h/2+4}" text-anchor="middle" style="font-family:Inter;font-size:${Math.max(8,h-4)}px;font-weight:700;fill:#fff">${label}</text>`;
+  svg+=`</svg>`;return svg;
+}
+function svgMiniSparkline(values,w,h,color){
+  if(!values||values.length<2)return '';
+  const maxV=Math.max(...values)*1.15||1;const step=w/(values.length-1);
+  let pts=values.map((v,i)=>`${step*i},${h-h*(v/maxV)}`).join(' ');
+  let svg=`<svg viewBox="0 0 ${w} ${h}" style="display:block">`;
+  svg+=`<defs><linearGradient id="sp${w}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity=".25"/><stop offset="100%" stop-color="${color}" stop-opacity=".02"/></linearGradient></defs>`;
+  svg+=`<path d="M0,${h} L${pts} L${w},${h} Z" fill="url(#sp${w})"/>`;
+  svg+=`<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  svg+=`</svg>`;return svg;
+}
 
 const M=document.getElementById("main-content");
 
@@ -10074,7 +10092,8 @@ M.innerHTML+='<div class="page" id="page-tratamientos">'+
 '<select id="trat-parcela" onchange="filtrarTratamientos()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px"><option value="">Todas parcelas</option></select>'+
 '<select id="trat-estado" onchange="filtrarTratamientos()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px"><option value="">Todos estados</option><option value="aplicado">Aplicado</option><option value="planificado">Planificado</option><option value="en_plazo">En plazo seg.</option></select>'+
 '</div>'+
-'<div class="tbl-wrap"><table class="tbl" id="trat-tabla"><thead><tr><th>Fecha</th><th>Parcela</th><th>Plaga/Enf.</th><th>Producto</th><th>Dosis</th><th>Plazo seg.</th><th>Responsable</th><th>Estado</th><th>Acc.</th></tr></thead><tbody id="trat-tbody"></tbody></table></div>'+
+'<div id="trat-timeline"></div>'+
+'<div class="tbl-wrap"><table class="tbl" id="trat-tabla"><thead><tr><th>Fecha</th><th>Parcela</th><th>Plaga/Enf.</th><th>Producto</th><th>Dosis</th><th>Plazo</th><th>Responsable</th><th>Estado</th><th>Acc.</th></tr></thead><tbody id="trat-tbody"></tbody></table></div>'+
 '</div>';
 
 // ── E2) INCIDENCIAS ──
@@ -10082,12 +10101,15 @@ M.innerHTML+='<div class="page" id="page-incidencias">'+
 '<div class="header"><h1>\u26A0\uFE0F Incidencias</h1>'+
 '<div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="nuevaIncidenciaModal()">\u2795 Nueva Incidencia</button></div></div>'+
 '<div id="inc-stats" class="stat-row"></div>'+
-'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">'+
+'<div id="inc-charts-extra"></div>'+
+'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center">'+
 '<select id="inc-estado" onchange="filtrarIncidencias()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px"><option value="">Todos</option><option value="abierta">Abiertas</option><option value="cerrada">Cerradas</option></select>'+
 '<select id="inc-severidad" onchange="filtrarIncidencias()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px"><option value="">Severidad</option><option value="alta">Alta</option><option value="media">Media</option><option value="baja">Baja</option></select>'+
 '<select id="inc-parcela" onchange="filtrarIncidencias()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px"><option value="">Todas parcelas</option></select>'+
+'<button class="btn btn-sm" id="inc-toggle-view" onclick="toggleIncView()" style="margin-left:auto">\uD83C\uDFF7 Vista Tarjetas</button>'+
 '</div>'+
-'<div class="tbl-wrap"><table class="tbl" id="inc-tabla"><thead><tr><th>ID</th><th>Fecha</th><th>Parcela</th><th>Tipo</th><th>Severidad</th><th>Descripci\u00f3n</th><th>Asignado</th><th>Estado</th><th>Acc.</th></tr></thead><tbody id="inc-tbody"></tbody></table></div>'+
+'<div id="inc-cards-view" style="display:none"></div>'+
+'<div id="inc-table-view"><div class="tbl-wrap"><table class="tbl" id="inc-tabla"><thead><tr><th>ID</th><th>Fecha</th><th>Parcela</th><th>Tipo</th><th>Severidad</th><th>Descripci\u00f3n</th><th>Asignado</th><th>Estado</th><th>Acc.</th></tr></thead><tbody id="inc-tbody"></tbody></table></div></div>'+
 '</div>';
 
 // ── F) TRAZABILIDAD ──
@@ -10102,8 +10124,8 @@ M.innerHTML+='<div class="page" id="page-trazabilidad">'+
 '<button class="tab-btn" data-group="traz" data-tab="movimientos" onclick="showTab(\'traz\',\'movimientos\')">Movimientos</button>'+
 '<button class="tab-btn" data-group="traz" data-tab="inventario" onclick="showTab(\'traz\',\'inventario\')">Inventario</button>'+
 '</div>'+
-'<div class="tab-content active" data-group="traz" id="tab-traz-lotes-traz"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Lote ID</th><th>Fecha</th><th>Parcela</th><th>Tipo</th><th>Kg</th><th>Cajas</th><th>Destino</th><th>Estado</th></tr></thead><tbody id="traz-lotes-tbody"></tbody></table></div></div>'+
-'<div class="tab-content" data-group="traz" id="tab-traz-movimientos"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Lote</th><th>Tipo</th><th>Cantidad</th><th>Origen</th><th>Destino</th><th>Responsable</th></tr></thead><tbody id="traz-mov-tbody"></tbody></table></div></div>'+
+'<div class="tab-content active" data-group="traz" id="tab-traz-lotes-traz"><div id="traz-lotes-charts"></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Lote ID</th><th>Fecha</th><th>Parcela</th><th>Tipo</th><th>Kg</th><th>Cajas</th><th>Destino</th><th>Estado</th></tr></thead><tbody id="traz-lotes-tbody"></tbody></table></div></div>'+
+'<div class="tab-content" data-group="traz" id="tab-traz-movimientos"><div id="traz-mov-timeline"></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Lote</th><th>Tipo</th><th>Cantidad</th><th>Origen</th><th>Destino</th><th>Responsable</th></tr></thead><tbody id="traz-mov-tbody"></tbody></table></div></div>'+
 '<div class="tab-content" data-group="traz" id="tab-traz-inventario"><div id="traz-inv-content"></div></div>'+
 '</div>';
 
@@ -10153,12 +10175,15 @@ function _colorTipo(t){return t==='breva'?'#7C3AED':t==='higo'?'#2C6E49':'#E07A5
 function renderRecStats(){
   var el=_sel('rec-stats');if(!el)return;
   var totalKg=0,totalCajas=0,totalDestr=0,n=cosechas.length;
-  cosechas.forEach(function(c){totalKg+=c.kg;totalCajas+=c.cajas;totalDestr+=c.destrio});
+  var porMes={};
+  cosechas.forEach(function(c){totalKg+=c.kg;totalCajas+=c.cajas;totalDestr+=c.destrio;var m=c.fecha?c.fecha.substring(0,7):'';if(m){porMes[m]=(porMes[m]||0)+c.kg}});
   var avgDestr=n?totalDestr/n:0;
-  el.innerHTML='<div class="card"><div class="value" style="color:var(--accent)">'+totalKg.toLocaleString('es')+'</div><div style="font-size:11px;color:var(--gray)">KG TOTALES</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--primary)">'+totalCajas.toLocaleString('es')+'</div><div style="font-size:11px;color:var(--gray)">CAJAS</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--gold)">'+n+'</div><div style="font-size:11px;color:var(--gray)">LOTES</div></div>'+
-  '<div class="card"><div class="value" style="color:'+(avgDestr>5?'var(--coral)':'var(--primary)')+'">'+avgDestr.toFixed(1)+'%</div><div style="font-size:11px;color:var(--gray)">DESTRÍO MEDIO</div></div>';
+  var meses=Object.keys(porMes).sort();var sparkVals=meses.map(function(m){return porMes[m]});
+  var kgPerCaja=totalCajas?(totalKg/totalCajas).toFixed(1):'0';
+  el.innerHTML='<div class="card" style="padding:16px;text-align:center"><div class="value" style="color:var(--accent);font-size:26px">'+totalKg.toLocaleString('es')+'</div><div style="font-size:11px;color:var(--gray)">KG TOTALES</div>'+(sparkVals.length>1?'<div style="margin-top:6px">'+svgMiniSparkline(sparkVals,120,28,'#2C6E49')+'</div>':'')+'</div>'+
+  '<div class="card" style="padding:16px;text-align:center"><div class="value" style="color:var(--primary);font-size:26px">'+totalCajas.toLocaleString('es')+'</div><div style="font-size:11px;color:var(--gray)">CAJAS</div><div style="font-size:12px;color:var(--gray);margin-top:4px">'+kgPerCaja+' kg/caja</div></div>'+
+  '<div class="card" style="padding:16px;text-align:center"><div class="value" style="color:var(--gold);font-size:26px">'+n+'</div><div style="font-size:11px;color:var(--gray)">LOTES</div></div>'+
+  '<div class="card" style="padding:16px;text-align:center"><div class="value" style="color:'+(avgDestr>5?'var(--coral)':'var(--primary)')+';font-size:26px">'+avgDestr.toFixed(1)+'%</div><div style="font-size:11px;color:var(--gray)">DESTRÍO MEDIO</div>'+svgProgressBar(avgDestr*10,120,6,avgDestr>5?'#E07A5F':'#2C6E49')+'</div>';
 }
 function renderCosechas(data){
   var tb=_sel('rec-tbody');if(!tb)return;
@@ -10233,12 +10258,41 @@ window.exportarCosechasCSV=function(){
 };
 function renderCalidad(){
   var el=_sel('rec-calidad-content');if(!el)return;
-  var porTipo={};cosechas.forEach(function(c){if(!porTipo[c.tipo])porTipo[c.tipo]={kg:0,destrio:0,n:0,incid:{}};porTipo[c.tipo].kg+=c.kg;porTipo[c.tipo].destrio+=c.destrio;porTipo[c.tipo].n++;if(c.incidencias){porTipo[c.tipo].incid[c.incidencias]=(porTipo[c.tipo].incid[c.incidencias]||0)+1}});
-  var h='<h3 style="margin-bottom:12px">Resumen de Calidad por Tipo</h3><div class="cards" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">';
-  Object.keys(porTipo).forEach(function(t){
+  var porTipo={},porCalibre={Grande:0,Mediana:0,Pequeña:0};
+  cosechas.forEach(function(c){
+    if(!porTipo[c.tipo])porTipo[c.tipo]={kg:0,destrio:0,n:0,calibres:{Grande:0,Mediana:0,'Pequeña':0},incid:{}};
+    porTipo[c.tipo].kg+=c.kg;porTipo[c.tipo].destrio+=c.destrio;porTipo[c.tipo].n++;
+    if(c.calibre&&c.calibre!=='-'){porTipo[c.tipo].calibres[c.calibre]=(porTipo[c.tipo].calibres[c.calibre]||0)+c.kg;porCalibre[c.calibre]=(porCalibre[c.calibre]||0)+c.kg}
+    if(c.incidencias){porTipo[c.tipo].incid[c.incidencias]=(porTipo[c.tipo].incid[c.incidencias]||0)+1}
+  });
+  var tipos=Object.keys(porTipo);
+  var donutData=tipos.map(function(t){return {v:porTipo[t].kg,c:_colorTipo(t)}});
+  var donutLeg='<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px">'+tipos.map(function(t){return '<span style="font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+_colorTipo(t)+';margin-right:4px"></span>'+t.charAt(0).toUpperCase()+t.slice(1)+' ('+porTipo[t].kg.toLocaleString('es')+' kg)</span>'}).join('')+'</div>';
+  var barData=tipos.map(function(t){return {n:t.charAt(0).toUpperCase()+t.slice(1),v:+(porTipo[t].n?porTipo[t].destrio/porTipo[t].n:0).toFixed(1)}});
+  var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">'+
+    '<div class="card" style="padding:16px;text-align:center"><h4 style="margin-bottom:8px">\uD83C\uDF52 Producción por Tipo</h4>'+svgDonut(donutData,130)+donutLeg+'</div>'+
+    '<div class="card" style="padding:16px"><h4 style="margin-bottom:8px">\uD83D\uDCC9 Destrío Medio por Tipo (%)</h4>'+svgBarChart(barData,300,140,['#7C3AED','#2C6E49','#E07A5F'])+'</div></div>';
+  // Calibre breakdown
+  var totalCal=Object.values(porCalibre).reduce(function(a,b){return a+b},0)||1;
+  var calCols={Grande:'#2C6E49',Mediana:'#D4A843','Pequeña':'#E07A5F'};
+  h+='<div class="card" style="padding:16px;margin-bottom:16px"><h4 style="margin-bottom:12px">\uD83D\uDCCF Distribución por Calibre</h4>';
+  h+='<div style="display:flex;gap:4px;height:24px;border-radius:12px;overflow:hidden;margin-bottom:12px">';
+  Object.keys(calCols).forEach(function(cal){var pct=porCalibre[cal]/totalCal*100;if(pct>0)h+='<div style="width:'+pct+'%;background:'+calCols[cal]+';display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700">'+(pct>8?cal+' '+pct.toFixed(0)+'%':'')+'</div>'});
+  h+='</div>';
+  tipos.forEach(function(t){
+    var d=porTipo[t];var tCal=Object.values(d.calibres).reduce(function(a,b){return a+b},0)||1;
+    h+='<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;margin-bottom:4px"><span class="tag" style="background:'+_colorTipo(t)+'1a;color:'+_colorTipo(t)+'">'+t.toUpperCase()+'</span></div>';
+    h+='<div style="display:flex;gap:4px;height:16px;border-radius:8px;overflow:hidden">';
+    Object.keys(calCols).forEach(function(cal){var pct=d.calibres[cal]/tCal*100;if(pct>0)h+='<div style="width:'+pct+'%;background:'+calCols[cal]+';display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:600">'+(pct>12?pct.toFixed(0)+'%':'')+'</div>'});
+    h+='</div></div>';
+  });
+  h+='</div>';
+  // Detail cards per type (preserved)
+  h+='<h3 style="margin-bottom:12px">Detalle por Tipo</h3><div class="cards" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">';
+  tipos.forEach(function(t){
     var d=porTipo[t];var avg=d.n?d.destrio/d.n:0;
-    h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><span class="tag" style="background:'+_colorTipo(t)+'1a;color:'+_colorTipo(t)+'">'+t.toUpperCase()+'</span><span style="font-size:20px;font-weight:700">'+d.kg.toLocaleString('es')+' kg</span></div>'+
-    '<div style="margin-top:8px;font-size:12px;color:var(--gray)">'+d.n+' lotes | Destrío medio: <strong style="color:'+(avg>5?'var(--coral)':'var(--accent)')+'">'+avg.toFixed(1)+'%</strong></div>';
+    h+='<div class="card" style="padding:16px;border-left:4px solid '+_colorTipo(t)+'"><div style="display:flex;justify-content:space-between;align-items:center"><span class="tag" style="background:'+_colorTipo(t)+'1a;color:'+_colorTipo(t)+'">'+t.toUpperCase()+'</span><span style="font-size:20px;font-weight:700">'+d.kg.toLocaleString('es')+' kg</span></div>'+
+    '<div style="margin-top:8px;font-size:12px;color:var(--gray)">'+d.n+' lotes | Destrío: <strong style="color:'+(avg>5?'var(--coral)':'var(--accent)')+'">'+avg.toFixed(1)+'%</strong></div>'+svgProgressBar(100-avg*10,180,6,avg>5?'#E07A5F':'#2C6E49','Calidad '+(100-avg*10).toFixed(0)+'%');
     var incKeys=Object.keys(d.incid);
     if(incKeys.length){h+='<div style="margin-top:6px;font-size:11px">Incidencias: '+incKeys.map(function(k){return k+' ('+d.incid[k]+')'}).join(', ')+'</div>'}
     h+='</div>';
@@ -10314,10 +10368,26 @@ function _s(id){return document.getElementById(id)}
 function renderRiegoStats(){
   var el=_s('riego-stats');if(!el)return;
   var tL=0,tF=0,cF=0;riegos.forEach(function(r){tL+=r.litros});fertis.forEach(function(f){cF+=f.coste;tF++});
-  el.innerHTML='<div class="card"><div class="value" style="color:var(--blue)">'+(tL/1000).toFixed(1)+'m³</div><div style="font-size:11px;color:var(--gray)">AGUA TOTAL</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--accent)">'+riegos.length+'</div><div style="font-size:11px;color:var(--gray)">RIEGOS</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--purple)">'+tF+'</div><div style="font-size:11px;color:var(--gray)">FERTIRRIGACIONES</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--gold)">'+cF.toLocaleString('es')+'\u20ac</div><div style="font-size:11px;color:var(--gray)">COSTE FERTI</div></div>';
+  var avgL=riegos.length?Math.round(tL/riegos.length):0;
+  // Monthly sparkline data
+  var porMes={};riegos.forEach(function(r){var m=r.fecha.substring(0,7);if(!porMes[m])porMes[m]=0;porMes[m]+=r.litros});
+  var meses=Object.keys(porMes).sort();var sparkVals=meses.map(function(m){return porMes[m]/1000});
+  function kpi(icon,t,v,u,sub,col,spark){
+    return '<div class="card" style="padding:16px;text-align:center;position:relative;overflow:hidden">'+
+      '<div style="position:absolute;top:-8px;right:-8px;font-size:36px;opacity:.08">'+icon+'</div>'+
+      '<div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">'+t+'</div>'+
+      '<div style="font-size:32px;font-weight:800;color:'+(col||'var(--dark)')+';line-height:1">'+v+'<span style="font-size:14px;font-weight:500;color:var(--gray)"> '+u+'</span></div>'+
+      '<div style="margin-top:6px;font-size:11px;color:var(--gray)">'+sub+'</div>'+
+      (spark?'<div style="margin-top:8px">'+spark+'</div>':'')+
+    '</div>';
+  }
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px">'+
+    kpi('\uD83D\uDCA7','Agua Total',(tL/1000).toFixed(1),'m\u00B3','consumo acumulado','var(--blue)',svgMiniSparkline(sparkVals,120,28,'#3B82F6'))+
+    kpi('\uD83D\uDEBF','Riegos',riegos.length,'','aplicaciones','var(--accent)','')+
+    kpi('\uD83E\uDDEA','Fertirrigaciones',tF,'','tratamientos','#7C3AED','')+
+    kpi('\uD83D\uDCB0','Coste Ferti',cF.toLocaleString('es'),'\u20ac','inversión','var(--gold)','')+
+    kpi('\uD83D\uDCCA','Media por Riego',avgL.toLocaleString('es'),'L','litros/aplicación','var(--dark)','')+
+  '</div>';
 }
 function renderRiegos(data){
   var tb=_s('riego-tbody');if(!tb)return;
@@ -10335,12 +10405,41 @@ function renderCostesRiego(){
   var el=_s('riego-costes-content');if(!el)return;
   var porParc={};riegos.forEach(function(r){if(!porParc[r.parcela])porParc[r.parcela]={litros:0,riegos:0,costeAgua:0,costeFerti:0};porParc[r.parcela].litros+=r.litros;porParc[r.parcela].riegos++;porParc[r.parcela].costeAgua+=r.litros*0.00038});
   fertis.forEach(function(f){if(!porParc[f.parcela])porParc[f.parcela]={litros:0,riegos:0,costeAgua:0,costeFerti:0};porParc[f.parcela].costeFerti+=f.coste});
-  var h='<h3 style="margin-bottom:12px">Coste Agua + Fertilizante por Parcela</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Parcela</th><th>Litros</th><th>Riegos</th><th>Coste Agua \u20ac</th><th>Coste Ferti \u20ac</th><th>Total \u20ac</th></tr></thead><tbody>';
-  Object.keys(porParc).sort(function(a,b){return(porParc[b].costeAgua+porParc[b].costeFerti)-(porParc[a].costeAgua+porParc[a].costeFerti)}).forEach(function(p){
+  var pKeys=Object.keys(porParc).sort(function(a,b){return porParc[b].litros-porParc[a].litros});
+  var maxL=pKeys.length?porParc[pKeys[0]].litros:1;
+  // Charts row
+  var donutData=pKeys.map(function(p,i){var cols=['#3B82F6','#6366f1','#4c956c','#e07a5f','#f59e0b','#8b5cf6'];return {v:porParc[p].litros,c:cols[i%cols.length]}});
+  var barData=pKeys.slice(0,6).map(function(p){return {n:p.split(' ')[0],v:Math.round(porParc[p].costeAgua+porParc[p].costeFerti)}});
+  // Monthly line chart
+  var porMes={};riegos.forEach(function(r){var m=r.fecha.substring(0,7);if(!porMes[m])porMes[m]=0;porMes[m]+=r.litros});
+  var meses=Object.keys(porMes).sort();var lineData=meses.map(function(m){return {n:m.substring(5),v:Math.round(porMes[m]/1000)}});
+  var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">'+
+    '<div class="card" style="padding:16px;text-align:center"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCA7 Consumo por Parcela</h3>'+
+    (donutData.length>0?svgDonut(donutData,160):'<div style="color:var(--gray)">Sin datos</div>')+
+    '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:8px">'+pKeys.map(function(p,i){var cols=['#3B82F6','#6366f1','#4c956c','#e07a5f','#f59e0b','#8b5cf6'];return '<span style="font-size:10px;color:'+cols[i%cols.length]+';font-weight:600">\u25CF '+p.split(' ')[0]+'</span>'}).join('')+'</div></div>'+
+    '<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCB0 Coste Total por Parcela</h3>'+
+    (barData.length>0?svgBarChart(barData,380,180,['#e07a5f','#c45c3e','#f59e0b','#d4a843','#e07a5f','#c45c3e']):'<div style="color:var(--gray)">Sin datos</div>')+'</div></div>';
+  // Monthly trend
+  if(lineData.length>0){
+    h+='<div class="card" style="padding:16px;margin-bottom:20px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCC8 Consumo Mensual (m\u00B3)</h3>'+svgLineChart(lineData,600,160,'#3B82F6')+'</div>';
+  }
+  // Progress bars per parcela
+  h+='<div class="card" style="padding:16px;margin-bottom:20px"><h3 style="margin:0 0 14px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83C\uDF31 Consumo Relativo por Parcela</h3>';
+  pKeys.forEach(function(p){
+    var pct=Math.round(porParc[p].litros/maxL*100);
+    h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'+
+      '<span style="width:100px;font-size:12px;font-weight:600;flex-shrink:0">'+p.split(' ').slice(0,2).join(' ')+'</span>'+
+      '<div style="flex:1">'+svgProgressBar(pct,300,14,'#3B82F6','')+'</div>'+
+      '<span style="width:70px;text-align:right;font-size:12px;font-weight:600;color:var(--blue)">'+(porParc[p].litros/1000).toFixed(1)+' m\u00B3</span></div>';
+  });
+  h+='</div>';
+  // Table preserved
+  h+='<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCCB Desglose Costes</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Parcela</th><th>Litros</th><th>Riegos</th><th>Coste Agua \u20ac</th><th>Coste Ferti \u20ac</th><th>Total \u20ac</th></tr></thead><tbody>';
+  pKeys.forEach(function(p){
     var d=porParc[p];var t=d.costeAgua+d.costeFerti;
     h+='<tr><td>'+p+'</td><td>'+d.litros.toLocaleString('es')+'</td><td>'+d.riegos+'</td><td>'+d.costeAgua.toFixed(0)+'\u20ac</td><td>'+d.costeFerti.toFixed(0)+'\u20ac</td><td><strong>'+t.toFixed(0)+'\u20ac</strong></td></tr>';
   });
-  h+='</tbody></table></div>';el.innerHTML=h;
+  h+='</tbody></table></div></div>';el.innerHTML=h;
 }
 window.filtrarRiegos=function(){
   var parc=_s('riego-parcela').value,desde=_s('riego-desde').value,hasta=_s('riego-hasta').value;
@@ -10430,9 +10529,37 @@ function renderTratStats(){
 }
 function renderTratamientos(data){
   var tb=_s('trat-tbody');if(!tb)return;tb.innerHTML='';
+  var now=new Date();
   (data||tratamientos).forEach(function(t){
-    tb.innerHTML+='<tr><td>'+t.fecha+'</td><td>'+t.parcela+'</td><td style="max-width:160px">'+t.plaga+'</td><td>'+t.producto+'</td><td>'+t.dosis+'</td><td>'+t.plazoSeg+' d</td><td>'+t.responsable+'</td><td><span class="tag" style="color:'+estadoColor(t.estado)+'">'+t.estado+'</span></td><td><button class="btn btn-sm" onclick="verTratamiento('+t.id+')">Ver</button></td></tr>';
+    var plazoHtml=t.plazoSeg+' d';
+    if(t.estado==='aplicado'&&t.plazoSeg>0){
+      var limDate=new Date(t.fecha);limDate.setDate(limDate.getDate()+t.plazoSeg);
+      var diffD=Math.ceil((limDate-now)/(1000*60*60*24));
+      if(diffD>0){var pct=Math.max(0,100-diffD/t.plazoSeg*100);plazoHtml='<div style="min-width:90px"><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px"><span style="color:var(--coral);font-weight:700">\u23F3 '+diffD+'d</span><span style="color:var(--gray)">'+t.plazoSeg+'d</span></div>'+svgProgressBar(pct,90,6,'#E07A5F')+'</div>'}
+      else plazoHtml='<span style="color:var(--accent);font-weight:600">\u2705 OK</span>';
+    }else if(t.estado==='planificado'){plazoHtml='<span style="color:var(--gold)">\u23F0 '+t.plazoSeg+'d</span>'}
+    tb.innerHTML+='<tr><td>'+t.fecha+'</td><td>'+t.parcela+'</td><td style="max-width:160px">'+t.plaga+'</td><td>'+t.producto+'</td><td>'+t.dosis+'</td><td>'+plazoHtml+'</td><td>'+t.responsable+'</td><td><span class="tag" style="color:'+estadoColor(t.estado)+'">'+t.estado+'</span></td><td><button class="btn btn-sm" onclick="verTratamiento('+t.id+')">Ver</button></td></tr>';
   });
+}
+function renderTratTimeline(){
+  var el=_s('trat-timeline');if(!el)return;
+  var sorted=tratamientos.slice().sort(function(a,b){return a.fecha>b.fecha?1:-1});
+  if(sorted.length<2){el.innerHTML='';return}
+  var dates=sorted.map(function(t){return new Date(t.fecha).getTime()});
+  var minD=dates[0],maxD=dates[dates.length-1],range=maxD-minD||1;
+  var W=600,H=80,pad=30;
+  var svg='<svg viewBox="0 0 '+(W+pad*2)+' '+H+'" style="display:block;max-width:100%">';
+  svg+='<line x1="'+pad+'" y1="'+H/2+'" x2="'+(W+pad)+'" y2="'+H/2+'" stroke="var(--border,#E2E8F0)" stroke-width="2" stroke-linecap="round"/>';
+  sorted.forEach(function(t,i){
+    var x=pad+(dates[i]-minD)/range*W;var isAp=t.estado==='aplicado';
+    var clr=isAp?'#2C6E49':'#D4A843';var r=8;
+    svg+='<circle cx="'+x+'" cy="'+H/2+'" r="'+r+'" fill="'+clr+'" opacity=".9"><animate attributeName="r" from="0" to="'+r+'" dur=".4s" fill="freeze"/></circle>';
+    svg+='<text x="'+x+'" y="'+(H/2-14)+'" text-anchor="middle" style="font-family:Inter;font-size:9px;fill:var(--gray,#94A3B8)">'+t.fecha.slice(5)+'</text>';
+    svg+='<text x="'+x+'" y="'+(H/2+22)+'" text-anchor="middle" style="font-family:Inter;font-size:8px;fill:var(--text,#334155)">'+t.producto.split(' ')[0]+'</text>';
+  });
+  svg+='</svg>';
+  var legend='<div style="display:flex;gap:14px;justify-content:center;font-size:11px;margin-top:4px"><span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2C6E49;margin-right:4px"></span>Aplicado</span><span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#D4A843;margin-right:4px"></span>Planificado</span></div>';
+  el.innerHTML='<div class="card" style="padding:16px;margin-bottom:16px"><h4 style="margin-bottom:8px">\uD83D\uDCC5 Timeline Tratamientos</h4>'+svg+legend+'</div>';
 }
 window.filtrarTratamientos=function(){
   var parc=_s('trat-parcela').value,est=_s('trat-estado').value;
@@ -10474,7 +10601,7 @@ window.verTratamiento=function(id){
   openModal('modal-pedido');
 };
 function popTratSelects(){var s=_s('trat-parcela');if(s&&s.options.length<=1){_pn.forEach(function(p){var o=document.createElement('option');o.value=p;o.textContent=p;s.appendChild(o)})}}
-function initTrat(){renderTratStats();renderTratamientos();popTratSelects()}
+function initTrat(){renderTratStats();renderTratTimeline();renderTratamientos();popTratSelects()}
 setTimeout(initTrat,540);
 })();
 
@@ -10501,12 +10628,53 @@ function renderIncStats(){
   el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:16px">'+
     '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Abiertas</div><div style="font-size:32px;font-weight:800;color:var(--coral)">'+ab+'</div><div style="font-size:11px;color:var(--gray)">requieren atención</div></div>'+
     '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Cerradas</div><div style="font-size:32px;font-weight:800;color:var(--accent)">'+ce+'</div><div style="font-size:11px;color:var(--gray)">resueltas</div></div>'+
-    '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Tasa Resolución</div><div style="font-size:32px;font-weight:800;color:'+(tasaResol>=70?'var(--accent)':'var(--coral)')+'">'+tasaResol+'%</div><div style="font-size:11px;color:var(--gray)">'+(tasaResol>=70?'\u2705 buen ritmo':'\u26A0\uFE0F mejorar')+'</div></div>'+
+    '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Tasa Resolución</div><div style="font-size:32px;font-weight:800;color:'+(tasaResol>=70?'var(--accent)':'var(--coral)')+'">'+tasaResol+'%</div>'+svgProgressBar(tasaResol,160,8,tasaResol>=70?'#2C6E49':'#E07A5F')+'</div>'+
     '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Severidad</div>'+
     svgDonut([{v:Math.max(alta,1),c:'#e07a5f'},{v:Math.max(media,1),c:'#D4A843'},{v:Math.max(baja,1),c:'#4c956c'}],100)+
     '<div style="display:flex;justify-content:center;gap:10px;margin-top:6px;font-size:10px">'+
       '<span style="color:#e07a5f">\u25CF Alta '+alta+'</span><span style="color:#D4A843">\u25CF Media '+media+'</span><span style="color:#4c956c">\u25CF Baja '+baja+'</span></div>'+
     '</div></div>';
+  // Charts extra: heatmap parcelas + donut tipos
+  var ce2=_s('inc-charts-extra');if(!ce2)return;
+  var porParc={},porTipo={};
+  _pn.forEach(function(p){porParc[p]=0});
+  incidencias.filter(function(i){return i.estado==='abierta'}).forEach(function(i){porParc[i.parcela]=(porParc[i.parcela]||0)+1});
+  incidencias.forEach(function(i){porTipo[i.tipo]=(porTipo[i.tipo]||0)+1});
+  var heatCols=function(n){return n===0?'#d1fae5':n<=1?'#a7f3d0':n<=2?'#fde68a':n<=3?'#fbbf24':'#ef4444'};
+  var hm='<div class="card" style="padding:16px"><h4 style="margin-bottom:12px">\uD83D\uDDFA Mapa Calor — Incidencias Abiertas por Parcela</h4><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">';
+  _pn.forEach(function(p){var n=porParc[p]||0;hm+='<div style="background:'+heatCols(n)+';border-radius:10px;padding:12px;text-align:center"><div style="font-weight:700;font-size:13px;color:#1a1a1a">'+p+'</div><div style="font-size:24px;font-weight:800;color:#1a1a1a;margin:4px 0">'+n+'</div><div style="font-size:10px;color:#333">'+(n===0?'Sin incidencias':n===1?'1 incidencia':n+' incidencias')+'</div></div>'});
+  hm+='</div></div>';
+  var tipoCols={Plaga:'#e07a5f',Enfermedad:'#7C3AED',Riego:'#3B82F6',Clima:'#D4A843',Estructura:'#6B7280',Robo:'#1B3A2D',Otro:'#9CA3AF'};
+  var tDonut=Object.keys(porTipo).map(function(k){return {v:porTipo[k],c:tipoCols[k]||'#6B7280'}});
+  var tLeg='<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px">'+Object.keys(porTipo).map(function(k){return '<span style="font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+(tipoCols[k]||'#6B7280')+';margin-right:4px"></span>'+k+' ('+porTipo[k]+')</span>'}).join('')+'</div>';
+  ce2.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">'+hm+'<div class="card" style="padding:16px;text-align:center"><h4 style="margin-bottom:8px">\uD83D\uDCCA Incidencias por Tipo</h4>'+svgDonut(tDonut,130)+tLeg+'</div></div>';
+}
+function renderIncCards(data){
+  var el=_s('inc-cards-view');if(!el)return;
+  var items=data||incidencias;
+  if(!items.length){el.innerHTML='<div class="card" style="padding:20px;text-align:center;color:var(--gray)">No hay incidencias</div>';return}
+  var h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">';
+  items.forEach(function(i){
+    var bClr=i.severidad==='alta'?'#E07A5F':i.severidad==='media'?'#D4A843':'#4C956C';
+    var tipoCols={Plaga:'#e07a5f',Enfermedad:'#7C3AED',Riego:'#3B82F6',Clima:'#D4A843',Estructura:'#6B7280'};
+    h+='<div class="card" style="padding:16px;border-left:4px solid '+bClr+';position:relative">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">';
+    h+='<span style="font-weight:700;font-size:13px">INC-'+String(i.id).padStart(3,'0')+'</span>';
+    h+='<span class="tag" style="background:'+(i.estado==='abierta'?'rgba(224,122,95,.12);color:var(--coral)':'rgba(44,110,73,.12);color:var(--accent)')+'">'+i.estado+'</span></div>';
+    h+='<div style="font-size:12px;margin-bottom:6px;color:var(--text)">'+i.desc+'</div>';
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">';
+    h+='<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:'+(tipoCols[i.tipo]||'#6B7280')+';color:#fff;font-weight:600">'+i.tipo+'</span>';
+    h+='<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:'+bClr+'22;color:'+bClr+';font-weight:600">'+i.severidad+'</span></div>';
+    h+='<div style="font-size:11px;color:var(--gray)">\uD83D\uDCC5 '+i.fecha+' · \uD83C\uDFE0 '+i.parcela+' · \uD83D\uDC64 '+i.asignado+'</div>';
+    if(i.estado==='abierta')h+='<button class="btn btn-sm" onclick="cerrarIncidencia('+i.id+')" style="margin-top:8px">\u2705 Cerrar</button>';
+    h+='</div>';
+  });
+  h+='</div>';el.innerHTML=h;
+}
+window.toggleIncView=function(){
+  var tv=_s('inc-table-view'),cv=_s('inc-cards-view'),btn=_s('inc-toggle-view');
+  if(cv.style.display==='none'){cv.style.display='block';tv.style.display='none';btn.textContent='\uD83D\uDCCB Vista Tabla';renderIncCards()}
+  else{cv.style.display='none';tv.style.display='block';btn.textContent='\uD83C\uDFF7 Vista Tarjetas'}
 }
 function renderIncidencias(data){
   var tb=_s('inc-tbody');if(!tb)return;tb.innerHTML='';
@@ -10569,11 +10737,22 @@ function _s(id){return document.getElementById(id)}
 
 function renderTrazStats(){
   var el=_s('traz-stats');if(!el)return;
-  var alm=0,exp=0,proc=0;lotes.forEach(function(l){if(l.estado==='almacenado')alm++;else if(l.estado==='expedido')exp++;else proc++});
-  el.innerHTML='<div class="card"><div class="value" style="color:var(--accent)">'+lotes.length+'</div><div style="font-size:11px;color:var(--gray)">LOTES TOTAL</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--blue)">'+alm+'</div><div style="font-size:11px;color:var(--gray)">ALMACENADOS</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--gold)">'+proc+'</div><div style="font-size:11px;color:var(--gray)">EN PROCESO</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--primary)">'+exp+'</div><div style="font-size:11px;color:var(--gray)">EXPEDIDOS</div></div>';
+  var alm=0,exp=0,proc=0,tkgs=0,tcaj=0;
+  lotes.forEach(function(l){tkgs+=l.kg;tcaj+=l.cajas;if(l.estado==='almacenado')alm++;else if(l.estado==='expedido')exp++;else proc++});
+  var kpi=function(icon,val,lbl,clr){return '<div class="card" style="text-align:center;padding:16px 12px"><div style="font-size:20px;margin-bottom:4px">'+icon+'</div><div class="value" style="color:'+clr+';font-size:26px">'+val+'</div><div style="font-size:11px;color:var(--gray);margin-top:2px">'+lbl+'</div></div>'};
+  var donutData=[{v:alm,c:'#3B82F6'},{v:proc,c:'#D4A843'},{v:exp,c:'#2C6E49'}];
+  var legend='<div style="display:flex;gap:12px;justify-content:center;margin-top:8px;flex-wrap:wrap">'+
+    '<span style="font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3B82F6;margin-right:4px"></span>Almacenados ('+alm+')</span>'+
+    '<span style="font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#D4A843;margin-right:4px"></span>En Proceso ('+proc+')</span>'+
+    '<span style="font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2C6E49;margin-right:4px"></span>Expedidos ('+exp+')</span></div>';
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:16px">'+
+    kpi('\uD83D\uDCE6',lotes.length,'LOTES TOTAL','var(--accent)')+
+    kpi('\u2696\uFE0F',(tkgs/1000).toFixed(1)+'t','KG TOTAL','var(--primary)')+
+    kpi('\uD83D\uDCE5',tcaj.toLocaleString('es'),'CAJAS TOTAL','var(--blue)')+
+    kpi('\uD83C\uDFE2',alm,'ALMACENADOS','#3B82F6')+
+    kpi('\u2699\uFE0F',proc,'EN PROCESO','#D4A843')+
+    kpi('\uD83D\uDE80',exp,'EXPEDIDOS','#2C6E49')+
+  '</div><div class="card" style="text-align:center;padding:16px"><h4 style="margin-bottom:8px">Distribución de Estados</h4>'+svgDonut(donutData,140)+legend+'</div>';
 }
 function renderLotes(){
   var tb=_s('traz-lotes-tbody');if(!tb)return;tb.innerHTML='';
@@ -10582,18 +10761,64 @@ function renderLotes(){
     tb.innerHTML+='<tr><td><strong>'+l.lote+'</strong></td><td>'+l.fecha+'</td><td>'+l.parcela+'</td><td>'+l.tipo+'</td><td>'+l.kg.toLocaleString('es')+'</td><td>'+l.cajas+'</td><td>'+(l.destino||'-')+'</td><td><span class="tag" style="color:'+ec+'">'+l.estado+'</span></td></tr>';
   });
 }
+function renderLotesCharts(){
+  var el=_s('traz-lotes-charts');if(!el)return;
+  var porParc={},porTipo={};
+  lotes.forEach(function(l){
+    porParc[l.parcela]=(porParc[l.parcela]||0)+l.kg;
+    porTipo[l.tipo]=(porTipo[l.tipo]||0)+l.kg;
+  });
+  var barData=Object.keys(porParc).map(function(k){return {n:k,v:porParc[k]}});
+  var tipoCols={breva:'#D4A843',higo:'#4C956C',granada:'#E07A5F'};
+  var donutData=Object.keys(porTipo).map(function(k){return {v:porTipo[k],c:tipoCols[k]||'#3B82F6'}});
+  var tipoLegend='<div style="display:flex;gap:12px;justify-content:center;margin-top:8px;flex-wrap:wrap">'+
+    Object.keys(porTipo).map(function(k){return '<span style="font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+(tipoCols[k]||'#3B82F6')+';margin-right:4px"></span>'+k.charAt(0).toUpperCase()+k.slice(1)+' ('+porTipo[k].toLocaleString('es')+' kg)</span>'}).join('')+'</div>';
+  var maxKg=Math.max.apply(null,barData.map(function(d){return d.v}))||1;
+  var bars=barData.map(function(d){return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>'+d.n+'</span><span style="font-weight:700;color:var(--accent)">'+d.v.toLocaleString('es')+' kg</span></div>'+svgProgressBar(d.v/maxKg*100,280,14,'#4C956C')+'</div>'}).join('');
+  el.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">'+
+    '<div class="card" style="padding:16px"><h4 style="margin-bottom:12px">\uD83D\uDCCA Kg por Parcela</h4>'+svgBarChart(barData,320,160,['#2C6E49','#4C956C','#3B82F6','#D4A843','#7C3AED','#E07A5F'])+'</div>'+
+    '<div class="card" style="padding:16px;text-align:center"><h4 style="margin-bottom:8px">\uD83C\uDF52 Kg por Tipo</h4>'+svgDonut(donutData,130)+tipoLegend+'</div>'+
+  '</div><div class="card" style="padding:16px"><h4 style="margin-bottom:12px">Producción por Parcela</h4>'+bars+'</div>';
+}
 function renderMovimientos(){
   var tb=_s('traz-mov-tbody');if(!tb)return;tb.innerHTML='';
   movimientos.forEach(function(m){
     tb.innerHTML+='<tr><td>'+m.fecha+'</td><td>'+m.lote+'</td><td><span style="color:'+(m.tipo==='entrada'?'var(--accent)':'var(--coral)')+'">'+m.tipo+'</span></td><td>'+m.cantidad+' cajas</td><td>'+m.origen+'</td><td>'+m.destino+'</td><td>'+m.responsable+'</td></tr>';
   });
+  var tl=_s('traz-mov-timeline');if(!tl)return;
+  var sorted=movimientos.slice().sort(function(a,b){return a.fecha>b.fecha?1:-1}).slice(-12);
+  if(!sorted.length){tl.innerHTML='';return}
+  var h='<div class="card" style="padding:16px;margin-bottom:16px"><h4 style="margin-bottom:16px">\uD83D\uDD04 Timeline de Movimientos</h4><div style="position:relative;padding-left:28px">';
+  h+='<div style="position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--border,#E2E8F0)"></div>';
+  sorted.forEach(function(m,i){
+    var isIn=m.tipo==='entrada';var clr=isIn?'#2C6E49':'#E07A5F';var icon=isIn?'\uD83D\uDCE5':'\uD83D\uDCE4';
+    h+='<div style="position:relative;margin-bottom:14px;padding:10px 14px;background:var(--card-bg,#fff);border-radius:10px;border:1px solid var(--border,#E8ECF0);box-shadow:0 1px 3px rgba(0,0,0,.04)">';
+    h+='<div style="position:absolute;left:-24px;top:12px;width:12px;height:12px;border-radius:50%;background:'+clr+';border:2px solid var(--card-bg,#fff)"></div>';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">';
+    h+='<div>'+icon+' <strong style="color:'+clr+'">'+m.tipo.toUpperCase()+'</strong> <span style="font-size:12px;color:var(--gray)">'+m.lote+'</span></div>';
+    h+='<span style="font-size:11px;color:var(--gray)">'+m.fecha+'</span></div>';
+    h+='<div style="font-size:12px;margin-top:4px;color:var(--text-secondary,#64748B)">'+m.cantidad+' cajas · '+m.origen+' → '+m.destino+' · <em>'+m.responsable+'</em></div></div>';
+  });
+  h+='</div></div>';tl.innerHTML=h;
 }
 function renderInvResumen(){
   var el=_s('traz-inv-content');if(!el)return;
-  var porDest={};lotes.filter(function(l){return l.estado==='almacenado'}).forEach(function(l){if(!porDest[l.destino])porDest[l.destino]={cajas:0,kg:0,lotes:0};porDest[l.destino].cajas+=l.cajas;porDest[l.destino].kg+=l.kg;porDest[l.destino].lotes++});
-  var h='<h3 style="margin-bottom:12px">Stock por Ubicación</h3><div class="cards" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">';
-  Object.keys(porDest).forEach(function(d){var v=porDest[d];h+='<div class="card"><h4>'+d+'</h4><div class="value" style="font-size:22px;color:var(--accent)">'+v.cajas+' cajas</div><div style="font-size:12px;color:var(--gray)">'+v.kg.toLocaleString('es')+' kg | '+v.lotes+' lotes</div></div>'});
-  if(!Object.keys(porDest).length)h+='<div class="card"><div style="color:var(--gray)">Sin stock almacenado</div></div>';
+  var porDest={};var totalCajas=0;
+  lotes.filter(function(l){return l.estado==='almacenado'}).forEach(function(l){if(!porDest[l.destino])porDest[l.destino]={cajas:0,kg:0,lotes:0};porDest[l.destino].cajas+=l.cajas;porDest[l.destino].kg+=l.kg;porDest[l.destino].lotes++;totalCajas+=l.cajas});
+  var keys=Object.keys(porDest);
+  if(!keys.length){el.innerHTML='<div class="card" style="padding:20px;text-align:center"><div style="color:var(--gray)">Sin stock almacenado</div></div>';return}
+  var barData=keys.map(function(k){return {n:k,v:porDest[k].cajas}});
+  var maxC=Math.max.apply(null,barData.map(function(d){return d.v}))||1;
+  var locColors=['#2C6E49','#3B82F6','#D4A843','#7C3AED','#E07A5F','#4C956C'];
+  var h='<div class="card" style="padding:16px;margin-bottom:16px"><h4 style="margin-bottom:12px">\uD83D\uDCCA Cajas por Ubicación</h4>'+svgBarChart(barData,360,150,locColors)+'</div>';
+  h+='<div class="cards" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">';
+  keys.forEach(function(d,i){
+    var v=porDest[d];var pct=totalCajas?(v.cajas/totalCajas*100):0;
+    h+='<div class="card" style="padding:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h4>\uD83C\uDFE2 '+d+'</h4><span style="font-size:11px;color:var(--gray);background:var(--border,#E8ECF0);padding:2px 8px;border-radius:10px">'+pct.toFixed(0)+'%</span></div>';
+    h+='<div class="value" style="font-size:24px;color:'+(locColors[i%locColors.length])+';margin-bottom:4px">'+v.cajas+' <span style="font-size:14px">cajas</span></div>';
+    h+='<div style="font-size:12px;color:var(--gray);margin-bottom:8px">'+v.kg.toLocaleString('es')+' kg · '+v.lotes+' lotes</div>';
+    h+=svgProgressBar(pct,200,10,locColors[i%locColors.length])+'</div>';
+  });
   h+='</div>';el.innerHTML=h;
 }
 window.nuevoLoteModal=function(){
@@ -10637,7 +10862,7 @@ window.exportarTrazCSV=function(){
   lotes.forEach(function(l){csv+=l.lote+';'+l.fecha+';'+l.parcela+';'+l.tipo+';'+l.kg+';'+l.cajas+';'+l.destino+';'+l.estado+';'+(l.cliente||'')+'\n'});
   var b=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='trazabilidad_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 };
-function initTraz(){renderTrazStats();renderLotes();renderMovimientos();renderInvResumen()}
+function initTraz(){renderTrazStats();renderLotes();renderLotesCharts();renderMovimientos();renderInvResumen()}
 setTimeout(initTraz,580);
 })();
 
@@ -10774,9 +10999,26 @@ function initCEO(){
   ultRiegos.forEach(function(r){riegoH+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><span>'+r.fecha+' — '+r.parcela+'</span><strong>'+(r.litros/1000).toFixed(1)+' m³</strong></div>'});
   riegoH+='</div>';
 
-  cnt.innerHTML=chartsH+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'+rankH+incDonutH+'</div><div style="margin-top:16px">'+riegoH+'</div>';
+  // Resumen Operativo Cruzado
+  var totalLitros=0;riegos.forEach(function(r){totalLitros+=r.litros||0});
+  var efHid=totalKg?(totalLitros/totalKg).toFixed(1):'0';
+  var tratAp=tratamientos.filter(function(t){return t.estado==='aplicado'}).length;
+  var pctTrat=tratamientos.length?Math.round(tratAp/tratamientos.length*100):0;
+  var lotesExp=lotes.filter(function(l){return l.estado==='expedido'}).length;
+  var pctRot=lotes.length?Math.round(lotesExp/lotes.length*100):0;
+  var lotesAlmC=lotes.filter(function(l){return l.estado==='almacenado'}).length;
+  var lotesProc=lotes.filter(function(l){return l.estado!=='almacenado'&&l.estado!=='expedido'}).length;
+  var opsH='<div style="margin-top:20px"><h3 style="margin-bottom:14px;font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDD27 Resumen Operativo Cruzado</h3>';
+  opsH+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">';
+  opsH+='<div class="card" style="padding:16px;text-align:center"><div style="font-size:20px;margin-bottom:4px">\uD83D\uDCA7</div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:6px;font-weight:600">Eficiencia Hídrica</div><div style="font-size:28px;font-weight:800;color:var(--blue);margin-bottom:4px">'+efHid+'</div><div style="font-size:11px;color:var(--gray);margin-bottom:6px">litros/kg producido</div>'+svgProgressBar(Math.min(100,100-efHid*5),180,8,parseFloat(efHid)<10?'#2C6E49':'#E07A5F')+'</div>';
+  opsH+='<div class="card" style="padding:16px;text-align:center"><div style="font-size:20px;margin-bottom:4px">\uD83D\uDC1B</div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:6px;font-weight:600">Cumplimiento Tratamientos</div><div style="font-size:28px;font-weight:800;color:'+(pctTrat>=80?'var(--accent)':'var(--coral)')+';margin-bottom:4px">'+pctTrat+'%</div><div style="font-size:11px;color:var(--gray);margin-bottom:6px">'+tratAp+'/'+tratamientos.length+' aplicados</div>'+svgProgressBar(pctTrat,180,8,pctTrat>=80?'#2C6E49':'#E07A5F')+'</div>';
+  opsH+='<div class="card" style="padding:16px;text-align:center"><div style="font-size:20px;margin-bottom:4px">\uD83D\uDE80</div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:6px;font-weight:600">Rotación Inventario</div><div style="font-size:28px;font-weight:800;color:var(--primary);margin-bottom:4px">'+pctRot+'%</div><div style="font-size:11px;color:var(--gray);margin-bottom:6px">'+lotesExp+'/'+lotes.length+' expedidos</div>'+svgProgressBar(pctRot,180,8,'#2C6E49')+'</div>';
+  opsH+='<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:8px;font-weight:600">Estado Lotes</div>'+svgDonut([{v:Math.max(lotesAlmC,1),c:'#3B82F6'},{v:Math.max(lotesProc,1),c:'#D4A843'},{v:Math.max(lotesExp,1),c:'#2C6E49'}],110)+'<div style="display:flex;justify-content:center;gap:8px;margin-top:6px;font-size:10px"><span style="color:#3B82F6">\u25CF Alm. '+lotesAlmC+'</span><span style="color:#D4A843">\u25CF Proc. '+lotesProc+'</span><span style="color:#2C6E49">\u25CF Exp. '+lotesExp+'</span></div></div>';
+  opsH+='</div></div>';
 
-  // Alertas inteligentes
+  cnt.innerHTML=chartsH+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'+rankH+incDonutH+'</div><div style="margin-top:16px">'+riegoH+'</div>'+opsH;
+
+  // Alertas inteligentes — con resumen severidad
   renderCEOAlertas(cosechas,riegos,incidencias);
 }
 
@@ -10807,8 +11049,15 @@ function renderCEOAlertas(cosechas,riegos,incidencias){
 
   AgroStore.save('agri_alertas_ceo',alertas);
 
-  if(!alertas.length){el.innerHTML='<div class="card" style="border-left:3px solid var(--accent)"><strong>\u2705 Sin alertas activas</strong></div>';return}
-  var h='<h3 style="margin-bottom:12px">\uD83D\uDD14 Alertas Inteligentes ('+alertas.length+')</h3>';
+  if(!alertas.length){el.innerHTML='<div class="card" style="border-left:3px solid var(--accent);padding:16px"><strong>\u2705 Sin alertas activas — todas las operaciones bajo control</strong></div>';return}
+  var nAlta=alertas.filter(function(a){return a.sev==='alta'}).length;
+  var nMedia=alertas.filter(function(a){return a.sev==='media'}).length;
+  var nBaja=alertas.filter(function(a){return a.sev==='baja'}).length;
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px"><h3 style="margin:0">\uD83D\uDD14 Alertas Inteligentes ('+alertas.length+')</h3><div style="display:flex;gap:8px">'+
+    (nAlta?'<span style="font-size:11px;padding:3px 10px;border-radius:12px;background:rgba(224,122,95,.12);color:#E07A5F;font-weight:700">\uD83D\uDD34 '+nAlta+' alta'+(nAlta>1?'s':'')+'</span>':'')+
+    (nMedia?'<span style="font-size:11px;padding:3px 10px;border-radius:12px;background:rgba(212,168,67,.12);color:#D4A843;font-weight:700">\uD83D\uDFE1 '+nMedia+' media'+(nMedia>1?'s':'')+'</span>':'')+
+    (nBaja?'<span style="font-size:11px;padding:3px 10px;border-radius:12px;background:rgba(44,110,73,.12);color:#2C6E49;font-weight:700">\uD83D\uDFE2 '+nBaja+' baja'+(nBaja>1?'s':'')+'</span>':'')+
+    '</div></div>';
   alertas.forEach(function(a){
     var ic=a.sev==='alta'?'\uD83D\uDD34':a.sev==='media'?'\uD83D\uDFE1':'\uD83D\uDFE2';
     var bc=a.sev==='alta'?'rgba(224,122,95,.08)':a.sev==='media'?'rgba(212,168,67,.08)':'rgba(44,110,73,.08)';
