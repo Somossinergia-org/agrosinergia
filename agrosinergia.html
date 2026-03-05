@@ -525,6 +525,15 @@ textarea.form-control{min-height:80px;resize:vertical}
 .form-card-badge.validado{background:rgba(76,149,108,.12);color:var(--primary)}
 .form-card-badge.rechazado{background:rgba(224,122,95,.12);color:#C0392B}
 
+/* ===== RESPONSIVE CHARTS ===== */
+@media(max-width:768px){
+  #fichaje-charts-row{grid-template-columns:1fr !important}
+  #cuadrillas-content>div{grid-template-columns:1fr !important}
+}
+@media(max-width:900px){
+  #ceo-content>div:first-child{grid-template-columns:1fr !important}
+}
+
 /* ===== CATASTRO OVERLAY ===== */
 .catastro-search-bar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;padding:8px 12px;background:var(--white);border-radius:10px;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,.04)}
 .catastro-search-bar input{flex:1;min-width:200px;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:'Inter',sans-serif;background:var(--white);color:var(--text);transition:border-color .2s}
@@ -708,35 +717,35 @@ const pages=[
   {id:"dashboard",icon:"\u{1F4CA}",label:"Dashboard",section:"Principal"},
   {id:"pedidos",icon:"\u{1F4E6}",label:"Pedidos",section:"Comercial",badge:"3"},
   {id:"procesos",icon:"\u2699\ufe0f",label:"Procesos",section:"Comercial"},
-  {id:"auditorias",icon:"\u{1F4CB}",label:"Auditor\u00edas",section:"Calidad",badge:"1"},
-  {id:"comunicacion",icon:"\u{1F4AC}",label:"Comunicaci\u00f3n",section:"Equipo",badge:"5"},
   {id:"cartografia",icon:"\u{1F5FA}\uFE0F",label:"Cartograf\u00eda",section:"Fincas"},
   {id:"parcelas",icon:"\u{1F33F}",label:"Parcelas",section:"Fincas"},
+  {id:"meteo",icon:"\u26C5",label:"Meteorolog\u00eda",section:"Fincas"},
   {id:"intervenciones",icon:"\u{1F527}",label:"Intervenciones",section:"Operaciones"},
   {id:"partes",icon:"\u{1F9D1}\u200d\u{1F33E}",label:"Partes Trabajo",section:"Operaciones"},
   {id:"vademecum",icon:"\u{1F9EA}",label:"Vademecum",section:"Operaciones"},
-  {id:"meteo",icon:"\u26C5",label:"Meteorolog\u00eda",section:"Cultivos"},
-  {id:"stock",icon:"\u{1F4E6}",label:"Stock",section:"Recursos"},
-  {id:"maquinaria",icon:"\u{1F69C}",label:"Maquinaria",section:"Recursos"},
-  {id:"costes",icon:"\u{1F4B0}",label:"Costes",section:"Finanzas"},
-  {id:"seguimiento",icon:"\u{1F9D1}\u200D\u{1F4BC}",label:"Personal",section:"RRHH"},
-  {id:"siex",icon:"\u2705",label:"SIEX",section:"Cumplimiento"},
-  {id:"explotaciones",icon:"\u{1F3E2}",label:"Explotaciones",section:"Admin"},
-  {id:"usuarios",icon:"\u{1F465}",label:"Usuarios",section:"Admin"},
-  {id:"mi-panel",icon:"\u{1F3E0}",label:"Mi Panel",section:"Mi Zona"},
-  {id:"formularios",icon:"\u{1F4DD}",label:"Formularios",section:"Mi Zona"},
-  {id:"fichajes",icon:"\u23F0",label:"Fichajes",section:"Personal"},
-  {id:"cuadrillas",icon:"\u{1F465}",label:"Cuadrillas",section:"Personal"},
-  {id:"transporte",icon:"\u{1F69A}",label:"Transporte",section:"Transporte"},
-  {id:"vehiculos",icon:"\u{1F697}",label:"Veh\u00edculos",section:"Transporte"},
-  {id:"roles",icon:"\u{1F511}",label:"Roles y Permisos",section:"Admin"},
   {id:"recoleccion",icon:"\u{1F347}",label:"Cosecha",section:"Agricultura"},
   {id:"riego",icon:"\u{1F4A7}",label:"Riego / Abonado",section:"Agricultura"},
   {id:"tratamientos",icon:"\u{1F41B}",label:"Tratamientos",section:"Agricultura"},
   {id:"incidencias",icon:"\u26A0\uFE0F",label:"Incidencias",section:"Agricultura"},
   {id:"trazabilidad",icon:"\u{1F4E6}",label:"Trazabilidad",section:"Agricultura"},
-  {id:"rentabilidad",icon:"\u{1F4C8}",label:"Rentabilidad",section:"Agricultura"},
-  {id:"ceo",icon:"\u{1F451}",label:"CEO Dashboard",section:"Agricultura"}
+  {id:"ceo",icon:"\u{1F451}",label:"CEO Dashboard",section:"Agricultura"},
+  {id:"seguimiento",icon:"\u{1F9D1}\u200D\u{1F4BC}",label:"Personal",section:"RRHH"},
+  {id:"fichajes",icon:"\u23F0",label:"Fichajes",section:"RRHH"},
+  {id:"cuadrillas",icon:"\u{1F465}",label:"Cuadrillas",section:"RRHH"},
+  {id:"comunicacion",icon:"\u{1F4AC}",label:"Comunicaci\u00f3n",section:"RRHH",badge:"5"},
+  {id:"costes",icon:"\u{1F4B0}",label:"Costes",section:"Finanzas"},
+  {id:"rentabilidad",icon:"\u{1F4C8}",label:"Rentabilidad",section:"Finanzas"},
+  {id:"stock",icon:"\u{1F4E6}",label:"Stock",section:"Recursos"},
+  {id:"maquinaria",icon:"\u{1F69C}",label:"Maquinaria",section:"Recursos"},
+  {id:"transporte",icon:"\u{1F69A}",label:"Transporte",section:"Transporte"},
+  {id:"vehiculos",icon:"\u{1F697}",label:"Veh\u00edculos",section:"Transporte"},
+  {id:"siex",icon:"\u2705",label:"SIEX",section:"Cumplimiento"},
+  {id:"auditorias",icon:"\u{1F4CB}",label:"Auditor\u00edas",section:"Cumplimiento",badge:"1"},
+  {id:"explotaciones",icon:"\u{1F3E2}",label:"Explotaciones",section:"Admin"},
+  {id:"usuarios",icon:"\u{1F465}",label:"Usuarios",section:"Admin"},
+  {id:"roles",icon:"\u{1F511}",label:"Roles y Permisos",section:"Admin"},
+  {id:"mi-panel",icon:"\u{1F3E0}",label:"Mi Panel",section:"Admin"},
+  {id:"formularios",icon:"\u{1F4DD}",label:"Formularios",section:"Admin"}
 ];
 
 const navList=document.getElementById("nav-list");
@@ -7709,73 +7718,18 @@ window.pagarNominaDir=function(id){
   renderSegStats();filtrarNominas();
 };
 
-// ---- FICHAJES ----
+// ---- FICHAJES (redirige a página dedicada en RRHH) ----
 function renderFichajes(){
   var c=document.getElementById('seg-fichajes-container');
   if(!c)return;
-  // Hoy
-  var hoy=fichajes.filter(function(f){return f.fecha==='2026-03-04'});
-  var h='';
-  h+='<div class="chart-container" style="border-left:4px solid var(--accent);margin-bottom:14px"><div class="chart-title">\u{1F4C5} Hoy - 04 Marzo 2026</div>';
-  if(hoy.length===0)h+='<div style="color:var(--gray);font-size:12px">Sin fichajes registrados hoy</div>';
-  else{
-    hoy.forEach(function(f){
-      var tr=plantilla.find(function(x){return x.id===f.trabajador});
-      h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.04)">';
-      h+='<div><div style="font-weight:600;font-size:13px">\u{1F464} '+(tr?tr.nombre:'?')+'</div>';
-      h+='<div style="font-size:11px;color:var(--gray)">'+f.ubicacion+' \u2022 '+f.tarea+'</div></div>';
-      h+='<div style="display:flex;align-items:center;gap:10px">';
-      h+='<div style="text-align:center"><div style="font-size:10px;color:var(--gray)">Entrada</div><div style="font-weight:700;font-size:14px;color:var(--accent)">'+f.entrada+'</div></div>';
-      h+='<div style="text-align:center"><div style="font-size:10px;color:var(--gray)">Salida</div><div style="font-weight:700;font-size:14px;color:var(--coral)">'+f.salida+'</div></div>';
-      h+='<div style="text-align:center"><div style="font-size:10px;color:var(--gray)">Horas</div><div style="font-weight:700;font-size:14px">'+f.horasTotales+'h</div></div>';
-      h+='<div>'+(f.validado?'<span class="tag tag-green" style="font-size:10px">\u2705</span>':'<button class="btn btn-sm btn-outline" onclick="validarFichajeDir('+f.id+')">Validar</button>')+'</div>';
-      h+='</div></div>';
-    });
-  }
-  h+='</div>';
-  // Resumen semanal
-  h+='<div class="chart-container"><div class="chart-title">\u{1F4CA} Resumen Semanal (Sem. 10)</div>';
-  var semDias=['2026-03-02','2026-03-03','2026-03-04'];
-  var semLabels=['Lun 02','Mar 03','Mi\u00e9 04'];
-  h+='<div class="tbl-wrap"><table><tr><th>Trabajador</th>';
-  semLabels.forEach(function(d){h+='<th>'+d+'</th>'});
-  h+='<th>Total sem.</th></tr>';
-  plantilla.filter(function(t){return t.activo}).forEach(function(t){
-    h+='<tr><td><strong>'+t.nombre+'</strong></td>';
-    var totalSem=0;
-    semDias.forEach(function(dia){
-      var f=fichajes.find(function(x){return x.trabajador===t.id&&x.fecha===dia});
-      if(f){
-        totalSem+=f.horasTotales;
-        h+='<td style="text-align:center"><span style="font-weight:600">'+f.horasTotales+'h</span><br><span style="font-size:9px;color:var(--gray)">'+f.entrada+'-'+f.salida+'</span></td>';
-      } else {
-        h+='<td style="text-align:center;color:var(--gray)">-</td>';
-      }
-    });
-    h+='<td style="font-weight:700;text-align:center">'+totalSem+'h</td>';
-    h+='</tr>';
-  });
-  h+='</table></div></div>';
-  // Tabla todos fichajes
-  h+='<div class="chart-container"><div class="chart-title">\u{1F4CB} Todos los Fichajes</div>';
-  var sorted=fichajes.slice().sort(function(a,b){return b.fecha.localeCompare(a.fecha)||a.trabajador-b.trabajador});
-  h+='<div class="tbl-wrap"><table>';
-  h+='<tr><th>Fecha</th><th>Trabajador</th><th>Entrada</th><th>Salida</th><th>Desc.</th><th>Horas</th><th>Ubicaci\u00f3n</th><th>Tarea</th><th>Valid.</th></tr>';
-  sorted.forEach(function(f){
-    var tr=plantilla.find(function(x){return x.id===f.trabajador});
-    h+='<tr>';
-    h+='<td style="font-weight:600">'+f.fecha+'</td>';
-    h+='<td><strong>'+(tr?tr.nombre:'?')+'</strong></td>';
-    h+='<td>'+f.entrada+'</td><td>'+f.salida+'</td>';
-    h+='<td>'+f.descanso+'min</td>';
-    h+='<td style="font-weight:700">'+f.horasTotales+'h</td>';
-    h+='<td style="font-size:11px">'+f.ubicacion+'</td>';
-    h+='<td style="font-size:11px;max-width:180px">'+f.tarea+'</td>';
-    h+='<td>'+(f.validado?'\u2705':'<button class="btn btn-sm btn-outline" onclick="validarFichajeDir('+f.id+')">Val.</button>')+'</td>';
-    h+='</tr>';
-  });
-  h+='</table></div></div>';
-  c.innerHTML=h;
+  c.innerHTML='<div style="text-align:center;padding:40px 20px">'+
+    '<div style="font-size:48px;margin-bottom:16px">\u23F0</div>'+
+    '<h3 style="margin:0 0 8px;font-size:18px;color:var(--dark)">Fichajes y Jornadas</h3>'+
+    '<p style="color:var(--gray);font-size:14px;margin:0 0 20px;max-width:400px;margin-left:auto;margin-right:auto">'+
+      'La gestión completa de fichajes se ha trasladado a su propia sección dedicada en <strong>RRHH \u2192 Fichajes</strong>, con estadísticas avanzadas, vista semanal, gráficos y exportación CSV.'+
+    '</p>'+
+    '<button class="btn btn-primary" onclick="showPage(\'fichajes\')" style="font-size:14px;padding:10px 24px">\u23F0 Ir a Fichajes</button>'+
+  '</div>';
 }
 
 window.validarFichajeDir=function(id){
@@ -10294,15 +10248,33 @@ function renderCalidad(){
 function renderMetricas(){
   var el=_sel('rec-metricas-content');if(!el)return;
   var porTrab={};cosechas.forEach(function(c){if(!c.trabajador)return;if(!porTrab[c.trabajador])porTrab[c.trabajador]={kg:0,cajas:0,lotes:0};porTrab[c.trabajador].kg+=c.kg;porTrab[c.trabajador].cajas+=c.cajas;porTrab[c.trabajador].lotes++});
-  var h='<h3 style="margin-bottom:12px">Rendimiento por Trabajador</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Trabajador</th><th>Kg Totales</th><th>Cajas</th><th>Lotes</th><th>Kg/Lote</th></tr></thead><tbody>';
-  Object.keys(porTrab).sort(function(a,b){return porTrab[b].kg-porTrab[a].kg}).forEach(function(t,i){
-    var d=porTrab[t];h+='<tr><td>'+(i===0?'\uD83E\uDD47 ':'')+t+'</td><td><strong>'+d.kg.toLocaleString('es')+'</strong></td><td>'+d.cajas+'</td><td>'+d.lotes+'</td><td>'+(d.lotes?Math.round(d.kg/d.lotes):0)+'</td></tr>';
+  // SVG chart: Kg por trabajador
+  var trabKeys=Object.keys(porTrab).sort(function(a,b){return porTrab[b].kg-porTrab[a].kg});
+  var chartTrab=trabKeys.slice(0,6).map(function(t){return {n:t.split(' ')[0],v:porTrab[t].kg}});
+  var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">'+
+    '<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83C\uDFC6 Kg por Trabajador</h3>'+
+    (chartTrab.length>0?svgBarChart(chartTrab,400,200,['#4c956c','#6366f1','#e07a5f','#f59e0b','#8b5cf6','#ec4899']):'<div style="color:var(--gray)">Sin datos</div>')+'</div>';
+  // SVG chart: Kg por parcela
+  var porParc={};cosechas.forEach(function(c){if(!porParc[c.parcela])porParc[c.parcela]={kg:0,cajas:0,lotes:0};porParc[c.parcela].kg+=c.kg;porParc[c.parcela].cajas+=c.cajas;porParc[c.parcela].lotes++});
+  var parcKeys=Object.keys(porParc).sort(function(a,b){return porParc[b].kg-porParc[a].kg});
+  var chartParc=parcKeys.slice(0,6).map(function(p){return {n:p.split(' ')[0],v:porParc[p].kg}});
+  h+='<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83C\uDF3F Kg por Parcela</h3>'+
+    (chartParc.length>0?svgBarChart(chartParc,400,200,['#2C6E49','#4c956c','#6bbd8e','#8fd1a8','#b2e5c2','#d4f5e0']):'<div style="color:var(--gray)">Sin datos</div>')+'</div></div>';
+  // Tendencia producción (line chart simulado por mes)
+  var porMes={};cosechas.forEach(function(c){var m=c.fecha?c.fecha.substring(0,7):'2026-03';if(!porMes[m])porMes[m]=0;porMes[m]+=c.kg});
+  var meses=Object.keys(porMes).sort();
+  if(meses.length>1){
+    var chartLine=meses.map(function(m){return {n:m.substring(5),v:porMes[m]}});
+    h+='<div class="card" style="padding:16px;margin-bottom:20px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCC8 Tendencia Producción Mensual</h3>'+svgLineChart(chartLine,600,180,'#4c956c')+'</div>';
+  }
+  // Tables
+  h+='<h3 style="margin-bottom:12px">\uD83D\uDCCB Rendimiento por Trabajador</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Trabajador</th><th>Kg Totales</th><th>Cajas</th><th>Lotes</th><th>Kg/Lote</th></tr></thead><tbody>';
+  trabKeys.forEach(function(t,i){
+    var d=porTrab[t];h+='<tr><td>'+(i===0?'\uD83E\uDD47 ':i===1?'\uD83E\uDD48 ':i===2?'\uD83E\uDD49 ':'')+t+'</td><td><strong>'+d.kg.toLocaleString('es')+'</strong></td><td>'+d.cajas+'</td><td>'+d.lotes+'</td><td>'+(d.lotes?Math.round(d.kg/d.lotes):0)+'</td></tr>';
   });
   h+='</tbody></table></div>';
-  // Producción por parcela
-  var porParc={};cosechas.forEach(function(c){if(!porParc[c.parcela])porParc[c.parcela]={kg:0,cajas:0,lotes:0};porParc[c.parcela].kg+=c.kg;porParc[c.parcela].cajas+=c.cajas;porParc[c.parcela].lotes++});
-  h+='<h3 style="margin:20px 0 12px">Producción por Parcela</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Parcela</th><th>Kg</th><th>Cajas</th><th>Lotes</th></tr></thead><tbody>';
-  Object.keys(porParc).sort(function(a,b){return porParc[b].kg-porParc[a].kg}).forEach(function(p){
+  h+='<h3 style="margin:20px 0 12px">\uD83C\uDF3F Producción por Parcela</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Parcela</th><th>Kg</th><th>Cajas</th><th>Lotes</th></tr></thead><tbody>';
+  parcKeys.forEach(function(p){
     var d=porParc[p];h+='<tr><td>'+p+'</td><td><strong>'+d.kg.toLocaleString('es')+'</strong></td><td>'+d.cajas+'</td><td>'+d.lotes+'</td></tr>';
   });
   h+='</tbody></table></div>';el.innerHTML=h;
@@ -10439,11 +10411,22 @@ function estadoColor(e){return e==='aplicado'?'var(--accent)':e==='planificado'?
 
 function renderTratStats(){
   var el=_s('trat-stats');if(!el)return;
-  var ap=0,pl=0,cT=0;tratamientos.forEach(function(t){if(t.estado==='aplicado')ap++;else pl++;cT+=t.coste||0});
-  el.innerHTML='<div class="card"><div class="value" style="color:var(--accent)">'+ap+'</div><div style="font-size:11px;color:var(--gray)">APLICADOS</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--gold)">'+pl+'</div><div style="font-size:11px;color:var(--gray)">PLANIFICADOS</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--primary)">'+tratamientos.length+'</div><div style="font-size:11px;color:var(--gray)">TOTAL</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--coral)">'+cT.toLocaleString('es')+'\u20ac</div><div style="font-size:11px;color:var(--gray)">COSTE FITO</div></div>';
+  var ap=0,pl=0,cT=0,costePorParc={};
+  tratamientos.forEach(function(t){if(t.estado==='aplicado')ap++;else pl++;cT+=t.coste||0;if(!costePorParc[t.parcela])costePorParc[t.parcela]=0;costePorParc[t.parcela]+=t.coste||0});
+  var pctAp=tratamientos.length?(ap/tratamientos.length*100).toFixed(0):0;
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:16px">'+
+    '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Aplicados</div><div style="font-size:32px;font-weight:800;color:var(--accent)">'+ap+'</div><div style="font-size:11px;color:var(--gray)">'+pctAp+'% completados</div></div>'+
+    '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Planificados</div><div style="font-size:32px;font-weight:800;color:var(--gold)">'+pl+'</div><div style="font-size:11px;color:var(--gray)">pendientes</div></div>'+
+    '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Coste Total</div><div style="font-size:32px;font-weight:800;color:var(--coral)">'+cT.toLocaleString('es')+'\u20ac</div><div style="font-size:11px;color:var(--gray)">fitosanitarios</div></div>'+
+    '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Estado</div>'+
+    svgDonut([{v:ap,c:'#4c956c'},{v:pl,c:'#D4A843'}],100)+
+    '</div></div>';
+  // Coste por parcela bar chart
+  var cKeys=Object.keys(costePorParc).sort(function(a,b){return costePorParc[b]-costePorParc[a]});
+  if(cKeys.length>0){
+    var chartData=cKeys.slice(0,6).map(function(p){return {n:p.split(' ')[0],v:costePorParc[p]}});
+    el.innerHTML+='<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCB0 Coste Fitosanitario por Parcela</h3>'+svgBarChart(chartData,500,180,['#e07a5f','#c45c3e','#a84030','#e07a5f','#c45c3e','#a84030'])+'</div>';
+  }
 }
 function renderTratamientos(data){
   var tb=_s('trat-tbody');if(!tb)return;tb.innerHTML='';
@@ -10512,11 +10495,18 @@ function sevColor(s){return s==='alta'?'var(--coral)':s==='media'?'var(--gold)':
 
 function renderIncStats(){
   var el=_s('inc-stats');if(!el)return;
-  var ab=0,ce=0,alta=0;incidencias.forEach(function(i){if(i.estado==='abierta'){ab++;if(i.severidad==='alta')alta++}else ce++});
-  el.innerHTML='<div class="card"><div class="value" style="color:var(--coral)">'+ab+'</div><div style="font-size:11px;color:var(--gray)">ABIERTAS</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--accent)">'+ce+'</div><div style="font-size:11px;color:var(--gray)">CERRADAS</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--coral)">'+alta+'</div><div style="font-size:11px;color:var(--gray)">ALTA SEVERIDAD</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--primary)">'+incidencias.length+'</div><div style="font-size:11px;color:var(--gray)">TOTAL</div></div>';
+  var ab=0,ce=0,alta=0,media=0,baja=0;
+  incidencias.forEach(function(i){if(i.estado==='abierta'){ab++;if(i.severidad==='alta')alta++;else if(i.severidad==='media')media++;else baja++}else ce++});
+  var tasaResol=incidencias.length?Math.round(ce/incidencias.length*100):0;
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:16px">'+
+    '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Abiertas</div><div style="font-size:32px;font-weight:800;color:var(--coral)">'+ab+'</div><div style="font-size:11px;color:var(--gray)">requieren atención</div></div>'+
+    '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Cerradas</div><div style="font-size:32px;font-weight:800;color:var(--accent)">'+ce+'</div><div style="font-size:11px;color:var(--gray)">resueltas</div></div>'+
+    '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Tasa Resolución</div><div style="font-size:32px;font-weight:800;color:'+(tasaResol>=70?'var(--accent)':'var(--coral)')+'">'+tasaResol+'%</div><div style="font-size:11px;color:var(--gray)">'+(tasaResol>=70?'\u2705 buen ritmo':'\u26A0\uFE0F mejorar')+'</div></div>'+
+    '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Severidad</div>'+
+    svgDonut([{v:Math.max(alta,1),c:'#e07a5f'},{v:Math.max(media,1),c:'#D4A843'},{v:Math.max(baja,1),c:'#4c956c'}],100)+
+    '<div style="display:flex;justify-content:center;gap:10px;margin-top:6px;font-size:10px">'+
+      '<span style="color:#e07a5f">\u25CF Alta '+alta+'</span><span style="color:#D4A843">\u25CF Media '+media+'</span><span style="color:#4c956c">\u25CF Baja '+baja+'</span></div>'+
+    '</div></div>';
 }
 function renderIncidencias(data){
   var tb=_s('inc-tbody');if(!tb)return;tb.innerHTML='';
@@ -10685,13 +10675,19 @@ window.calcularRentabilidad=function(){
   ranked.forEach(function(r,i){
     tb.innerHTML+='<tr><td>'+r.nombre+'</td><td>'+r.prodKg.toLocaleString('es')+'</td><td>'+r.ingresos.toLocaleString('es')+'\u20ac</td><td>'+r.costes.toLocaleString('es')+'\u20ac</td><td style="color:'+(r.margen>0?'var(--accent)':'var(--coral)')+'"><strong>'+r.margen.toLocaleString('es')+'\u20ac</strong></td><td>'+r.cpk.toFixed(2)+'\u20ac</td><td style="color:'+(r.pct>20?'var(--accent)':'var(--coral)')+'">'+r.pct.toFixed(1)+'%</td><td>'+(i===0?'\uD83E\uDD47':i===1?'\uD83E\uDD48':i===2?'\uD83E\uDD49':'#'+(i+1))+'</td></tr>';
   });
-  // Simple bar chart
+  // SVG bar chart for margins
   var ch=_s('rent-chart');if(!ch)return;
-  var maxM=Math.max.apply(null,ranked.map(function(r){return Math.abs(r.margen)}));
-  ch.innerHTML='<h3 style="margin-bottom:12px">Margen por Parcela</h3>'+ranked.map(function(r){
-    var w=maxM?Math.abs(r.margen)/maxM*100:0;
-    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><span style="width:120px;font-size:12px;font-weight:600">'+r.nombre+'</span><div style="flex:1;background:var(--border);border-radius:4px;height:20px"><div style="width:'+w+'%;height:100%;border-radius:4px;background:'+(r.margen>0?'var(--accent)':'var(--coral)')+'"></div></div><span style="width:80px;text-align:right;font-size:12px;font-weight:600;color:'+(r.margen>0?'var(--accent)':'var(--coral)')+'">'+r.margen.toLocaleString('es')+'\u20ac</span></div>';
-  }).join('');
+  var chartMargen=ranked.slice(0,6).map(function(r){return {n:r.nombre.split(' ')[0],v:Math.round(r.margen)}});
+  var colorsMargen=ranked.slice(0,6).map(function(r){return r.margen>0?'#4c956c':'#e07a5f'});
+  ch.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'+
+    '<div><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCCA Margen por Parcela</h3>'+
+    svgBarChart(chartMargen.map(function(d){return {n:d.n,v:Math.abs(d.v)}}),380,200,colorsMargen)+'</div>'+
+    '<div><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCB0 Ingresos vs Costes</h3>'+
+    (function(){var tIng=ranked.reduce(function(s,r){return s+r.ingresos},0);var tCos=ranked.reduce(function(s,r){return s+r.costes},0);
+      return svgDonut([{v:Math.round(tIng),c:'#4c956c'},{v:Math.round(tCos),c:'#e07a5f'}],180)+
+      '<div style="display:flex;justify-content:center;gap:16px;margin-top:8px;font-size:12px">'+
+        '<span style="color:#4c956c;font-weight:600">\u25CF Ingresos '+(tIng/1000).toFixed(0)+'k\u20ac</span>'+
+        '<span style="color:#e07a5f;font-weight:600">\u25CF Costes '+(tCos/1000).toFixed(0)+'k\u20ac</span></div>'})()+'</div></div>';
 };
 function popRentSelects(){var s=_s('rent-parcela');if(s&&s.options.length<=1){_parcData.forEach(function(p){var o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre;s.appendChild(o)})}}
 function initRent(){renderRentStats();calcularRentabilidad();popRentSelects()}
@@ -10727,42 +10723,58 @@ function initCEO(){
 
   // Content panels
   var cnt=_s('ceo-content');if(!cnt)return;
-  // Ranking trabajadores
+
+  // SVG Charts row
   var porTrab={};cosechas.forEach(function(c){if(!c.trabajador)return;if(!porTrab[c.trabajador])porTrab[c.trabajador]={kg:0,lotes:0};porTrab[c.trabajador].kg+=c.kg;porTrab[c.trabajador].lotes++});
-  var rankH='<div class="card"><h3 style="margin-bottom:10px">\uD83C\uDFC6 Ranking Trabajadores</h3>';
   var sorted=Object.keys(porTrab).sort(function(a,b){return porTrab[b].kg-porTrab[a].kg});
-  sorted.slice(0,5).forEach(function(t,i){
-    var d=porTrab[t];rankH+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span>'+(i===0?'\uD83E\uDD47':i===1?'\uD83E\uDD48':i===2?'\uD83E\uDD49':'#'+(i+1))+' '+t+'</span><strong>'+d.kg.toLocaleString('es')+' kg</strong></div>';
+  var porTipo={};cosechas.forEach(function(c){if(!porTipo[c.tipo])porTipo[c.tipo]=0;porTipo[c.tipo]+=c.kg});
+
+  // Charts grid
+  var chartsH='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">';
+
+  // Donut: Producción por tipo
+  var tipoColors={'breva':'#7C3AED','higo':'#2C6E49','brevas':'#7C3AED','higos':'#2C6E49','naranja':'#f59e0b','limón':'#84cc16','oliva':'#6366f1'};
+  var donutData=Object.keys(porTipo).map(function(t){return {v:porTipo[t],c:tipoColors[t]||'#e07a5f'}});
+  chartsH+='<div class="card" style="padding:16px;text-align:center"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83C\uDF4E Producción por Tipo</h3>'+
+    (donutData.length>0?svgDonut(donutData,160):'<div style="color:var(--gray)">Sin datos</div>')+
+    '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:8px">'+
+    Object.keys(porTipo).map(function(t){return '<span style="font-size:10px;color:'+(tipoColors[t]||'#e07a5f')+';font-weight:600">\u25CF '+t+' '+(porTipo[t]/1000).toFixed(1)+'t</span>'}).join('')+'</div></div>';
+
+  // Bar: Ranking trabajadores
+  var rankData=sorted.slice(0,6).map(function(t){return {n:t.split(' ')[0],v:porTrab[t].kg}});
+  chartsH+='<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83C\uDFC6 Top Trabajadores (Kg)</h3>'+
+    (rankData.length>0?svgBarChart(rankData,380,200,['#4c956c','#6366f1','#e07a5f','#f59e0b','#8b5cf6','#ec4899']):'<div style="color:var(--gray)">Sin datos</div>')+'</div>';
+
+  // Line: Evolución mensual
+  var porMes={};cosechas.forEach(function(c){var m=c.fecha?c.fecha.substring(0,7):'2026-03';if(!porMes[m])porMes[m]=0;porMes[m]+=c.kg});
+  var meses=Object.keys(porMes).sort();
+  var lineData=meses.map(function(m){return {n:m.substring(5),v:porMes[m]}});
+  chartsH+='<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCC8 Evolución Mensual</h3>'+
+    (lineData.length>1?svgLineChart(lineData,380,200,'#6366f1'):'<div style="color:var(--gray);font-size:13px">Se mostrará con más datos de meses</div>')+'</div>';
+  chartsH+='</div>';
+
+  // Detail panels
+  var rankH='<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83C\uDFC6 Ranking Completo</h3>';
+  sorted.forEach(function(t,i){
+    var d=porTrab[t];rankH+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><div style="display:flex;align-items:center;gap:8px"><span style="width:24px;height:24px;border-radius:6px;background:var(--accent-bg);display:flex;align-items:center;justify-content:center;font-size:11px">'+(i===0?'\uD83E\uDD47':i===1?'\uD83E\uDD48':i===2?'\uD83E\uDD49':'#'+(i+1))+'</span><span>'+t+'</span></div><strong>'+d.kg.toLocaleString('es')+' kg</strong></div>';
   });
   rankH+='</div>';
 
-  // Producción por tipo
-  var porTipo={};cosechas.forEach(function(c){if(!porTipo[c.tipo])porTipo[c.tipo]=0;porTipo[c.tipo]+=c.kg});
-  var tipoH='<div class="card"><h3 style="margin-bottom:10px">\uD83C\uDF4E Producción por Tipo</h3>';
-  var maxKg=Math.max.apply(null,Object.values(porTipo).concat([1]));
-  Object.keys(porTipo).forEach(function(t){
-    var w=porTipo[t]/maxKg*100;var col=t==='breva'?'#7C3AED':t==='higo'?'#2C6E49':'#E07A5F';
-    tipoH+='<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span style="text-transform:capitalize">'+t+'</span><strong>'+porTipo[t].toLocaleString('es')+' kg</strong></div><div style="height:12px;background:var(--border);border-radius:6px"><div style="width:'+w+'%;height:100%;border-radius:6px;background:'+col+'"></div></div></div>';
-  });
-  tipoH+='</div>';
+  // Incidencias severity mini-donut
+  var incAlta=incidencias.filter(function(i){return i.severidad==='alta'}).length;
+  var incMedia=incidencias.filter(function(i){return i.severidad==='media'}).length;
+  var incBaja=incidencias.filter(function(i){return i.severidad==='baja'}).length;
+  var incDonutH='<div class="card" style="padding:16px;text-align:center"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\u26A0\uFE0F Distribución Incidencias</h3>'+
+    svgDonut([{v:Math.max(incAlta,1),c:'#e07a5f'},{v:Math.max(incMedia,1),c:'#D4A843'},{v:Math.max(incBaja,1),c:'#4c956c'}],140)+
+    '<div style="display:flex;justify-content:center;gap:10px;margin-top:8px;font-size:10px"><span style="color:#e07a5f">\u25CF Alta '+incAlta+'</span><span style="color:#D4A843">\u25CF Media '+incMedia+'</span><span style="color:#4c956c">\u25CF Baja '+incBaja+'</span></div></div>';
 
   // Últimos riegos
   var ultRiegos=riegos.sort(function(a,b){return b.fecha.localeCompare(a.fecha)}).slice(0,4);
-  var riegoH='<div class="card"><h3 style="margin-bottom:10px">\uD83D\uDCA7 Últimos Riegos</h3>';
-  ultRiegos.forEach(function(r){riegoH+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px"><span>'+r.fecha+' — '+r.parcela+'</span><strong>'+(r.litros/1000).toFixed(1)+' m³</strong></div>'});
+  var riegoH='<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCA7 Últimos Riegos</h3>';
+  ultRiegos.forEach(function(r){riegoH+='<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><span>'+r.fecha+' — '+r.parcela+'</span><strong>'+(r.litros/1000).toFixed(1)+' m³</strong></div>'});
   riegoH+='</div>';
 
-  // Incidencias abiertas
-  var abiertas=incidencias.filter(function(i){return i.estado==='abierta'});
-  var incH='<div class="card"><h3 style="margin-bottom:10px">\u26A0\uFE0F Incidencias Abiertas</h3>';
-  if(!abiertas.length)incH+='<div style="font-size:13px;color:var(--gray)">Sin incidencias abiertas \u2705</div>';
-  abiertas.forEach(function(i){
-    var sc=i.severidad==='alta'?'var(--coral)':i.severidad==='media'?'var(--gold)':'var(--accent)';
-    incH+='<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><div style="display:flex;justify-content:space-between"><span>'+i.parcela+' — '+i.tipo+'</span><span style="color:'+sc+';font-weight:600">'+i.severidad+'</span></div><div style="color:var(--gray);margin-top:2px">'+i.desc.substring(0,60)+'...</div></div>';
-  });
-  incH+='</div>';
-
-  cnt.innerHTML=rankH+tipoH+riegoH+incH;
+  cnt.innerHTML=chartsH+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'+rankH+incDonutH+'</div><div style="margin-top:16px">'+riegoH+'</div>';
 
   // Alertas inteligentes
   renderCEOAlertas(cosechas,riegos,incidencias);
@@ -11321,20 +11333,42 @@ var fichajes=AgroStore.load('agri_fichajes',_defFichajes);
 
 var M=document.getElementById('main-content');
 M.innerHTML+='<div class="page" id="page-fichajes">'+
-'<div class="header"><h1>\u23F0 Fichajes y Jornadas</h1></div>'+
-'<div id="fichaje-clock-area"></div>'+
-'<div id="fichaje-stats" class="stat-row" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:16px"></div>'+
-'<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">'+
-  '<input type="date" class="form-control" id="fichaje-filter-fecha" style="max-width:160px" onchange="filtrarFichajes()">'+
-  '<select class="form-control" id="fichaje-filter-validado" style="max-width:160px" onchange="filtrarFichajes()"><option value="">Todos</option><option value="si">Validados</option><option value="no">Pendientes</option></select>'+
+'<div class="header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">'+
+  '<div><h1>\u23F0 Fichajes y Jornadas</h1><p class="sub" style="margin:4px 0 0;font-size:13px;color:var(--gray)">Control horario · Registro de jornadas laborales</p></div>'+
+  '<div style="display:flex;gap:8px">'+
+    '<button class="btn" onclick="exportFichajesCSV()" title="Exportar CSV">\uD83D\uDCE5 Exportar</button>'+
+    '<button class="btn btn-primary" onclick="openNuevoFichaje()" title="Registrar fichaje manual">\u2795 Registrar</button>'+
+  '</div>'+
 '</div>'+
-'<div class="tbl-wrap"><table id="fichajes-table"><thead><tr><th>Empleado</th><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Pausa</th><th>Horas</th><th>Tarea</th><th>Validado</th><th>Acción</th></tr></thead><tbody id="fichajes-tbody"></tbody></table></div>'+
+'<div id="fichaje-clock-area"></div>'+
+'<div id="fichaje-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-bottom:20px"></div>'+
+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px" id="fichaje-charts-row">'+
+  '<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCC5 Vista Semanal</h3><div id="fichaje-weekly"></div></div>'+
+  '<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCCA Horas por Día (7 días)</h3><div id="fichaje-chart"></div></div>'+
+'</div>'+
+'<div class="card" style="padding:16px;margin-bottom:20px">'+
+  '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">'+
+    '<h3 style="margin:0;font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCCB Registro de Fichajes</h3>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+      '<input type="date" class="form-control" id="fichaje-filter-fecha" style="max-width:150px;font-size:12px" onchange="filtrarFichajes()">'+
+      '<select class="form-control" id="fichaje-filter-validado" style="max-width:140px;font-size:12px" onchange="filtrarFichajes()"><option value="">Todos los estados</option><option value="si">\u2705 Validados</option><option value="no">\u23F3 Pendientes</option></select>'+
+      '<input type="text" class="form-control" id="fichaje-filter-buscar" placeholder="\uD83D\uDD0D Buscar empleado..." style="max-width:170px;font-size:12px" oninput="filtrarFichajes()">'+
+    '</div>'+
+  '</div>'+
+  '<div class="tbl-wrap"><table id="fichajes-table"><thead><tr><th>Empleado</th><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Pausa</th><th>Horas</th><th>Parcela / Tarea</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="fichajes-tbody"></tbody></table></div>'+
+'</div>'+
 '</div>';
 
 // Cuadrillas page
 M.innerHTML+='<div class="page" id="page-cuadrillas">'+
-'<div class="header"><h1>\uD83D\uDC65 Cuadrillas</h1></div>'+
+'<div class="header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">'+
+  '<div><h1>\uD83D\uDC65 Cuadrillas y Equipos</h1><p class="sub" style="margin:4px 0 0;font-size:13px;color:var(--gray)">Gestión de equipos · Asignación de personal y habilidades</p></div>'+
+  '<button class="btn btn-primary" onclick="openNuevaCuadrilla()">\u2795 Nueva Cuadrilla</button>'+
+'</div>'+
+'<div id="cuadrillas-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:20px"></div>'+
 '<div id="cuadrillas-content"></div>'+
+'<div class="card" style="padding:16px;margin-top:20px"><h3 style="margin:0 0 14px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83C\uDFAF Matriz de Habilidades y Certificaciones</h3><div id="cuadrillas-skills"></div></div>'+
+'<div class="card" style="padding:16px;margin-top:16px"><h3 style="margin:0 0 14px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDDFA\uFE0F Asignación Actual de Cuadrillas</h3><div id="cuadrillas-asignacion"></div></div>'+
 '</div>';
 
 function renderFichajesClock(){
@@ -11385,37 +11419,157 @@ window.ficharSalida=function(){
 function renderFichajesStats(){
   var el=document.getElementById('fichaje-stats');if(!el)return;
   var hoy=new Date().toISOString().slice(0,10);
+  var ayer=new Date(Date.now()-864e5).toISOString().slice(0,10);
   var diaFich=fichajes.filter(function(f){return f.fecha===hoy});
+  var ayerFich=fichajes.filter(function(f){return f.fecha===ayer});
   var activos=diaFich.filter(function(f){return f.entrada&&!f.salida});
   var cerrados=diaFich.filter(function(f){return f.salida});
-  var validados=fichajes.filter(function(f){return f.validado});
-  el.innerHTML='<div class="card"><h3>FICHADOS HOY</h3><div class="value">'+diaFich.length+'</div></div>'+
-    '<div class="card"><h3>EN ACTIVO</h3><div class="value" style="color:var(--accent)">'+activos.length+'</div></div>'+
-    '<div class="card"><h3>CERRADOS HOY</h3><div class="value">'+cerrados.length+'</div></div>'+
-    '<div class="card"><h3>PENDIENTES VALIDAR</h3><div class="value" style="color:var(--gold)">'+(fichajes.length-validados.length)+'</div></div>';
+  var pendVal=fichajes.filter(function(f){return !f.validado&&f.salida});
+  // Horas semana
+  var lun=new Date();lun.setDate(lun.getDate()-lun.getDay()+1);var lunStr=lun.toISOString().slice(0,10);
+  var semFich=fichajes.filter(function(f){return f.fecha>=lunStr&&f.horas>0});
+  var horasSemana=semFich.reduce(function(s,f){return s+f.horas},0);
+  var mediaDia=semFich.length>0?horasSemana/([...new Set(semFich.map(function(f){return f.fecha}))].length):0;
+  function trend(v,ref){var d=v-ref;if(d===0)return '<span style="color:var(--gray);font-size:11px">= igual</span>';return d>0?'<span style="color:var(--accent);font-size:11px">\u25B2 +'+d+'</span>':'<span style="color:#e07a5f;font-size:11px">\u25BC '+d+'</span>'}
+  function kpi(icon,title,val,unit,trendHtml,color){
+    return '<div class="card" style="padding:16px;text-align:center;position:relative;overflow:hidden">'+
+      '<div style="position:absolute;top:-8px;right:-8px;font-size:36px;opacity:.08">'+icon+'</div>'+
+      '<div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">'+title+'</div>'+
+      '<div style="font-size:32px;font-weight:800;color:'+(color||'var(--dark)')+';line-height:1">'+val+'<span style="font-size:14px;font-weight:500;color:var(--gray)"> '+unit+'</span></div>'+
+      '<div style="margin-top:6px">'+trendHtml+'</div></div>';
+  }
+  el.innerHTML=
+    kpi('\u23F0','Fichados Hoy',diaFich.length,'',trend(diaFich.length,ayerFich.length),'var(--dark)')+
+    kpi('\uD83D\uDFE2','En Activo',activos.length,'ahora','<span style="color:var(--accent);font-size:11px">en jornada</span>','var(--accent)')+
+    kpi('\u231A','Horas Semana',horasSemana.toFixed(1),'h','<span style="font-size:11px;color:var(--gray)">desde lunes</span>','var(--dark)')+
+    kpi('\uD83D\uDCCA','Media Diaria',mediaDia.toFixed(1),'h/día','<span style="font-size:11px;color:var(--gray)">por empleado</span>','#6366f1')+
+    kpi('\u26A0\uFE0F','Pendientes',pendVal.length,'validar',pendVal.length>0?'<span style="color:#e07a5f;font-size:11px">requieren aprobación</span>':'<span style="color:var(--accent);font-size:11px">\u2705 todo al día</span>','var(--gold)');
 }
+
+function renderFichajesWeekly(){
+  var el=document.getElementById('fichaje-weekly');if(!el)return;
+  var hoy=new Date();var dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  var lun=new Date(hoy);lun.setDate(hoy.getDate()-hoy.getDay()+1);
+  var h='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">';
+  for(var d=0;d<7;d++){
+    var dia=new Date(lun);dia.setDate(lun.getDate()+d);
+    var dStr=dia.toISOString().slice(0,10);
+    var dFich=fichajes.filter(function(f){return f.fecha===dStr});
+    var totalH=dFich.reduce(function(s,f){return s+f.horas},0);
+    var isHoy=dStr===hoy.toISOString().slice(0,10);
+    var personas=[...new Set(dFich.map(function(f){return f.empleado}))];
+    var pctH=Math.min(totalH/60*100,100);// max ~60h day total
+    h+='<div style="text-align:center;padding:8px 4px;border-radius:10px;background:'+(isHoy?'var(--accent-bg)':'var(--card)')+';">'+
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:'+(isHoy?'var(--accent)':'var(--gray)')+'">'+dias[dia.getDay()]+'</div>'+
+      '<div style="font-size:16px;font-weight:800;margin:4px 0;color:var(--dark)">'+dia.getDate()+'</div>'+
+      '<div style="height:40px;display:flex;align-items:end;justify-content:center;margin:6px 0">'+
+        '<div style="width:22px;background:'+(totalH>0?'var(--accent)':'var(--border)')+';border-radius:4px 4px 0 0;height:'+Math.max(pctH*0.4,3)+'px;opacity:.7"></div>'+
+      '</div>'+
+      '<div style="font-size:13px;font-weight:700;color:'+(totalH>0?'var(--dark)':'var(--gray)')+'">'+totalH.toFixed(1)+'h</div>'+
+      '<div style="font-size:10px;color:var(--gray)">'+personas.length+' pers.</div>'+
+    '</div>';
+  }
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+function renderFichajesChart(){
+  var el=document.getElementById('fichaje-chart');if(!el)return;
+  var data=[];
+  var dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  for(var i=6;i>=0;i--){
+    var d=new Date(Date.now()-i*864e5);var dStr=d.toISOString().slice(0,10);
+    var horas=fichajes.filter(function(f){return f.fecha===dStr}).reduce(function(s,f){return s+f.horas},0);
+    data.push({n:dias[d.getDay()]+' '+d.getDate(),v:Math.round(horas*10)/10});
+  }
+  el.innerHTML=svgBarChart(data,420,200,['#4c956c','#5ba97d','#6bbd8e','#7cd19f','#4c956c','#5ba97d','#6bbd8e']);
+}
+
+window.exportFichajesCSV=function(){
+  var csv='Empleado,Fecha,Entrada,Salida,Pausa(min),Horas,Parcela,Tarea,Validado,ValidadoPor\n';
+  fichajes.forEach(function(f){
+    csv+='"'+f.empleado+'",'+f.fecha+','+f.entrada+','+(f.salida||'')+','+f.pausa+','+f.horas+',"'+(f.parcela||'')+'","'+(f.tarea||'')+'",'+(f.validado?'Sí':'No')+',"'+(f.validadoPor||'')+'"\n';
+  });
+  var b=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='fichajes_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  notifySaved('CSV exportado correctamente');
+};
+window.openNuevoFichaje=function(){
+  var emps=AgroStore.load('agri_employees',[]);
+  var opts=emps.filter(function(e){return e.active}).map(function(e){return '<option value="'+e.id+'">'+e.fullName+'</option>'}).join('');
+  var html='<div style="padding:20px"><h2 style="margin:0 0 16px">\u2795 Registrar Fichaje Manual</h2>'+
+    '<div style="display:grid;gap:12px">'+
+    '<div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Empleado</label><select class="form-control" id="nf-emp">'+opts+'</select></div>'+
+    '<div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Fecha</label><input type="date" class="form-control" id="nf-fecha" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+      '<div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Entrada</label><input type="time" class="form-control" id="nf-entrada" value="07:00"></div>'+
+      '<div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Salida</label><input type="time" class="form-control" id="nf-salida" value="15:00"></div>'+
+    '</div>'+
+    '<div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Tarea</label><input type="text" class="form-control" id="nf-tarea" placeholder="Descripción de la tarea..."></div>'+
+    '<button class="btn btn-primary" onclick="guardarNuevoFichaje()" style="margin-top:8px">\uD83D\uDCBE Guardar Fichaje</button>'+
+    '</div></div>';
+  openModal('modal-generic');
+  document.querySelector('#modal-generic .modal-body').innerHTML=html;
+};
+window.guardarNuevoFichaje=function(){
+  var empId=parseInt(document.getElementById('nf-emp').value);
+  var emps=AgroStore.load('agri_employees',[]);
+  var emp=emps.find(function(e){return e.id===empId});if(!emp)return;
+  var fecha=document.getElementById('nf-fecha').value;
+  var entrada=document.getElementById('nf-entrada').value;
+  var salida=document.getElementById('nf-salida').value;
+  var tarea=document.getElementById('nf-tarea').value;
+  var ep=entrada.split(':'),sp=salida.split(':');
+  var eh=parseInt(ep[0])*60+parseInt(ep[1]),sh=parseInt(sp[0])*60+parseInt(sp[1]);
+  var horas=Math.round((sh-eh)/60*10)/10;
+  fichajes.push({id:fichajes.length+1,empleadoId:empId,empleado:emp.fullName,fecha:fecha,entrada:entrada,salida:salida,pausa:30,parcela:'',tarea:tarea,horas:horas,validado:false,validadoPor:'',observ:''});
+  AgroStore.save('agri_fichajes',fichajes);closeModal('modal-generic');
+  renderFichajesStats();renderFichajesWeekly();renderFichajesChart();renderFichajesTable();
+  notifySaved('Fichaje registrado: '+emp.fullName+' ('+horas+'h)');
+};
 
 function renderFichajesTable(){
   var el=document.getElementById('fichajes-tbody');if(!el)return;
-  var list=fichajes.slice().sort(function(a,b){return a.fecha>b.fecha?-1:1});
+  var list=fichajes.slice().sort(function(a,b){return a.fecha>b.fecha?-1:a.fecha<b.fecha?1:a.entrada>b.entrada?-1:1});
   // Apply filters
   var ff=document.getElementById('fichaje-filter-fecha');
   var fv=document.getElementById('fichaje-filter-validado');
+  var fb=document.getElementById('fichaje-filter-buscar');
   if(ff&&ff.value)list=list.filter(function(f){return f.fecha===ff.value});
   if(fv&&fv.value)list=list.filter(function(f){return fv.value==='si'?f.validado:!f.validado});
+  if(fb&&fb.value){var q=fb.value.toLowerCase();list=list.filter(function(f){return f.empleado.toLowerCase().indexOf(q)>-1})}
   // Filter by role: recolector/conductor only see own
   var user=window.getCurrentUser?window.getCurrentUser():null;
   if(user&&(user.role==='RECOLECTOR'||user.role==='CONDUCTOR'||user.role==='ALMACEN'||user.role==='CALIDAD'||user.role==='TECNICO_CAMPO')){
     list=list.filter(function(f){return f.empleadoId===user.id});
   }
+  var hoy=new Date().toISOString().slice(0,10);
   var h='';
   list.slice(0,50).forEach(function(f){
     var canValidate=window.hasPermission&&(window.hasPermission('fichajes.approve')||window.hasPermission('attendance.approve'));
-    h+='<tr><td><strong>'+f.empleado+'</strong></td><td>'+f.fecha+'</td><td>'+f.entrada+'</td><td>'+(f.salida||'<span style="color:var(--accent)">En curso</span>')+'</td>'+
-      '<td>'+f.pausa+'min</td><td><strong>'+(f.horas||'—')+'</strong></td><td style="font-size:12px">'+f.tarea+'</td>'+
-      '<td>'+(f.validado?'<span style="color:var(--accent)">\u2705 '+f.validadoPor+'</span>':'<span style="color:var(--gold)">\u23F3 Pendiente</span>')+'</td>'+
-      '<td>'+(canValidate&&!f.validado&&f.salida?'<button class="btn btn-sm" onclick="validarFichaje('+f.id+')">Validar</button>':'')+'</td></tr>';
+    var enCurso=f.entrada&&!f.salida;
+    var esHoy=f.fecha===hoy;
+    var initials=f.empleado.split(' ').map(function(w){return w.charAt(0)}).slice(0,2).join('');
+    var horasColor=f.horas>=8?'var(--accent)':f.horas>=6?'var(--dark)':f.horas>0?'var(--gold)':'var(--gray)';
+    // Status badge
+    var statusBadge=f.validado?
+      '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(76,149,108,.12);color:var(--accent);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">\u2705 Validado</span>':
+      enCurso?
+      '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(99,102,241,.1);color:#6366f1;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">\uD83D\uDD35 En curso</span>':
+      '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(251,191,36,.12);color:var(--gold);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">\u23F3 Pendiente</span>';
+    h+='<tr style="'+(esHoy?'background:var(--accent-bg);':'')+'">'+
+      '<td><div style="display:flex;align-items:center;gap:8px">'+
+        '<div style="width:30px;height:30px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">'+initials+'</div>'+
+        '<strong>'+f.empleado+'</strong></div></td>'+
+      '<td><span style="font-size:12px;white-space:nowrap">'+(esHoy?'\uD83D\uDFE2 Hoy':f.fecha)+'</span></td>'+
+      '<td style="font-weight:600">'+f.entrada+'</td>'+
+      '<td style="font-weight:600">'+(f.salida||'<span style="color:#6366f1">···</span>')+'</td>'+
+      '<td style="font-size:12px;color:var(--gray)">'+f.pausa+'\'</td>'+
+      '<td><strong style="color:'+horasColor+';font-size:15px">'+(f.horas?f.horas.toFixed(1)+'h':'—')+'</strong></td>'+
+      '<td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(f.parcela||'')+' · '+(f.tarea||'')+'">'+(f.parcela?'<span style="color:var(--accent)">'+f.parcela+'</span> · ':'')+f.tarea+'</td>'+
+      '<td>'+statusBadge+'</td>'+
+      '<td>'+(canValidate&&!f.validado&&f.salida?'<button class="btn btn-sm" onclick="validarFichaje('+f.id+')" style="font-size:11px">\u2705 Validar</button>':'')+'</td></tr>';
   });
+  if(list.length===0)h='<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--gray)">No hay fichajes con los filtros seleccionados</td></tr>';
   el.innerHTML=h;
 }
 window.filtrarFichajes=function(){renderFichajesTable()};
@@ -11429,6 +11583,31 @@ window.validarFichaje=function(id){
   notifySaved('Fichaje validado');
 };
 
+function renderCuadrillasStats(){
+  var el=document.getElementById('cuadrillas-stats');if(!el)return;
+  var emps=AgroStore.load('agri_employees',[]).filter(function(e){return e.active});
+  var cuadrillas={};
+  emps.forEach(function(e){var cq=e.subrole||'Sin asignar';if(!cuadrillas[cq])cuadrillas[cq]=[];cuadrillas[cq].push(e)});
+  var numCq=Object.keys(cuadrillas).length;
+  var totalMiembros=emps.length;
+  var media=numCq>0?(totalMiembros/numCq).toFixed(1):0;
+  // Activos hoy (con fichaje)
+  var hoy=new Date().toISOString().slice(0,10);
+  var fich=AgroStore.load('agri_fichajes',[]);
+  var activosHoy=[...new Set(fich.filter(function(f){return f.fecha===hoy}).map(function(f){return f.empleadoId}))].length;
+  function kpi(icon,t,v,u,sub,col){
+    return '<div class="card" style="padding:16px;text-align:center;position:relative;overflow:hidden">'+
+      '<div style="position:absolute;top:-8px;right:-8px;font-size:36px;opacity:.08">'+icon+'</div>'+
+      '<div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">'+t+'</div>'+
+      '<div style="font-size:32px;font-weight:800;color:'+(col||'var(--dark)')+';line-height:1">'+v+'<span style="font-size:14px;font-weight:500;color:var(--gray)"> '+u+'</span></div>'+
+      '<div style="margin-top:6px;font-size:11px;color:var(--gray)">'+sub+'</div></div>';
+  }
+  el.innerHTML=kpi('\uD83D\uDC65','Cuadrillas',numCq,'equipos','organizadas','')+
+    kpi('\uD83D\uDC64','Miembros Totales',totalMiembros,'personas','activos','var(--accent)')+
+    kpi('\uD83D\uDFE2','Activos Hoy',activosHoy,'fichados','con registro','#6366f1')+
+    kpi('\uD83D\uDCCA','Media por Cuadrilla',media,'pers.','promedio','var(--gold)');
+}
+
 function renderCuadrillas(){
   var el=document.getElementById('cuadrillas-content');if(!el)return;
   var emps=AgroStore.load('agri_employees',[]);
@@ -11439,26 +11618,117 @@ function renderCuadrillas(){
     if(!cuadrillas[cq])cuadrillas[cq]=[];
     cuadrillas[cq].push(e);
   });
-  var h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">';
+  var colores=['#4c956c','#6366f1','#e07a5f','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#84cc16'];
+  var hoy=new Date().toISOString().slice(0,10);
+  var fich=AgroStore.load('agri_fichajes',[]);
+  var h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px">';
+  var ci=0;
   Object.keys(cuadrillas).forEach(function(cq){
     var members=cuadrillas[cq];
-    h+='<div class="card"><h3 style="text-transform:none;letter-spacing:0">\uD83D\uDC65 '+cq+'</h3>'+
-      '<div class="sub" style="margin-bottom:10px">'+members.length+' miembros</div>';
+    var color=colores[ci%colores.length];ci++;
+    // Horas semana de esta cuadrilla
+    var empIds=members.map(function(m){return m.id});
+    var horasCq=fich.filter(function(f){return empIds.indexOf(f.empleadoId)>-1&&f.horas>0}).reduce(function(s,f){return s+f.horas},0);
+    var activosCq=fich.filter(function(f){return f.fecha===hoy&&empIds.indexOf(f.empleadoId)>-1}).length;
+    h+='<div class="card" style="padding:0;overflow:hidden;border-left:4px solid '+color+'">'+
+      '<div style="padding:16px 16px 12px;display:flex;justify-content:space-between;align-items:flex-start">'+
+        '<div><h3 style="margin:0;font-size:16px;font-weight:700;text-transform:none;letter-spacing:0">\uD83D\uDC65 '+cq+'</h3>'+
+        '<div style="font-size:12px;color:var(--gray);margin-top:2px">'+members.length+' miembros · '+activosCq+' activos hoy</div></div>'+
+        '<div style="display:flex;gap:6px">'+
+          '<span style="background:'+color+'15;color:'+color+';padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600">'+horasCq.toFixed(0)+'h acum.</span>'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:0 16px 14px">';
     members.forEach(function(m){
       var rd=window.ROLES[m.role]||{label:m.role,color:'#666'};
-      h+='<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)">'+
-        '<div style="width:32px;height:32px;border-radius:8px;background:'+rd.color+'15;color:'+rd.color+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">'+m.firstName.charAt(0)+m.lastName.charAt(0)+'</div>'+
-        '<div><div style="font-size:13px;font-weight:600">'+m.fullName+'</div><div style="font-size:11px;color:var(--gray)">'+rd.label+'</div></div>'+
+      var mFich=fich.find(function(f){return f.empleadoId===m.id&&f.fecha===hoy});
+      var estado=mFich?(mFich.salida?'\uD83D\uDFE2':'\uD83D\uDD35'):'\u26AA';
+      var skills=m.certifications||[];
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">'+
+        '<div style="width:36px;height:36px;border-radius:10px;background:'+rd.color+'15;color:'+rd.color+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;position:relative">'+
+          m.firstName.charAt(0)+m.lastName.charAt(0)+
+          '<span style="position:absolute;bottom:-2px;right:-2px;font-size:8px">'+estado+'</span>'+
+        '</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px;font-weight:600">'+m.fullName+'</span></div>'+
+          '<div style="display:flex;align-items:center;gap:6px;margin-top:2px">'+
+            '<span style="font-size:10px;color:'+rd.color+';font-weight:600">'+rd.label+'</span>'+
+            (skills.length>0?skills.map(function(s){return '<span style="background:var(--accent-bg);color:var(--accent);padding:1px 6px;border-radius:8px;font-size:9px;font-weight:600">'+s+'</span>'}).join(''):'')+'</div>'+
+        '</div>'+
       '</div>';
     });
-    h+='</div>';
+    h+='</div></div>';
   });
   h+='</div>';
   el.innerHTML=h;
 }
 
+function renderCuadrillasSkills(){
+  var el=document.getElementById('cuadrillas-skills');if(!el)return;
+  var emps=AgroStore.load('agri_employees',[]).filter(function(e){return e.active});
+  var certNames=['Fitosanitario','PRL','Manipulador','Conducción','Primeros Aux.','Carretillero'];
+  // Assign demo certifications if not present
+  emps.forEach(function(e){
+    if(!e.certifications){
+      var c=[];
+      if(e.role==='TECNICO_CAMPO'||e.role==='JEFE_FINCA')c.push('Fitosanitario','PRL');
+      if(e.role==='RECOLECTOR')c.push('PRL','Manipulador');
+      if(e.role==='CONDUCTOR')c.push('Conducción','PRL');
+      if(e.role==='ALMACEN')c.push('Manipulador','Carretillero');
+      if(e.role==='CEO'||e.role==='ADMIN_OPERACIONES')c.push('PRL','Primeros Aux.');
+      if(c.length===0)c.push('PRL');
+      e.certifications=c;
+    }
+  });
+  AgroStore.save('agri_employees',emps);
+  var h='<div class="tbl-wrap"><table><thead><tr><th>Empleado</th><th>Rol</th>';
+  certNames.forEach(function(cn){h+='<th style="text-align:center;font-size:11px;min-width:80px">'+cn+'</th>'});
+  h+='</tr></thead><tbody>';
+  emps.forEach(function(e){
+    var rd=window.ROLES[e.role]||{label:e.role,color:'#666'};
+    var certs=e.certifications||[];
+    h+='<tr><td><strong>'+e.fullName+'</strong></td><td style="font-size:11px;color:'+rd.color+'">'+rd.label+'</td>';
+    certNames.forEach(function(cn){
+      var has=certs.indexOf(cn)>-1;
+      h+='<td style="text-align:center">'+(has?'<span style="color:var(--accent);font-size:16px">\u2705</span>':'<span style="color:var(--border);font-size:16px">\u2796</span>')+'</td>';
+    });
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+}
+
+function renderCuadrillasAsignacion(){
+  var el=document.getElementById('cuadrillas-asignacion');if(!el)return;
+  var emps=AgroStore.load('agri_employees',[]).filter(function(e){return e.active});
+  var cuadrillas={};
+  emps.forEach(function(e){var cq=e.subrole||'Sin asignar';if(!cuadrillas[cq])cuadrillas[cq]=[];cuadrillas[cq].push(e)});
+  var parcelas=['El Rincón S1-S4','La Dehesa S1-S3','La Solana','Camino Viejo','Alto del Pino'];
+  var colores=['#4c956c','#6366f1','#e07a5f','#f59e0b','#8b5cf6'];
+  var ci=0;
+  var h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">';
+  Object.keys(cuadrillas).forEach(function(cq){
+    var color=colores[ci%colores.length];ci++;
+    var parcela=parcelas[ci%parcelas.length];
+    h+='<div style="border:1px solid var(--border);border-radius:12px;padding:14px;border-left:3px solid '+color+'">'+
+      '<div style="font-size:13px;font-weight:700;margin-bottom:4px">\uD83D\uDC65 '+cq+'</div>'+
+      '<div style="font-size:11px;color:var(--gray);margin-bottom:6px">\uD83D\uDDFA\uFE0F '+parcela+'</div>'+
+      '<div style="display:flex;gap:-4px">'+
+        cuadrillas[cq].slice(0,5).map(function(m){return '<div style="width:26px;height:26px;border-radius:50%;background:'+color+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:2px solid var(--card);margin-left:-6px" title="'+m.fullName+'">'+m.firstName.charAt(0)+m.lastName.charAt(0)+'</div>'}).join('')+
+        (cuadrillas[cq].length>5?'<div style="width:26px;height:26px;border-radius:50%;background:var(--border);color:var(--gray);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;margin-left:-6px">+'+(cuadrillas[cq].length-5)+'</div>':'')+
+      '</div>'+
+    '</div>';
+  });
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+window.openNuevaCuadrilla=function(){
+  notifySaved('Funcionalidad de nueva cuadrilla disponible próximamente');
+};
+
 var _sp5=showPage;
-showPage=function(id){_sp5(id);if(id==='fichajes'){renderFichajesClock();renderFichajesStats();renderFichajesTable()}if(id==='cuadrillas')renderCuadrillas()};
+showPage=function(id){_sp5(id);if(id==='fichajes'){renderFichajesClock();renderFichajesStats();renderFichajesWeekly();renderFichajesChart();renderFichajesTable()}if(id==='cuadrillas'){renderCuadrillasStats();renderCuadrillas();renderCuadrillasSkills();renderCuadrillasAsignacion()}};
 })();
 
 // ═══════════════════════════════════════════════════════
