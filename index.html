@@ -10131,14 +10131,19 @@ M.innerHTML+='<div class="page" id="page-trazabilidad">'+
 
 // ── G) RENTABILIDAD ──
 M.innerHTML+='<div class="page" id="page-rentabilidad">'+
-'<div class="header"><h1>\uD83D\uDCC8 Rentabilidad por Parcela</h1></div>'+
+'<div class="header"><h1>\uD83D\uDCC8 Rentabilidad por Parcela</h1>'+
+'<button class="btn btn-outline" onclick="exportarRentCSV()">\uD83D\uDCE5 CSV</button></div>'+
 '<div id="rent-stats" class="stat-row"></div>'+
 '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">'+
 '<select id="rent-parcela" onchange="calcularRentabilidad()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px"><option value="">Todas</option></select>'+
 '<select id="rent-periodo" onchange="calcularRentabilidad()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px"><option value="2026">2026</option><option value="2025">2025</option></select>'+
 '</div>'+
-'<div class="tbl-wrap"><table class="tbl" id="rent-tabla"><thead><tr><th>Parcela</th><th>Producci\u00f3n kg</th><th>Ingresos \u20ac</th><th>Costes \u20ac</th><th>Margen \u20ac</th><th>Coste/kg</th><th>Margen %</th><th>Ranking</th></tr></thead><tbody id="rent-tbody"></tbody></table></div>'+
-'<div id="rent-chart" style="margin-top:20px"></div>'+
+'<div class="tab-bar" data-group="rent"><button class="tab-btn active" data-group="rent" data-tab="resumen" onclick="showTab(\'rent\',\'resumen\')">Resumen</button><button class="tab-btn" data-group="rent" data-tab="costes" onclick="showTab(\'rent\',\'costes\')">Desglose Costes</button><button class="tab-btn" data-group="rent" data-tab="analisis" onclick="showTab(\'rent\',\'analisis\')">An\u00e1lisis</button></div>'+
+'<div class="tab-content active" data-group="rent" id="tab-rent-resumen">'+
+'<div class="tbl-wrap"><table class="tbl" id="rent-tabla"><thead><tr><th>Parcela</th><th>Producci\u00f3n kg</th><th>Ingresos \u20ac</th><th>Costes \u20ac</th><th>Margen \u20ac</th><th>Coste/kg</th><th>\u20ac/ha</th><th>Margen %</th><th>Ranking</th></tr></thead><tbody id="rent-tbody"></tbody></table></div>'+
+'<div id="rent-chart" style="margin-top:20px"></div></div>'+
+'<div class="tab-content" data-group="rent" id="tab-rent-costes"><div id="rent-desglose"></div></div>'+
+'<div class="tab-content" data-group="rent" id="tab-rent-analisis"><div id="rent-analisis"></div></div>'+
 '</div>';
 
 // ── CEO DASHBOARD ──
@@ -10881,13 +10886,22 @@ function totalCostes(c){return Object.values(c).reduce(function(a,b){return a+b}
 
 function renderRentStats(){
   var el=_s('rent-stats');if(!el)return;
-  var tProd=0,tIng=0,tCost=0;_parcData.forEach(function(p){tProd+=p.prodKg;tIng+=p.ingresosVenta;tCost+=totalCostes(p.costes)});
-  var margen=tIng-tCost;var cpk=tProd?tCost/tProd:0;
-  el.innerHTML='<div class="card"><div class="value" style="color:var(--accent)">'+(tProd/1000).toFixed(0)+'t</div><div style="font-size:11px;color:var(--gray)">PRODUCCIÓN</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--primary)">'+(tIng/1000).toFixed(0)+'k\u20ac</div><div style="font-size:11px;color:var(--gray)">INGRESOS</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--coral)">'+(tCost/1000).toFixed(0)+'k\u20ac</div><div style="font-size:11px;color:var(--gray)">COSTES</div></div>'+
-  '<div class="card"><div class="value" style="color:'+(margen>0?'var(--accent)':'var(--coral)')+'">'+(margen/1000).toFixed(0)+'k\u20ac</div><div style="font-size:11px;color:var(--gray)">MARGEN</div></div>'+
-  '<div class="card"><div class="value" style="color:var(--gold)">'+cpk.toFixed(2)+'\u20ac</div><div style="font-size:11px;color:var(--gray)">COSTE/KG</div></div>';
+  var tProd=0,tIng=0,tCost=0,tSup=0;
+  _parcData.forEach(function(p){tProd+=p.prodKg;tIng+=p.ingresosVenta;tCost+=totalCostes(p.costes);tSup+=p.superficie});
+  var margen=tIng-tCost;var roi=tCost>0?(margen/tCost*100):0;var eurHa=tSup>0?Math.round(margen/tSup):0;
+  var sparkProd=_parcData.map(function(p){return p.prodKg});
+  var best=_parcData.map(function(p){var ct=totalCostes(p.costes);return{n:p.nombre,pct:p.ingresosVenta>0?((p.ingresosVenta-ct)/p.ingresosVenta*100):0}}).sort(function(a,b){return b.pct-a.pct})[0];
+  var costRatio=tIng>0?(tCost/tIng*100):0;
+  var kpi=function(ic,tit,val,sub,clr,extra){return '<div class="card" style="padding:16px;text-align:center"><div style="font-size:20px;margin-bottom:4px">'+ic+'</div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:6px;font-weight:600">'+tit+'</div><div style="font-size:26px;font-weight:800;color:'+clr+'">'+val+'</div><div style="font-size:11px;color:var(--gray);margin-top:2px">'+sub+'</div>'+(extra||'')+'</div>'};
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:16px">'+
+    kpi('\uD83C\uDF31','SUPERFICIE',tSup.toFixed(1)+' ha',_parcData.length+' parcelas','var(--primary)','')+
+    kpi('\uD83C\uDF3E','PRODUCCI\u00d3N',(tProd/1000).toFixed(0)+' t','kg totales','var(--accent)','<div style="margin-top:6px">'+svgMiniSparkline(sparkProd,120,26,'#4C956C')+'</div>')+
+    kpi('\uD83D\uDCB0','INGRESOS',(tIng/1000).toFixed(0)+'k\u20ac',eurHa.toLocaleString('es')+' \u20ac/ha','var(--primary)','')+
+    kpi('\uD83D\uDCC9','COSTES',(tCost/1000).toFixed(0)+'k\u20ac',costRatio.toFixed(0)+'% de ingresos','var(--coral)','<div style="margin-top:6px">'+svgProgressBar(costRatio,120,6,'#E07A5F')+'</div>')+
+    kpi('\uD83D\uDCC8','MARGEN',(margen/1000).toFixed(0)+'k\u20ac',(100-costRatio).toFixed(0)+'% margen neto',margen>0?'var(--accent)':'var(--coral)','')+
+    kpi('\u2B50','ROI',roi.toFixed(1)+'%','retorno inversi\u00f3n',roi>30?'var(--accent)':'var(--coral)','<div style="margin-top:6px">'+svgProgressBar(Math.min(roi,100),120,6,roi>30?'#2C6E49':'#E07A5F')+'</div>')+
+    kpi('\uD83C\uDFC6','MEJOR PARCELA',best?best.n:'—',best?best.pct.toFixed(1)+'% margen':'','var(--gold)','')+
+  '</div>';
 }
 window.calcularRentabilidad=function(){
   var sel=_s('rent-parcela').value;
@@ -10895,24 +10909,102 @@ window.calcularRentabilidad=function(){
   var tb=_s('rent-tbody');if(!tb)return;tb.innerHTML='';
   var ranked=data.map(function(p){
     var ct=totalCostes(p.costes);var marg=p.ingresosVenta-ct;var pct=p.ingresosVenta?(marg/p.ingresosVenta*100):0;var cpk=p.prodKg?ct/p.prodKg:0;
-    return {nombre:p.nombre,prodKg:p.prodKg,ingresos:p.ingresosVenta,costes:ct,margen:marg,cpk:cpk,pct:pct};
+    var eurHa=p.superficie>0?Math.round(marg/p.superficie):0;
+    return {nombre:p.nombre,sup:p.superficie,prodKg:p.prodKg,ingresos:p.ingresosVenta,costes:ct,margen:marg,cpk:cpk,pct:pct,eurHa:eurHa};
   }).sort(function(a,b){return b.pct-a.pct});
   ranked.forEach(function(r,i){
-    tb.innerHTML+='<tr><td>'+r.nombre+'</td><td>'+r.prodKg.toLocaleString('es')+'</td><td>'+r.ingresos.toLocaleString('es')+'\u20ac</td><td>'+r.costes.toLocaleString('es')+'\u20ac</td><td style="color:'+(r.margen>0?'var(--accent)':'var(--coral)')+'"><strong>'+r.margen.toLocaleString('es')+'\u20ac</strong></td><td>'+r.cpk.toFixed(2)+'\u20ac</td><td style="color:'+(r.pct>20?'var(--accent)':'var(--coral)')+'">'+r.pct.toFixed(1)+'%</td><td>'+(i===0?'\uD83E\uDD47':i===1?'\uD83E\uDD48':i===2?'\uD83E\uDD49':'#'+(i+1))+'</td></tr>';
+    tb.innerHTML+='<tr><td>'+r.nombre+'</td><td>'+r.prodKg.toLocaleString('es')+'</td><td>'+r.ingresos.toLocaleString('es')+'\u20ac</td><td>'+r.costes.toLocaleString('es')+'\u20ac</td><td style="color:'+(r.margen>0?'var(--accent)':'var(--coral)')+'"><strong>'+r.margen.toLocaleString('es')+'\u20ac</strong></td><td>'+r.cpk.toFixed(2)+'\u20ac</td><td style="color:'+(r.eurHa>0?'var(--accent)':'var(--coral)')+'">'+r.eurHa.toLocaleString('es')+'\u20ac</td><td>'+svgProgressBar(Math.min(Math.max(r.pct,0),60)/60*100,80,12,r.pct>20?'#4c956c':'#e07a5f',r.pct.toFixed(1)+'%')+'</td><td>'+(i===0?'\uD83E\uDD47':i===1?'\uD83E\uDD48':i===2?'\uD83E\uDD49':'#'+(i+1))+'</td></tr>';
   });
-  // SVG bar chart for margins
+  // Charts grid 2x2
   var ch=_s('rent-chart');if(!ch)return;
-  var chartMargen=ranked.slice(0,6).map(function(r){return {n:r.nombre.split(' ')[0],v:Math.round(r.margen)}});
+  var chartMargen=ranked.slice(0,6).map(function(r){return {n:r.nombre.split(' ')[0],v:Math.abs(Math.round(r.margen))}});
   var colorsMargen=ranked.slice(0,6).map(function(r){return r.margen>0?'#4c956c':'#e07a5f'});
+  var tIng=ranked.reduce(function(s,r){return s+r.ingresos},0);var tCos=ranked.reduce(function(s,r){return s+r.costes},0);
+  // Line chart: €/ha per parcel
+  var lineEurHa=ranked.map(function(r){return {n:r.nombre.split(' ')[0],v:Math.max(r.eurHa,0)}});
+  // Ranking visual: progress bars por margen%
+  var maxPct=ranked.length?ranked[0].pct:1;
+  var hRank='';ranked.forEach(function(r,i){
+    var barPct=maxPct>0?(r.pct/maxPct*100):0;var medal=i===0?'\uD83E\uDD47 ':i===1?'\uD83E\uDD48 ':i===2?'\uD83E\uDD49 ':'';
+    hRank+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="width:90px;font-size:12px;font-weight:600;flex-shrink:0">'+medal+r.nombre.split(' ').slice(0,2).join(' ')+'</span><div style="flex:1">'+svgProgressBar(barPct,200,14,r.pct>20?'#4c956c':'#e07a5f','')+'</div><span style="width:50px;text-align:right;font-size:12px;font-weight:700;color:'+(r.pct>20?'var(--accent)':'var(--coral)')+'">'+r.pct.toFixed(1)+'%</span></div>';
+  });
   ch.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'+
-    '<div><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCCA Margen por Parcela</h3>'+
-    svgBarChart(chartMargen.map(function(d){return {n:d.n,v:Math.abs(d.v)}}),380,200,colorsMargen)+'</div>'+
-    '<div><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCB0 Ingresos vs Costes</h3>'+
-    (function(){var tIng=ranked.reduce(function(s,r){return s+r.ingresos},0);var tCos=ranked.reduce(function(s,r){return s+r.costes},0);
-      return svgDonut([{v:Math.round(tIng),c:'#4c956c'},{v:Math.round(tCos),c:'#e07a5f'}],180)+
-      '<div style="display:flex;justify-content:center;gap:16px;margin-top:8px;font-size:12px">'+
-        '<span style="color:#4c956c;font-weight:600">\u25CF Ingresos '+(tIng/1000).toFixed(0)+'k\u20ac</span>'+
-        '<span style="color:#e07a5f;font-weight:600">\u25CF Costes '+(tCos/1000).toFixed(0)+'k\u20ac</span></div>'})()+'</div></div>';
+    '<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCCA Margen por Parcela</h3>'+svgBarChart(chartMargen,380,180,colorsMargen)+'</div>'+
+    '<div class="card" style="padding:16px;text-align:center"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCB0 Ingresos vs Costes</h3>'+svgDonut([{v:Math.round(tIng),c:'#4c956c'},{v:Math.round(tCos),c:'#e07a5f'}],160)+'<div style="display:flex;justify-content:center;gap:16px;margin-top:8px;font-size:12px"><span style="color:#4c956c;font-weight:600">\u25CF Ingresos '+(tIng/1000).toFixed(0)+'k\u20ac</span><span style="color:#e07a5f;font-weight:600">\u25CF Costes '+(tCos/1000).toFixed(0)+'k\u20ac</span></div></div>'+
+    '<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCC8 Margen \u20ac/ha por Parcela</h3>'+svgLineChart(lineEurHa,380,160,'#D4A843')+'</div>'+
+    '<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83C\uDFC6 Ranking Margen %</h3>'+hRank+'</div></div>';
+  renderRentDesglose();renderRentAnalisis();
+};
+function renderRentDesglose(){
+  var el=_s('rent-desglose');if(!el)return;
+  var cats=['agua','fertilizantes','fitosanitarios','manoObra','maquinaria','seguros','otros'];
+  var catLbl={agua:'Agua',fertilizantes:'Fertilizantes',fitosanitarios:'Fitosanitarios',manoObra:'Mano de Obra',maquinaria:'Maquinaria',seguros:'Seguros',otros:'Otros'};
+  var catCol=['#3B82F6','#4c956c','#7C3AED','#E07A5F','#D4A843','#6366f1','#94A3B8'];
+  var sel=_s('rent-parcela').value;
+  var dataF=sel?_parcData.filter(function(p){return p.nombre===sel}):_parcData;
+  var catT={};cats.forEach(function(c){catT[c]=0});
+  dataF.forEach(function(p){cats.forEach(function(c){catT[c]+=p.costes[c]})});
+  var grand=cats.reduce(function(s,c){return s+catT[c]},0)||1;
+  // Donut + Bar
+  var donutD=cats.map(function(c,i){return{v:catT[c],c:catCol[i]}});
+  var barD=cats.map(function(c){return{n:catLbl[c].substring(0,6),v:catT[c]}});
+  var legend='<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px">'+cats.map(function(c,i){return '<span style="font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+catCol[i]+';margin-right:4px"></span>'+catLbl[c]+' ('+(catT[c]/1000).toFixed(1)+'k\u20ac)</span>'}).join('')+'</div>';
+  var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">'+
+    '<div class="card" style="padding:16px;text-align:center"><h4 style="margin-bottom:8px">\uD83C\uDF0D Distribuci\u00f3n de Costes</h4>'+svgDonut(donutD,150)+legend+'</div>'+
+    '<div class="card" style="padding:16px"><h4 style="margin-bottom:8px">\uD83D\uDCCA Costes por Categor\u00eda</h4>'+svgBarChart(barD,380,180,catCol)+'</div></div>';
+  // Progress bars
+  var maxCat=Math.max.apply(null,cats.map(function(c){return catT[c]}))||1;
+  h+='<div class="card" style="padding:16px;margin-bottom:16px"><h4 style="margin-bottom:12px">\uD83D\uDCCB Desglose por Categor\u00eda</h4>';
+  cats.forEach(function(c,i){
+    var pct=catT[c]/maxCat*100;var pctG=(catT[c]/grand*100).toFixed(1);
+    h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="width:120px;font-size:12px;font-weight:600;flex-shrink:0;color:'+catCol[i]+'">'+catLbl[c]+'</span><div style="flex:1">'+svgProgressBar(pct,280,14,catCol[i])+'</div><span style="width:70px;text-align:right;font-size:12px;font-weight:600">'+catT[c].toLocaleString('es')+'\u20ac</span><span style="width:40px;text-align:right;font-size:11px;color:var(--gray)">'+pctG+'%</span></div>';
+  });
+  h+='</div>';
+  // Tabla comparativa
+  var maxPC=Math.max.apply(null,dataF.map(function(p){return totalCostes(p.costes)}))||1;
+  h+='<div class="card" style="padding:16px"><h4 style="margin-bottom:12px">\uD83C\uDFE2 Comparativa Costes por Parcela</h4><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Parcela</th>';
+  cats.forEach(function(c){h+='<th>'+catLbl[c].substring(0,5)+'</th>'});
+  h+='<th>Total</th></tr></thead><tbody>';
+  dataF.forEach(function(p){
+    var tc=totalCostes(p.costes);
+    h+='<tr><td><strong>'+p.nombre+'</strong></td>';
+    cats.forEach(function(c){h+='<td>'+p.costes[c].toLocaleString('es')+'</td>'});
+    h+='<td><strong>'+tc.toLocaleString('es')+'\u20ac</strong> '+svgProgressBar(tc/maxPC*100,60,8,'#E07A5F')+'</td></tr>';
+  });
+  h+='</tbody></table></div></div>';el.innerHTML=h;
+}
+function renderRentAnalisis(){
+  var el=_s('rent-analisis');if(!el)return;
+  var sel=_s('rent-parcela').value;
+  var dataF=sel?_parcData.filter(function(p){return p.nombre===sel}):_parcData;
+  var metrics=dataF.map(function(p){
+    var ct=totalCostes(p.costes);var marg=p.ingresosVenta-ct;
+    return{nombre:p.nombre,sup:p.superficie,prodHa:p.superficie>0?Math.round(p.prodKg/p.superficie):0,ingHa:p.superficie>0?Math.round(p.ingresosVenta/p.superficie):0,costHa:p.superficie>0?Math.round(ct/p.superficie):0,margHa:p.superficie>0?Math.round(marg/p.superficie):0,roi:ct>0?(marg/ct*100):0};
+  }).sort(function(a,b){return b.roi-a.roi});
+  // Charts row
+  var barProdHa=metrics.map(function(m){return{n:m.nombre.split(' ')[0],v:m.prodHa}});
+  var barROI=metrics.map(function(m){return{n:m.nombre.split(' ')[0],v:Math.max(Math.round(m.roi),0)}});
+  var roiCols=metrics.map(function(m){return m.roi>30?'#4c956c':'#e07a5f'});
+  var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">'+
+    '<div class="card" style="padding:16px"><h4 style="margin-bottom:8px">\uD83C\uDF3E Productividad kg/ha</h4>'+svgBarChart(barProdHa,380,180,['#2C6E49','#4c956c','#6bbd8e','#8fd1a8','#b2e5c2','#d4f5e0'])+'</div>'+
+    '<div class="card" style="padding:16px"><h4 style="margin-bottom:8px">\u2B50 ROI % por Parcela</h4>'+svgBarChart(barROI,380,180,roiCols)+'</div></div>';
+  // Line chart margen/ha
+  var lineMargHa=metrics.map(function(m){return{n:m.nombre.split(' ')[0],v:Math.max(m.margHa,0)}});
+  h+='<div class="card" style="padding:16px;margin-bottom:16px"><h4 style="margin-bottom:8px">\uD83D\uDCC8 Margen \u20ac/ha por Parcela</h4>'+svgLineChart(lineMargHa,600,160,'#2C6E49')+'</div>';
+  // Table per-hectare
+  h+='<div class="card" style="padding:16px"><h4 style="margin-bottom:12px">\uD83D\uDCCB M\u00e9tricas por Hect\u00e1rea</h4><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Parcela</th><th>Sup. ha</th><th>Prod kg/ha</th><th>Ingresos \u20ac/ha</th><th>Costes \u20ac/ha</th><th>Margen \u20ac/ha</th><th>ROI %</th></tr></thead><tbody>';
+  metrics.forEach(function(m,i){
+    h+='<tr><td>'+(i===0?'\uD83E\uDD47 ':i===1?'\uD83E\uDD48 ':i===2?'\uD83E\uDD49 ':'')+m.nombre+'</td><td>'+m.sup+'</td><td>'+m.prodHa.toLocaleString('es')+'</td><td>'+m.ingHa.toLocaleString('es')+'\u20ac</td><td>'+m.costHa.toLocaleString('es')+'\u20ac</td><td style="color:'+(m.margHa>0?'var(--accent)':'var(--coral)')+'"><strong>'+m.margHa.toLocaleString('es')+'\u20ac</strong></td><td>'+svgProgressBar(Math.min(m.roi,80)/80*100,70,10,m.roi>30?'#4c956c':'#e07a5f',m.roi.toFixed(1)+'%')+'</td></tr>';
+  });
+  h+='</tbody></table></div></div>';el.innerHTML=h;
+}
+window.exportarRentCSV=function(){
+  var csv='Parcela;Superficie ha;Produccion kg;Ingresos;Costes;Margen;Coste/kg;EUR/ha;Margen%;ROI%\n';
+  _parcData.forEach(function(p){
+    var ct=totalCostes(p.costes);var m=p.ingresosVenta-ct;
+    csv+=p.nombre+';'+p.superficie+';'+p.prodKg+';'+p.ingresosVenta+';'+ct+';'+m+';'+(p.prodKg?ct/p.prodKg:0).toFixed(2)+';'+(p.superficie?Math.round(m/p.superficie):0)+';'+(p.ingresosVenta?(m/p.ingresosVenta*100):0).toFixed(1)+';'+(ct?(m/ct*100):0).toFixed(1)+'\n';
+  });
+  var b=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='rentabilidad_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 };
 function popRentSelects(){var s=_s('rent-parcela');if(s&&s.options.length<=1){_parcData.forEach(function(p){var o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre;s.appendChild(o)})}}
 function initRent(){renderRentStats();calcularRentabilidad();popRentSelects()}
