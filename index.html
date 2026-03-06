@@ -1806,6 +1806,40 @@ M.innerHTML+=`<div class="page" id="page-procesos">
     }
   };
 
+  // Shared document grid renderer (used by Flota and Maquinaria fichas)
+  window.renderDocumentosGrid=function(containerId,docs,nombre,fileInputId){
+    var docIconMap={permiso:'📜',itv:'🛡️',seguro:'🏦',certificado:'✅',tacografo:'⏱️',transporte:'🚛',factura:'🧾',manual:'📘',registro:'📋',ficha_seguridad:'⚠️',cartilla:'📗',operador:'🪪',revision:'🔍',ropo:'🧪'};
+    var h='<div style="font-weight:700;font-size:13px;margin-bottom:12px">📄 Documentación — '+nombre+'</div>';
+    var alertas=(docs||[]).filter(function(d){if(!d.vence)return false;var diff=Math.ceil((new Date(d.vence)-new Date())/(86400000));return diff<=90;});
+    if(alertas.length>0){
+      h+='<div style="background:rgba(231,111,81,.06);border-left:3px solid var(--coral);padding:10px 12px;border-radius:8px;margin-bottom:12px;font-size:12px">';
+      h+='<strong>⚠️ Atención — Documentos con vencimiento próximo:</strong>';
+      alertas.forEach(function(d){var dias=Math.ceil((new Date(d.vence)-new Date())/(86400000));h+='<div style="margin-top:3px;color:'+(dias<=0?'var(--coral)':'var(--gold)')+'">• '+d.nombre+': '+(dias<=0?'CADUCADO hace '+Math.abs(dias)+' días':dias+' días para vencer')+'</div>';});
+      h+='</div>';
+    }
+    h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">';
+    (docs||[]).forEach(function(doc){
+      var icon=docIconMap[doc.tipo]||'📄';
+      var tagHtml='';
+      if(doc.vence){
+        var dias=Math.ceil((new Date(doc.vence)-new Date())/(86400000));
+        tagHtml=dias>90?'<span class="tag tag-green" style="font-size:9px">Vigente</span>':dias>0?'<span class="tag tag-yellow" style="font-size:9px">Vence en '+dias+'d</span>':'<span class="tag tag-red" style="font-size:9px">CADUCADO</span>';
+      }else{tagHtml='<span class="tag tag-green" style="font-size:9px">Permanente</span>';}
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(0,0,0,.02);border-radius:10px;border:1px solid var(--border);cursor:pointer" onclick="alert(\'Documento: '+doc.nombre.replace(/'/g,"\\'")+'\\nArchivo: '+(doc.archivo||'N/A')+'\\nTamaño: '+(doc.size||'N/A')+'\\n\\n(En producción se abriría el visor de documentos)\')">';
+      h+='<div style="font-size:28px;min-width:36px;text-align:center">'+icon+'</div>';
+      h+='<div style="flex:1"><div style="font-size:12px;font-weight:600">'+doc.nombre+'</div>';
+      h+='<div style="font-size:10px;color:var(--gray)">'+(doc.size||'')+(doc.vence?' · Vence: '+doc.vence:'')+'</div>';
+      h+=tagHtml+'</div></div>';
+    });
+    h+='</div>';
+    h+='<div id="'+fileInputId+'-dz" style="margin-top:14px;border:2px dashed var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;background:rgba(59,130,246,.02)" onclick="document.getElementById(\''+fileInputId+'\').click()">';
+    h+='<div style="font-size:20px">📎</div>';
+    h+='<div style="font-size:12px;color:var(--gray)">Subir nuevo documento (PDF, JPG, XLS · Máx 10MB)</div>';
+    h+='<input type="file" id="'+fileInputId+'" accept=".pdf,.jpg,.png,.xlsx" multiple style="display:none" onchange="handleFileUpload(this,\''+fileInputId+'-dz\')">';
+    h+='</div>';
+    return h;
+  };
+
   // Register reception
   window.registrarRecepcion=function(){
     var finca=document.getElementById('rec-finca').value.split(' - ')[0];
@@ -3612,7 +3646,8 @@ var parcelas=[
    contrato:{tipo:'Propiedad',titular:'Fruchesco SL',catastral:'03009A011000180000UV',superficie_catastral:8.6,notas:'Compra 2019. Conversi\u00f3n a eco completada 2022.'},
    calendario:[{mes:'Ene-Feb',actividad:'Poda eco + compost'},{mes:'Mar',actividad:'Cobre eco + neem'},{mes:'Abr-May',actividad:'Fertiliz. org\u00e1nica'},{mes:'Jun-Jul',actividad:'Cosecha breva eco'},{mes:'Ago-Sep',actividad:'Cosecha higo eco'},{mes:'Oct-Nov',actividad:'Abonado verde'}],
    documentos:['Escritura propiedad','Certificado CAECV','P\u00f3liza seguro','Cuaderno campo eco 2026'],
-   estado:'activa',color:'#D4A843',notas:'Higos eco premium. Mejor precio de venta del portfolio.'},
+   estado:'activa',color:'#D4A843',documentos:[{'nombre':'Manual de Uso','tipo':'manual','fecha':'2019-05-20','vence':null,'archivo':'manual_Fede_Futur1500.pdf','size':'5.2 MB'},{'nombre':'Certificado Homologación','tipo':'certificado','fecha':'2019-01-15','vence':null,'archivo':'cert_homologacion_Fede.pdf','size':'140 KB'}],
+   notas:'Higos eco premium. Mejor precio de venta del portfolio.'},
 
   {id:7,nombre:'Central Confecci\u00f3n',superficie:0.8,cultivo:'instalacion',variedad:'Almac\u00e9n + L\u00ednea MAF',municipio:'Albatera',explotacion:'instalacion',
    catastro:'03009A001000320000WX',sigpac:'-',coordenadas:'38.1756,-0.8648',altitud:70,
@@ -3625,7 +3660,8 @@ var parcelas=[
    contrato:{tipo:'Propiedad',titular:'Fruitum 2016 SL',catastral:'03009A001000320000WX',superficie_catastral:0.8,notas:'Nave industrial 800m2. Incluye oficina 60m2, vestuarios, c\u00e1mara auxiliar.'},
    calendario:[{mes:'Todo a\u00f1o',actividad:'Confecci\u00f3n y expedici\u00f3n seg\u00fan campa\u00f1a'}],
    documentos:['Escritura propiedad','Licencia actividad','P\u00f3liza seguro industrial','Certificado instalaci\u00f3n el\u00e9ctrica'],
-   estado:'activa',color:'#3B82F6',notas:'L\u00ednea calibradora MAF Roda. Capacidad 5 Tn/hora.'},
+   estado:'activa',color:'#3B82F6',documentos:[{'nombre':'Manual de Uso','tipo':'manual','fecha':'2021-04-10','vence':null,'archivo':'manual_Belafer_TBF200.pdf','size':'4.0 MB'},{'nombre':'Certificado Homologación','tipo':'certificado','fecha':'2021-01-01','vence':null,'archivo':'cert_homologacion_Belafer.pdf','size':'130 KB'}],
+   notas:'L\u00ednea calibradora MAF Roda. Capacidad 5 Tn/hora.'},
 
   {id:8,nombre:'C\u00e1mara Frigor\u00edfica',superficie:0.4,cultivo:'instalacion',variedad:'Conservaci\u00f3n 2-8\u00b0C',municipio:'Albatera',explotacion:'instalacion',
    catastro:'03009A001000330000YZ',sigpac:'-',coordenadas:'38.1758,-0.8651',altitud:70,
@@ -4079,7 +4115,8 @@ window.crearParcela=function(){
     agua:{consumoAnual:0,costeM3:0.38,costeAnual:0,concesion:'-',caudal:'-'},
     luz:{contrato:'-',potencia:'-',consumoAnual:0,costeAnual:0,tarifa:'-'},
     gastos:{fitosanitarios:0,fertilizantes:0,manoObra:0,maquinaria:0,seguros:0,otros:0},
-    contrato:{tipo:document.getElementById('np-regimen').value,titular:explot==='fruchesco'?'Fruchesco SL':'Fruitum 2016 SL',superficie_catastral:sup,notas:'Nueva parcela.'},
+    contrato:{tipo:document.getElementById('np-regimen').value,titular:explot==='fruchesco'?'Fruchesco SL':'Fruitum 2016 SL',superficie_catastral:sup,documentos:[{'nombre':'Manual de Operaciones','tipo':'manual','fecha':'2020-06-15','vence':null,'archivo':'manual_Linde_H25D.pdf','size':'7.8 MB'},{'nombre':'Certificado Instalación','tipo':'certificado','fecha':'2020-06-20','vence':null,'archivo':'cert_instalacion_Linde_H25D.pdf','size':'160 KB'},{'nombre':'Póliza Seguro Industrial','tipo':'seguro','fecha':'2025-09-15','vence':'2026-09-15','archivo':'poliza_mapfre_Linde.pdf','size':'310 KB'}],
+   notas:'Nueva parcela.'},
     calendario:[],documentos:[],
     estado:'activa',color:colorMap[explot]||'#2C6E49',notas:document.getElementById('np-notas').value||''
   });
@@ -5758,6 +5795,8 @@ var maquinas=[
    combustible:'gasoil',deposito:90,consumoMedio:6.8,
    mantenimiento:{ultimoAceite:'2026-01-15',proxAceite:3600,ultimoFiltros:'2026-01-15',proxFiltros:3600,ultimoCorreas:'2025-06-10'},
    gastosAnuales:{combustible:4820,reparaciones:1350,seguro:680,mantenimiento:890,itv:45,otros:120},
+   
+   documentos:[{"nombre":"Manual de Usuario","tipo":"manual","fecha":"2020-03-10","vence":null,"archivo":"manual_JD5075E.pdf","size":"8.5 MB"},{"nombre":"Certificado CE","tipo":"certificado","fecha":"2020-01-15","vence":null,"archivo":"cert_CE_JD5075E.pdf","size":"120 KB"},{"nombre":"Libro de Revisiones","tipo":"registro","fecha":"2026-01-15","vence":null,"archivo":"libro_revisiones_JD5075E.pdf","size":"340 KB"},{"nombre":"Factura de Compra","tipo":"factura","fecha":"2020-03-10","vence":null,"archivo":"factura_JD5075E.pdf","size":"95 KB"},{"nombre":"Póliza Seguro Maquinaria","tipo":"seguro","fecha":"2025-09-15","vence":"2026-09-15","archivo":"poliza_mapfre_JD5075E.pdf","size":"280 KB"}],
    notas:'Tractor principal. Cabina climatizada.'},
   {id:2,nombre:'Kubota L3560',tipo:'tractor',propiedad:'propia',estado:'operativa',matricula:'MU-6730-CT',año:2022,
    marca:'Kubota',modelo:'L3560 HST',potencia:'37 CV',serie:'L3560-50234',
@@ -5768,6 +5807,8 @@ var maquinas=[
    combustible:'gasoil',deposito:55,consumoMedio:4.2,
    mantenimiento:{ultimoAceite:'2025-12-05',proxAceite:1700,ultimoFiltros:'2025-12-05',proxFiltros:1700,ultimoCorreas:'-'},
    gastosAnuales:{combustible:2940,reparaciones:420,seguro:520,mantenimiento:650,itv:45,otros:80},
+   
+   documentos:[{"nombre":"Manual de Usuario","tipo":"manual","fecha":"2022-04-20","vence":null,"archivo":"manual_Kubota_L3560.pdf","size":"6.2 MB"},{"nombre":"Certificado CE","tipo":"certificado","fecha":"2022-01-10","vence":null,"archivo":"cert_CE_Kubota_L3560.pdf","size":"115 KB"},{"nombre":"Libro de Revisiones","tipo":"registro","fecha":"2025-12-05","vence":null,"archivo":"libro_revisiones_Kubota_L3560.pdf","size":"290 KB"},{"nombre":"Factura de Compra","tipo":"factura","fecha":"2022-04-20","vence":null,"archivo":"factura_Kubota_L3560.pdf","size":"88 KB"},{"nombre":"Póliza Seguro Maquinaria","tipo":"seguro","fecha":"2025-09-15","vence":"2026-09-15","archivo":"poliza_mapfre_Kubota.pdf","size":"265 KB"}],
    notas:'Tractor auxiliar, ideal para parcelas eco peque\u00f1as.'},
   {id:3,nombre:'Motosierra Stihl MS 261',tipo:'herramienta',propiedad:'propia',estado:'operativa',matricula:'-',año:2022,
    marca:'Stihl',modelo:'MS 261 C-M',potencia:'3.0 kW',serie:'STIHL-MS261-2022-045',
@@ -5778,6 +5819,8 @@ var maquinas=[
    combustible:'gasolina',deposito:0.5,consumoMedio:0.6,
    mantenimiento:{ultimoAceite:'-',proxAceite:0,ultimoFiltros:'2026-01-10',proxFiltros:0,ultimoCorreas:'2025-09-20'},
    gastosAnuales:{combustible:120,reparaciones:85,seguro:0,mantenimiento:95,itv:0,otros:45},
+   
+   documentos:[{"nombre":"Manual de Usuario","tipo":"manual","fecha":"2022-06-01","vence":null,"archivo":"manual_Stihl_MS261.pdf","size":"4.1 MB"},{"nombre":"Certificado CE","tipo":"certificado","fecha":"2022-01-01","vence":null,"archivo":"cert_CE_Stihl_MS261.pdf","size":"95 KB"},{"nombre":"Ficha de Seguridad EPI","tipo":"ficha_seguridad","fecha":"2022-06-01","vence":null,"archivo":"ficha_seguridad_motosierra.pdf","size":"180 KB"}],
    notas:'Motosierra profesional para poda gruesa. Cadena anti-rebote.'},
   {id:4,nombre:'Desbrozadora Husqvarna 535RX',tipo:'herramienta',propiedad:'propia',estado:'operativa',matricula:'-',año:2023,
    marca:'Husqvarna',modelo:'535RX',potencia:'2.2 kW',serie:'HUSQ-535RX-2023-112',
@@ -5788,6 +5831,8 @@ var maquinas=[
    combustible:'gasolina',deposito:0.6,consumoMedio:0.5,
    mantenimiento:{ultimoAceite:'-',proxAceite:0,ultimoFiltros:'2025-12-15',proxFiltros:0,ultimoCorreas:'-'},
    gastosAnuales:{combustible:85,reparaciones:60,seguro:0,mantenimiento:75,itv:0,otros:30},
+   
+   documentos:[{"nombre":"Manual de Usuario","tipo":"manual","fecha":"2023-03-15","vence":null,"archivo":"manual_Husqvarna_535RX.pdf","size":"3.8 MB"},{"nombre":"Certificado CE","tipo":"certificado","fecha":"2023-01-01","vence":null,"archivo":"cert_CE_Husqvarna_535RX.pdf","size":"92 KB"},{"nombre":"Ficha de Seguridad EPI","tipo":"ficha_seguridad","fecha":"2023-03-15","vence":null,"archivo":"ficha_seguridad_desbrozadora.pdf","size":"165 KB"}],
    notas:'Desbrozadora para limpieza entre hileras y m\u00e1rgenes.'},
   {id:5,nombre:'Soplador Stihl BR 800',tipo:'herramienta',propiedad:'propia',estado:'operativa',matricula:'-',año:2024,
    marca:'Stihl',modelo:'BR 800 C-E',potencia:'3.2 kW',serie:'STIHL-BR800-2024-078',
@@ -5798,6 +5843,8 @@ var maquinas=[
    combustible:'gasolina',deposito:1.8,consumoMedio:1.2,
    mantenimiento:{ultimoAceite:'-',proxAceite:0,ultimoFiltros:'2026-02-01',proxFiltros:0,ultimoCorreas:'-'},
    gastosAnuales:{combustible:65,reparaciones:30,seguro:0,mantenimiento:50,itv:0,otros:20},
+   
+   documentos:[{"nombre":"Manual de Usuario","tipo":"manual","fecha":"2024-02-01","vence":null,"archivo":"manual_Stihl_BR800.pdf","size":"3.5 MB"},{"nombre":"Certificado CE","tipo":"certificado","fecha":"2024-01-01","vence":null,"archivo":"cert_CE_Stihl_BR800.pdf","size":"88 KB"},{"nombre":"Ficha de Seguridad EPI","tipo":"ficha_seguridad","fecha":"2024-02-01","vence":null,"archivo":"ficha_seguridad_soplador.pdf","size":"150 KB"}],
    notas:'Soplador de mochila para limpieza post-cosecha.'},
   {id:6,nombre:'Atomizador Fede Futur 1500',tipo:'implemento',propiedad:'propia',estado:'operativa',matricula:'-',año:2019,
    marca:'Fede',modelo:'Futur 1500L',potencia:'-',serie:'FEDE-F1500-2019-087',
@@ -5808,6 +5855,8 @@ var maquinas=[
    combustible:'-',deposito:0,consumoMedio:0,
    mantenimiento:{ultimoAceite:'-',proxAceite:0,ultimoFiltros:'2026-02-01',proxFiltros:0,ultimoCorreas:'2025-05-15'},
    gastosAnuales:{combustible:0,reparaciones:650,seguro:0,mantenimiento:480,itv:0,otros:150},
+   
+   documentos:[{"nombre":"Manual de Uso","tipo":"manual","fecha":"2019-05-20","vence":null,"archivo":"manual_Fede_Futur1500.pdf","size":"5.2 MB"},{"nombre":"Certificado Homologación","tipo":"certificado","fecha":"2019-01-15","vence":null,"archivo":"cert_homologacion_Fede.pdf","size":"140 KB"}],
    notas:'Atomizador arrastrado 1500L. Boquillas antideriva.'},
   {id:7,nombre:'Trituradora Belafer TBF-200',tipo:'implemento',propiedad:'propia',estado:'operativa',matricula:'-',año:2021,
    marca:'Belafer',modelo:'TBF-200',potencia:'-',serie:'BEL-TBF200-2021-043',
@@ -5818,6 +5867,8 @@ var maquinas=[
    combustible:'-',deposito:0,consumoMedio:0,
    mantenimiento:{ultimoAceite:'-',proxAceite:0,ultimoFiltros:'-',proxFiltros:0,ultimoCorreas:'2025-11-20'},
    gastosAnuales:{combustible:0,reparaciones:380,seguro:0,mantenimiento:320,itv:0,otros:90},
+   
+   documentos:[{"nombre":"Manual de Uso","tipo":"manual","fecha":"2021-04-10","vence":null,"archivo":"manual_Belafer_TBF200.pdf","size":"4.0 MB"},{"nombre":"Certificado Homologación","tipo":"certificado","fecha":"2021-01-01","vence":null,"archivo":"cert_homologacion_Belafer.pdf","size":"130 KB"}],
    notas:'Trituradora de restos de poda 2m ancho.'},
   {id:8,nombre:'Carretilla Linde H25D',tipo:'maquinaria_fija',propiedad:'propia',estado:'operativa',matricula:'-',año:2020,
    marca:'Linde',modelo:'H25D',potencia:'55 CV',serie:'H2X393T...',
@@ -5828,6 +5879,8 @@ var maquinas=[
    combustible:'gasoil',deposito:40,consumoMedio:3.5,
    mantenimiento:{ultimoAceite:'2026-02-01',proxAceite:2500,ultimoFiltros:'2026-02-01',proxFiltros:2500,ultimoCorreas:'-'},
    gastosAnuales:{combustible:2450,reparaciones:560,seguro:380,mantenimiento:720,itv:0,otros:180},
+   
+   documentos:[{"nombre":"Manual de Operaciones","tipo":"manual","fecha":"2020-06-15","vence":null,"archivo":"manual_Linde_H25D.pdf","size":"7.8 MB"},{"nombre":"Certificado Instalación","tipo":"certificado","fecha":"2020-06-20","vence":null,"archivo":"cert_instalacion_Linde_H25D.pdf","size":"160 KB"},{"nombre":"Póliza Seguro Industrial","tipo":"seguro","fecha":"2025-09-15","vence":"2026-09-15","archivo":"poliza_mapfre_Linde.pdf","size":"310 KB"}],
    notas:'Carretilla elevadora 2.5t. Pasillos almac\u00e9n.'},
   {id:9,nombre:'L\u00ednea Confecci\u00f3n MAF Roda',tipo:'maquinaria_fija',propiedad:'propia',estado:'operativa',matricula:'-',año:2018,
    marca:'MAF Roda',modelo:'Pomone 7',potencia:'4.5 kW',serie:'MAF-P7-2018-ES025',
@@ -5838,6 +5891,8 @@ var maquinas=[
    combustible:'electrico',deposito:0,consumoMedio:0,
    mantenimiento:{ultimoAceite:'-',proxAceite:0,ultimoFiltros:'-',proxFiltros:0,ultimoCorreas:'2025-09-10'},
    gastosAnuales:{combustible:1800,reparaciones:2400,seguro:1200,mantenimiento:1650,itv:0,otros:500},
+   
+   documentos:[{"nombre":"Manual de Operaciones","tipo":"manual","fecha":"2018-09-01","vence":null,"archivo":"manual_MAF_Roda_Pomone7.pdf","size":"12.3 MB"},{"nombre":"Certificado Instalación","tipo":"certificado","fecha":"2018-09-15","vence":null,"archivo":"cert_instalacion_MAF_Roda.pdf","size":"185 KB"},{"nombre":"Póliza Seguro Industrial","tipo":"seguro","fecha":"2025-10-01","vence":"2026-10-01","archivo":"poliza_mapfre_ind_MAF.pdf","size":"340 KB"},{"nombre":"Certificado Calibración Anual","tipo":"certificado","fecha":"2025-09-10","vence":"2026-09-10","archivo":"cert_calibracion_MAF_2025.pdf","size":"95 KB"}],
    notas:'L\u00ednea calibrado+selecci\u00f3n fruta. Capacidad 5t/h.'},
   {id:10,nombre:'Plataforma Elevadora Haulotte',tipo:'implemento',propiedad:'alquiler',estado:'operativa',matricula:'-',año:2022,
    marca:'Haulotte',modelo:'Star 10',potencia:'El\u00e9ctrica',serie:'ALQUILER',
@@ -5849,6 +5904,8 @@ var maquinas=[
    combustible:'electrico',deposito:0,consumoMedio:0,
    mantenimiento:{ultimoAceite:'-',proxAceite:0,ultimoFiltros:'-',proxFiltros:0,ultimoCorreas:'-'},
    gastosAnuales:{combustible:0,reparaciones:0,seguro:0,mantenimiento:0,itv:0,alquiler:1020,otros:0},
+   
+   documentos:[{"nombre":"Contrato de Alquiler","tipo":"factura","fecha":"2026-02-15","vence":"2026-04-15","archivo":"contrato_alquiler_Haulotte.pdf","size":"220 KB"}],
    notas:'Alquiler temporal poda en altura granados.'},
   {id:11,nombre:'Retroexcavadora CAT 428F',tipo:'implemento',propiedad:'alquiler',estado:'operativa',matricula:'-',año:2021,
    marca:'Caterpillar',modelo:'428F2',potencia:'97 CV',serie:'ALQUILER',
@@ -5860,20 +5917,22 @@ var maquinas=[
    combustible:'gasoil',deposito:120,consumoMedio:12,
    mantenimiento:{ultimoAceite:'-',proxAceite:0,ultimoFiltros:'-',proxFiltros:0,ultimoCorreas:'-'},
    gastosAnuales:{combustible:0,reparaciones:0,seguro:0,mantenimiento:0,itv:0,alquiler:1440,otros:0},
+   
+   documentos:[{"nombre":"Contrato de Alquiler","tipo":"factura","fecha":"2026-03-01","vence":"2026-03-10","archivo":"contrato_alquiler_CAT428F.pdf","size":"245 KB"}],
    notas:'Alquiler para destoconar parcela Los Llanos.'}
 ];
 
 var reparaciones=[
-  {id:1,maquina:3,fecha:'2026-03-01',tipo:'correctiva',descripcion:'Sustituci\u00f3n cadena y pi\u00f1\u00f3n motosierra Stihl MS 261',taller:'SAT Stihl Orihuela',coste:145,estado:'completada',garantia:true,garantiaMeses:6,piezas:'Cadena Stihl RS 325 + pi\u00f1\u00f3n',horasParada:2},
-  {id:2,maquina:1,fecha:'2026-02-15',tipo:'preventiva',descripcion:'Revisi\u00f3n 3000h: cambio aceite motor+hidr\u00e1ulico, filtros completos',taller:'John Deere Murcia',coste:890,estado:'completada',garantia:false,garantiaMeses:0,piezas:'Aceite 15W40 20L, filtros motor+hidr\u00e1ulico+aire',horasParada:4},
-  {id:3,maquina:9,fecha:'2026-02-28',tipo:'correctiva',descripcion:'Reparaci\u00f3n cinta transportadora principal - rodillos desgastados',taller:'MAF Roda SAT',coste:2200,estado:'completada',garantia:false,garantiaMeses:0,piezas:'4x rodillos + banda 12m + tensor',horasParada:8},
-  {id:4,maquina:6,fecha:'2026-01-20',tipo:'preventiva',descripcion:'Sustituci\u00f3n boquillas antideriva + calibraci\u00f3n',taller:'Pulverizadores Fede',coste:480,estado:'completada',garantia:false,garantiaMeses:0,piezas:'20x boquillas Albuz AVI-110-015',horasParada:3},
-  {id:5,maquina:1,fecha:'2026-03-04',tipo:'correctiva',descripcion:'Fuga circuito hidr\u00e1ulico elevador frontal',taller:'John Deere Murcia',coste:0,estado:'en_curso',garantia:false,garantiaMeses:0,piezas:'Pendiente diagn\u00f3stico',horasParada:0},
-  {id:6,maquina:8,fecha:'2025-12-10',tipo:'correctiva',descripcion:'Sustituci\u00f3n horquillas desgastadas',taller:'Linde SAT',coste:950,estado:'completada',garantia:false,garantiaMeses:0,piezas:'Par horquillas 1200mm clase III',horasParada:6},
-  {id:7,maquina:5,fecha:'2026-02-05',tipo:'preventiva',descripcion:'Limpieza filtro aire y revisi\u00f3n buj\u00eda soplador BR 800',taller:'SAT Stihl Orihuela',coste:45,estado:'completada',garantia:false,garantiaMeses:0,piezas:'Filtro aire + buj\u00eda NGK',horasParada:1},
-  {id:8,maquina:2,fecha:'2026-03-02',tipo:'correctiva',descripcion:'Cambio neum\u00e1ticos traseros (agrarios nuevos)',taller:'Neum\u00e1ticos Orihuela',coste:680,estado:'completada',garantia:true,garantiaMeses:12,piezas:'2x Firestone Performer 65 420/65R24',horasParada:2},
-  {id:9,maquina:7,fecha:'2025-11-20',tipo:'preventiva',descripcion:'Afilado y sustituci\u00f3n cuchillas trituradoras',taller:'Belafer SAT',coste:320,estado:'completada',garantia:false,garantiaMeses:0,piezas:'12x cuchillas Y + 4x contracuchillas',horasParada:4},
-  {id:10,maquina:3,fecha:'2025-10-15',tipo:'correctiva',descripcion:'Sustituci\u00f3n gu\u00eda espada y afilado cadena motosierra',taller:'SAT Stihl Orihuela',coste:180,estado:'completada',garantia:true,garantiaMeses:12,piezas:'Espada Stihl 40cm + cadena nueva',horasParada:2}
+  {id:1,maquina:3,fecha:'2026-03-01',tipo:'correctiva',descripcion:'Sustituci\u00f3n cadena y pi\u00f1\u00f3n motosierra Stihl MS 261',taller:'SAT Stihl Orihuela',coste:145,estado:'completada',garantia:true,garantiaMeses:6,piezas:'Cadena Stihl RS 325 + pi\u00f1\u00f3n',horasParada:2,factura:'FAC-2026-0089',informe:'informe_cadena_stihl_MS261.pdf'},
+  {id:2,maquina:1,fecha:'2026-02-15',tipo:'preventiva',descripcion:'Revisi\u00f3n 3000h: cambio aceite motor+hidr\u00e1ulico, filtros completos',taller:'John Deere Murcia',coste:890,estado:'completada',garantia:false,garantiaMeses:0,piezas:'Aceite 15W40 20L, filtros motor+hidr\u00e1ulico+aire',horasParada:4,factura:'FAC-2026-0052',informe:'informe_revision_3000h_JD5075E.pdf'},
+  {id:3,maquina:9,fecha:'2026-02-28',tipo:'correctiva',descripcion:'Reparaci\u00f3n cinta transportadora principal - rodillos desgastados',taller:'MAF Roda SAT',coste:2200,estado:'completada',garantia:false,garantiaMeses:0,piezas:'4x rodillos + banda 12m + tensor',horasParada:8,factura:'FAC-2026-0078',informe:'informe_cinta_MAF_Roda.pdf'},
+  {id:4,maquina:6,fecha:'2026-01-20',tipo:'preventiva',descripcion:'Sustituci\u00f3n boquillas antideriva + calibraci\u00f3n',taller:'Pulverizadores Fede',coste:480,estado:'completada',garantia:false,garantiaMeses:0,piezas:'20x boquillas Albuz AVI-110-015',horasParada:3,factura:'FAC-2026-0031',informe:'informe_boquillas_Fede.pdf'},
+  {id:5,maquina:1,fecha:'2026-03-04',tipo:'correctiva',descripcion:'Fuga circuito hidr\u00e1ulico elevador frontal',taller:'John Deere Murcia',coste:0,estado:'en_curso',garantia:false,garantiaMeses:0,piezas:'Pendiente diagn\u00f3stico',horasParada:0,factura:'Pendiente',informe:''},
+  {id:6,maquina:8,fecha:'2025-12-10',tipo:'correctiva',descripcion:'Sustituci\u00f3n horquillas desgastadas',taller:'Linde SAT',coste:950,estado:'completada',garantia:false,garantiaMeses:0,piezas:'Par horquillas 1200mm clase III',horasParada:6,factura:'FAC-2025-0412',informe:'informe_horquillas_Linde.pdf'},
+  {id:7,maquina:5,fecha:'2026-02-05',tipo:'preventiva',descripcion:'Limpieza filtro aire y revisi\u00f3n buj\u00eda soplador BR 800',taller:'SAT Stihl Orihuela',coste:45,estado:'completada',garantia:false,garantiaMeses:0,piezas:'Filtro aire + buj\u00eda NGK',horasParada:1,factura:'FAC-2026-0015',informe:''},
+  {id:8,maquina:2,fecha:'2026-03-02',tipo:'correctiva',descripcion:'Cambio neum\u00e1ticos traseros (agrarios nuevos)',taller:'Neum\u00e1ticos Orihuela',coste:680,estado:'completada',garantia:true,garantiaMeses:12,piezas:'2x Firestone Performer 65 420/65R24',horasParada:2,factura:'FAC-2026-0067',informe:'informe_neumaticos_Kubota.pdf'},
+  {id:9,maquina:7,fecha:'2025-11-20',tipo:'preventiva',descripcion:'Afilado y sustituci\u00f3n cuchillas trituradoras',taller:'Belafer SAT',coste:320,estado:'completada',garantia:false,garantiaMeses:0,piezas:'12x cuchillas Y + 4x contracuchillas',horasParada:4,factura:'FAC-2025-0398',informe:'informe_cuchillas_Belafer.pdf'},
+  {id:10,maquina:3,fecha:'2025-10-15',tipo:'correctiva',descripcion:'Sustituci\u00f3n gu\u00eda espada y afilado cadena motosierra',taller:'SAT Stihl Orihuela',coste:180,estado:'completada',garantia:true,garantiaMeses:12,piezas:'Espada Stihl 40cm + cadena nueva',horasParada:2,factura:'FAC-2025-0356',informe:'informe_espada_stihl.pdf'}
 ];
 
 var repostajes=[
@@ -6021,6 +6080,7 @@ window.verFichaMaquina=function(id){
   h+='<button class="btn btn-sm btn-outline" onclick="mostrarFichaMaqTab('+id+',\'economia\')">Econom\u00eda</button>';
   h+='<button class="btn btn-sm btn-outline" onclick="mostrarFichaMaqTab('+id+',\'mant\')">Mantenimiento</button>';
   h+='<button class="btn btn-sm btn-outline" onclick="mostrarFichaMaqTab('+id+',\'historial\')">Historial</button>';
+  h+='<button class="btn btn-sm btn-outline" onclick="mostrarFichaMaqTab('+id+',\'documentos\')">\uD83D\uDCC4 Documentos</button>';
   h+='</div>';
   h+='<div id="ficha-maq-body"></div>';
   h+='<div style="display:flex;gap:8px;margin-top:16px"><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cerrar</button></div>';
@@ -6186,6 +6246,7 @@ window.mostrarFichaMaqTab=function(id,tab){
         if(r.garantia)h+='<div style="font-size:9px;color:var(--accent)">\u2705 Garant\u00eda '+r.garantiaMeses+'m</div>';
         h+='</div></div>';
         if(r.horasParada>0)h+='<div style="font-size:10px;color:var(--gray);margin-top:2px">\u23F1\uFE0F Horas parada: '+r.horasParada+'h</div>';
+        if(r.factura||r.informe){h+='<div style="font-size:10px;margin-top:2px">';if(r.factura&&r.factura!=='Pendiente')h+='<span style="color:#3B82F6">\uD83E\uDDFE '+r.factura+'</span> ';if(r.informe)h+='<span style="color:#8B5CF6">\uD83D\uDCC4 Informe</span>';h+='</div>';}
         h+='</div>';
       });
     }
@@ -6221,6 +6282,9 @@ window.mostrarFichaMaqTab=function(id,tab){
       h+='</div>';
     }
   }
+  else if(tab==='documentos'){
+    h+=window.renderDocumentosGrid('ficha-maq-body',m.documentos||[],m.nombre,'maq-doc-file');
+  }
   body.innerHTML=h;
 };
 
@@ -6255,7 +6319,7 @@ function renderReparaciones(){
   }
   // Tabla
   h+='<div class="tbl-wrap"><table>';
-  h+='<tr><th>Fecha</th><th>M\u00e1quina</th><th>Tipo</th><th>Descripci\u00f3n</th><th>Taller</th><th>Coste</th><th>Parada</th><th>Garant\u00eda</th><th>Estado</th></tr>';
+  h+='<tr><th>Fecha</th><th>M\u00e1quina</th><th>Tipo</th><th>Descripci\u00f3n</th><th>Taller</th><th>Coste</th><th>Parada</th><th>Garant\u00eda</th><th>Docs</th><th>Estado</th></tr>';
   sorted.forEach(function(r){
     var maq=maquinas.find(function(x){return x.id===r.maquina});
     var nombre=maq?maq.nombre:'?';
@@ -6268,6 +6332,11 @@ function renderReparaciones(){
     h+='<td style="font-weight:700;color:var(--coral)">'+(r.coste>0?fmtEur(r.coste):'Pte.')+'</td>';
     h+='<td>'+r.horasParada+'h</td>';
     h+='<td>'+(r.garantia?'<span class="tag tag-green" style="font-size:9px">\u2705 '+r.garantiaMeses+'m</span>':'-')+'</td>';
+    h+='<td style="text-align:center;white-space:nowrap">';
+    if(r.factura&&r.factura!=='Pendiente')h+='<span title="Factura: '+r.factura+'" style="cursor:pointer">\uD83E\uDDFE</span> ';
+    if(r.informe)h+='<span title="Informe: '+r.informe+'" style="cursor:pointer">\uD83D\uDCC4</span>';
+    if((!r.factura||r.factura==='Pendiente')&&!r.informe)h+='<span style="color:var(--gray)">\u2014</span>';
+    h+='</td>';
     h+='<td><span class="tag '+(r.estado==='completada'?'tag-green':'tag-yellow')+'">'+r.estado+'</span></td>';
     h+='</tr>';
   });
@@ -6487,6 +6556,7 @@ window.nuevaReparacionModal=function(){
     '</div>'+
     '<div style="margin-top:10px"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Descripci\u00f3n</label><input type="text" id="nr-desc" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px" placeholder="Descripci\u00f3n de la reparaci\u00f3n..."></div>'+
     '<div style="margin-top:8px"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Piezas / Materiales</label><input type="text" id="nr-piezas" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px" placeholder="Piezas utilizadas..."></div>'+
+    '<div style="margin-top:8px"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">\uD83E\uDDFE N\u00ba Factura</label><input type="text" id="nr-factura" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px" placeholder="FAC-2026-XXXX"></div>'+
     '<div style="display:flex;gap:8px;margin-top:16px"><button class="btn btn-primary" onclick="crearReparacion()">Registrar</button><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button></div>';
   openModal('modal-pedido');
 };
@@ -6505,7 +6575,9 @@ window.crearReparacion=function(){
     estado:parseFloat(document.getElementById('nr-coste').value)>0?'completada':'en_curso',
     garantia:false,garantiaMeses:0,
     piezas:document.getElementById('nr-piezas').value||'-',
-    horasParada:parseInt(document.getElementById('nr-horas').value)||0
+    horasParada:parseInt(document.getElementById('nr-horas').value)||0,
+    factura:document.getElementById('nr-factura').value||'',
+    informe:''
   });
   closeModal('modal-pedido');
   renderMaqStats();renderReparaciones();
@@ -6557,6 +6629,7 @@ window.crearMaquina=function(){
     combustible:'gasoil',deposito:0,consumoMedio:0,
     mantenimiento:{ultimoAceite:'-',proxAceite:0,ultimoFiltros:'-',proxFiltros:0,ultimoCorreas:'-'},
     gastosAnuales:{combustible:0,reparaciones:0,seguro:0,mantenimiento:0,itv:0,otros:0},
+    documentos:[],
     notas:''
   });
   closeModal('modal-pedido');
@@ -11526,13 +11599,79 @@ showPage=function(id){
 (function(){
 'use strict';
 var _defVehicles=[
-  {id:1,matricula:'ALI-4521-BT',nombre:'Iveco Daily 35S14',tipo:'Furg\u00f3n Refrigerado',marca:'Iveco',modelo:'Daily 35S14',año:2021,categoria:'transporte',capacidad:'3.500 kg',activo:true,kmActual:87320,itv:'2026-11-15',seguro:'2026-09-01',estado:'operativo',notas:'Furg\u00f3n principal transporte fruta. Equipo frigor\u00edfico Carrier Supra 550'},
-  {id:2,matricula:'ALI-7890-CT',nombre:'MAN TGL 12.250',tipo:'Cami\u00f3n Plataforma',marca:'MAN',modelo:'TGL 12.250',año:2019,categoria:'transporte',capacidad:'8.000 kg',activo:true,kmActual:124500,itv:'2026-08-20',seguro:'2026-12-01',estado:'operativo',notas:'Transporte pallets grandes. Plataforma hidr\u00e1ulica'},
-  {id:3,matricula:'ALI-2233-DM',nombre:'Renault Kangoo',tipo:'Furgoneta',marca:'Renault',modelo:'Kangoo',año:2022,categoria:'auxiliar',capacidad:'800 kg',activo:true,kmActual:45600,itv:'2027-02-10',seguro:'2026-10-15',estado:'operativo',notas:'Transporte ligero, recados y muestras'},
-  {id:4,matricula:'ALI-5566-EJ',nombre:'John Deere 5075E + Remolque',tipo:'Tractor + Remolque',marca:'John Deere',modelo:'5075E',año:2020,categoria:'auxiliar',capacidad:'5.000 kg',activo:true,kmActual:3200,itv:'N/A',seguro:'2026-08-01',estado:'operativo',notas:'Tractor campo con remolque agr\u00edcola 5t'},
-  {id:5,matricula:'ALI-8812-FK',nombre:'Furg\u00f3n Renault Master',tipo:'Furg\u00f3n',marca:'Renault',modelo:'Master L3H2',año:2023,categoria:'transporte',capacidad:'1.200 kg',activo:true,kmActual:32100,itv:'2027-06-10',seguro:'2027-01-15',estado:'operativo',notas:'Furg\u00f3n cerrado para reparto local y comarcal'},
-  {id:6,matricula:'ALI-3345-GL',nombre:'Nissan Navara NP300',tipo:'Pickup 4x4',marca:'Nissan',modelo:'Navara NP300',año:2022,categoria:'auxiliar',capacidad:'800 kg',activo:true,kmActual:58700,itv:'2026-12-05',seguro:'2026-11-20',estado:'operativo',notas:'Pickup para acceso a parcelas y transporte herramientas'},
-  {id:7,matricula:'ALI-9901-HM',nombre:'Carretilla Toyota 8FBMT25',tipo:'Carretilla Elevadora',marca:'Toyota',modelo:'8FBMT25',año:2021,categoria:'auxiliar',capacidad:'2.500 kg',activo:true,kmActual:1850,itv:'N/A',seguro:'2026-09-15',estado:'operativo',notas:'Carretilla el\u00e9ctrica para carga/descarga almac\u00e9n'}
+  {id:1,matricula:'ALI-4521-BT',nombre:'Iveco Daily 35S14',tipo:'Furgón Refrigerado',marca:'Iveco',modelo:'Daily 35S14',año:2021,categoria:'transporte',capacidad:'3.500 kg',activo:true,kmActual:87320,
+   itv:{fecha:'2026-11-15',estado:'vigente',proxima:'2027-11-15'},
+   seguro:{compania:'Mapfre Agro',poliza:'FLT-2026-4521',prima:890,vence:'2026-09-01'},
+   estado:'operativo',notas:'Furgón principal transporte fruta. Equipo frigorífico Carrier Supra 550',
+   documentos:[
+     {nombre:'Permiso de Circulación',tipo:'permiso',fecha:'2021-06-15',vence:null,archivo:'permiso_circulacion_ALI4521BT.pdf',size:'120 KB'},
+     {nombre:'Ficha Técnica ITV',tipo:'itv',fecha:'2025-11-15',vence:'2026-11-15',archivo:'ficha_tecnica_ITV_ALI4521BT.pdf',size:'340 KB'},
+     {nombre:'Póliza Seguro RC+Todo Riesgo',tipo:'seguro',fecha:'2025-09-01',vence:'2026-09-01',archivo:'poliza_mapfre_ALI4521BT.pdf',size:'450 KB'},
+     {nombre:'Certificado ITV Vigente',tipo:'certificado',fecha:'2025-11-15',vence:'2026-11-15',archivo:'cert_itv_2025_ALI4521BT.pdf',size:'85 KB'},
+     {nombre:'Tacógrafo Digital',tipo:'tacografo',fecha:'2024-06-01',vence:'2026-06-01',archivo:'tacografo_ALI4521BT.pdf',size:'95 KB'},
+     {nombre:'Tarjeta de Transporte',tipo:'transporte',fecha:'2021-06-15',vence:null,archivo:'tarjeta_transporte_ALI4521BT.pdf',size:'65 KB'}
+   ]},
+  {id:2,matricula:'ALI-7890-CT',nombre:'MAN TGL 12.250',tipo:'Camión Plataforma',marca:'MAN',modelo:'TGL 12.250',año:2019,categoria:'transporte',capacidad:'8.000 kg',activo:true,kmActual:124500,
+   itv:{fecha:'2026-08-20',estado:'vigente',proxima:'2027-08-20'},
+   seguro:{compania:'Mapfre Agro',poliza:'FLT-2026-7890',prima:1250,vence:'2026-12-01'},
+   estado:'operativo',notas:'Transporte pallets grandes. Plataforma hidráulica',
+   documentos:[
+     {nombre:'Permiso de Circulación',tipo:'permiso',fecha:'2019-03-10',vence:null,archivo:'permiso_circulacion_ALI7890CT.pdf',size:'115 KB'},
+     {nombre:'Ficha Técnica ITV',tipo:'itv',fecha:'2025-08-20',vence:'2026-08-20',archivo:'ficha_tecnica_ITV_ALI7890CT.pdf',size:'360 KB'},
+     {nombre:'Póliza Seguro RC+Todo Riesgo',tipo:'seguro',fecha:'2025-12-01',vence:'2026-12-01',archivo:'poliza_mapfre_ALI7890CT.pdf',size:'480 KB'},
+     {nombre:'Certificado ITV Vigente',tipo:'certificado',fecha:'2025-08-20',vence:'2026-08-20',archivo:'cert_itv_2025_ALI7890CT.pdf',size:'90 KB'},
+     {nombre:'Tacógrafo Digital',tipo:'tacografo',fecha:'2025-01-15',vence:'2027-01-15',archivo:'tacografo_ALI7890CT.pdf',size:'98 KB'},
+     {nombre:'Tarjeta de Transporte',tipo:'transporte',fecha:'2019-03-10',vence:null,archivo:'tarjeta_transporte_ALI7890CT.pdf',size:'68 KB'}
+   ]},
+  {id:3,matricula:'ALI-2233-DM',nombre:'Renault Kangoo',tipo:'Furgoneta',marca:'Renault',modelo:'Kangoo',año:2022,categoria:'auxiliar',capacidad:'800 kg',activo:true,kmActual:45600,
+   itv:{fecha:'2027-02-10',estado:'vigente',proxima:'2028-02-10'},
+   seguro:{compania:'AXA Seguros',poliza:'AXA-2026-2233',prima:520,vence:'2026-10-15'},
+   estado:'operativo',notas:'Transporte ligero, recados y muestras',
+   documentos:[
+     {nombre:'Permiso de Circulación',tipo:'permiso',fecha:'2022-04-20',vence:null,archivo:'permiso_circulacion_ALI2233DM.pdf',size:'118 KB'},
+     {nombre:'Ficha Técnica ITV',tipo:'itv',fecha:'2026-02-10',vence:'2027-02-10',archivo:'ficha_tecnica_ITV_ALI2233DM.pdf',size:'320 KB'},
+     {nombre:'Póliza Seguro Terceros Ampliado',tipo:'seguro',fecha:'2025-10-15',vence:'2026-10-15',archivo:'poliza_axa_ALI2233DM.pdf',size:'380 KB'},
+     {nombre:'Certificado ITV Vigente',tipo:'certificado',fecha:'2026-02-10',vence:'2027-02-10',archivo:'cert_itv_2026_ALI2233DM.pdf',size:'82 KB'}
+   ]},
+  {id:4,matricula:'ALI-5566-EJ',nombre:'John Deere 5075E + Remolque',tipo:'Tractor + Remolque',marca:'John Deere',modelo:'5075E',año:2020,categoria:'auxiliar',capacidad:'5.000 kg',activo:true,kmActual:3200,
+   itv:{fecha:'N/A',estado:'N/A',proxima:'N/A'},
+   seguro:{compania:'Agroseguro',poliza:'AGR-2026-5566',prima:680,vence:'2026-08-01'},
+   estado:'operativo',notas:'Tractor campo con remolque agrícola 5t',
+   documentos:[
+     {nombre:'Póliza Seguro Maquinaria Agrícola',tipo:'seguro',fecha:'2025-08-01',vence:'2026-08-01',archivo:'poliza_agroseguro_ALI5566EJ.pdf',size:'320 KB'},
+     {nombre:'Cartilla GAP Maquinaria',tipo:'cartilla',fecha:'2020-05-15',vence:null,archivo:'cartilla_GAP_ALI5566EJ.pdf',size:'145 KB'},
+     {nombre:'Certificado ROPO Operador',tipo:'ropo',fecha:'2024-01-10',vence:'2029-01-10',archivo:'cert_ROPO_operador.pdf',size:'95 KB'}
+   ]},
+  {id:5,matricula:'ALI-8812-FK',nombre:'Furgón Renault Master',tipo:'Furgón',marca:'Renault',modelo:'Master L3H2',año:2023,categoria:'transporte',capacidad:'1.200 kg',activo:true,kmActual:32100,
+   itv:{fecha:'2027-06-10',estado:'vigente',proxima:'2028-06-10'},
+   seguro:{compania:'Zurich Seguros',poliza:'ZUR-2027-8812',prima:720,vence:'2027-01-15'},
+   estado:'operativo',notas:'Furgón cerrado para reparto local y comarcal',
+   documentos:[
+     {nombre:'Permiso de Circulación',tipo:'permiso',fecha:'2023-02-28',vence:null,archivo:'permiso_circulacion_ALI8812FK.pdf',size:'120 KB'},
+     {nombre:'Ficha Técnica ITV',tipo:'itv',fecha:'2026-06-10',vence:'2027-06-10',archivo:'ficha_tecnica_ITV_ALI8812FK.pdf',size:'335 KB'},
+     {nombre:'Póliza Seguro RC+Todo Riesgo',tipo:'seguro',fecha:'2026-01-15',vence:'2027-01-15',archivo:'poliza_zurich_ALI8812FK.pdf',size:'420 KB'},
+     {nombre:'Certificado ITV Vigente',tipo:'certificado',fecha:'2026-06-10',vence:'2027-06-10',archivo:'cert_itv_2026_ALI8812FK.pdf',size:'88 KB'},
+     {nombre:'Tarjeta de Transporte',tipo:'transporte',fecha:'2023-02-28',vence:null,archivo:'tarjeta_transporte_ALI8812FK.pdf',size:'62 KB'}
+   ]},
+  {id:6,matricula:'ALI-3345-GL',nombre:'Nissan Navara NP300',tipo:'Pickup 4x4',marca:'Nissan',modelo:'Navara NP300',año:2022,categoria:'auxiliar',capacidad:'800 kg',activo:true,kmActual:58700,
+   itv:{fecha:'2026-12-05',estado:'vigente',proxima:'2027-12-05'},
+   seguro:{compania:'Línea Directa',poliza:'LD-2026-3345',prima:580,vence:'2026-11-20'},
+   estado:'operativo',notas:'Pickup para acceso a parcelas y transporte herramientas',
+   documentos:[
+     {nombre:'Permiso de Circulación',tipo:'permiso',fecha:'2022-07-10',vence:null,archivo:'permiso_circulacion_ALI3345GL.pdf',size:'122 KB'},
+     {nombre:'Ficha Técnica ITV',tipo:'itv',fecha:'2025-12-05',vence:'2026-12-05',archivo:'ficha_tecnica_ITV_ALI3345GL.pdf',size:'310 KB'},
+     {nombre:'Póliza Seguro Todo Riesgo',tipo:'seguro',fecha:'2025-11-20',vence:'2026-11-20',archivo:'poliza_LD_ALI3345GL.pdf',size:'395 KB'},
+     {nombre:'Certificado ITV Vigente',tipo:'certificado',fecha:'2025-12-05',vence:'2026-12-05',archivo:'cert_itv_2025_ALI3345GL.pdf',size:'85 KB'}
+   ]},
+  {id:7,matricula:'ALI-9901-HM',nombre:'Carretilla Toyota 8FBMT25',tipo:'Carretilla Elevadora',marca:'Toyota',modelo:'8FBMT25',año:2021,categoria:'auxiliar',capacidad:'2.500 kg',activo:true,kmActual:1850,
+   itv:{fecha:'N/A',estado:'N/A',proxima:'N/A'},
+   seguro:{compania:'Mapfre Industrial',poliza:'IND-2026-9901',prima:450,vence:'2026-09-15'},
+   estado:'operativo',notas:'Carretilla eléctrica para carga/descarga almacén',
+   documentos:[
+     {nombre:'Póliza Seguro Maquinaria Industrial',tipo:'seguro',fecha:'2025-09-15',vence:'2026-09-15',archivo:'poliza_mapfre_ind_ALI9901HM.pdf',size:'340 KB'},
+     {nombre:'Certificado Operador Carretilla',tipo:'operador',fecha:'2023-03-20',vence:'2028-03-20',archivo:'cert_operador_carretilla.pdf',size:'180 KB'},
+     {nombre:'Revisión Periódica Anual',tipo:'revision',fecha:'2025-10-01',vence:'2026-10-01',archivo:'revision_periodica_2025_ALI9901HM.pdf',size:'220 KB'}
+   ]}
 ];
 var tipoRutaDef={comercial:{icon:'\uD83D\uDE9B',label:'Comercial',color:'#3B82F6'},campo:{icon:'\uD83D\uDE9C',label:'Campo',color:'#059669'},interna:{icon:'\uD83D\uDD04',label:'Interna',color:'#8B5CF6'},exportacion:{icon:'\uD83D\uDEA2',label:'Exportaci\u00f3n',color:'#E07A5F'}};
 var _defRoutes=[
@@ -11561,6 +11700,12 @@ var _defRoutes=[
   {id:19,fecha:'2026-03-02',vehiculo:'ALI-3345-GL',conductor:'Ahmed Benaissa',origen:'Finca La Solana (Albatera)',destino:'Finca Fruchesco Eco (Crevillente)',horaSalida:'14:00',horaLlegada:'14:20',estado:'completada',tipoRuta:'interna',carga:'Traslado cuadrilla recolectores',kg:100,lotes:[],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'Refuerzo cuadrilla eco para granada',distanciaKm:6,tiempoEstimado:'18min',costoEstimado:3}
 ];
 var vehicles=AgroStore.load('agri_vehicles',_defVehicles);
+// Migrate old string itv/seguro fields to object format
+vehicles.forEach(function(v){
+  if(typeof v.seguro==='string'){v.seguro={compania:'Pendiente',poliza:'-',prima:0,vence:v.seguro};}
+  if(typeof v.itv==='string'){v.itv={fecha:v.itv,estado:v.itv==='N/A'?'N/A':'vigente',proxima:''};}
+  if(!v.documentos)v.documentos=[];
+});
 var routes=AgroStore.load('agri_routes',_defRoutes);
 
 var M=document.getElementById('main-content');
@@ -11593,7 +11738,7 @@ function renderTranspStats(){
   var transp=vehicles.filter(function(v){return v.categoria==='transporte'}).length;
   var aux=vehicles.filter(function(v){return v.categoria==='auxiliar'}).length;
   var totalKm=vehicles.reduce(function(s,v){return s+v.kmActual},0);
-  var proxItv=vehicles.filter(function(v){if(v.itv==='N/A')return false;return v.itv<=new Date(Date.now()+90*86400000).toISOString().slice(0,10)}).length;
+  var proxItv=vehicles.filter(function(v){var f=(v.itv&&v.itv.fecha)?v.itv.fecha:v.itv;if(!f||f==='N/A')return false;return f<=new Date(Date.now()+90*86400000).toISOString().slice(0,10)}).length;
   el.innerHTML=
     '<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(44,110,73,.12);color:var(--accent)">\uD83D\uDE9B</div><div class="stat-body"><div class="stat-val">'+totalVeh+'</div><div class="stat-label">Veh\u00edculos</div></div></div>'+
     '<div class="stat-mini s-blue"><div class="stat-icon" style="background:rgba(59,130,246,.12);color:#3B82F6">\uD83D\uDE9A</div><div class="stat-body"><div class="stat-val">'+transp+'</div><div class="stat-label">Transporte</div></div></div>'+
@@ -11630,11 +11775,14 @@ function renderFlotaTransp(){
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:8px 0;text-align:center">'+
       '<div style="background:rgba(0,0,0,.03);padding:6px;border-radius:6px"><div style="font-weight:700;font-size:13px">'+v.kmActual.toLocaleString('es')+'</div><div style="font-size:9px;color:var(--gray)">km</div></div>'+
       '<div style="background:rgba(0,0,0,.03);padding:6px;border-radius:6px"><div style="font-weight:700;font-size:13px">'+v.capacidad+'</div><div style="font-size:9px;color:var(--gray)">Capacidad</div></div>'+
-      '<div style="background:rgba(0,0,0,.03);padding:6px;border-radius:6px"><div style="font-weight:700;font-size:13px">'+(v.itv==='N/A'?'N/A':v.itv)+'</div><div style="font-size:9px;color:var(--gray)">ITV</div></div></div>'+
+      '<div style="background:rgba(0,0,0,.03);padding:6px;border-radius:6px"><div style="font-weight:700;font-size:13px">'+((v.itv&&v.itv.fecha)?(v.itv.fecha==='N/A'?'N/A':v.itv.fecha):(v.itv||'N/A'))+'</div><div style="font-size:9px;color:var(--gray)">ITV</div></div></div>'+
       '<div style="display:flex;gap:6px;flex-wrap:wrap;font-size:11px">'+
       '<span style="background:rgba(76,149,108,.1);padding:3px 8px;border-radius:6px">'+v.marca+' '+v.modelo+'</span>'+
       '<span style="background:rgba(212,168,67,.1);padding:3px 8px;border-radius:6px">A\u00f1o: '+v.año+'</span>'+
-      '<span style="background:rgba(59,130,246,.1);padding:3px 8px;border-radius:6px">Seguro: '+v.seguro+'</span></div>'+
+      '<span style="background:rgba(59,130,246,.1);padding:3px 8px;border-radius:6px">Seguro: '+((v.seguro&&v.seguro.compania)?v.seguro.compania:(v.seguro||'Pendiente'))+'</span>'+
+      '<span style="background:rgba(139,92,246,.1);padding:3px 8px;border-radius:6px">\uD83D\uDCC4 '+(v.documentos?v.documentos.length:0)+' docs</span></div>'+
+      '<div style="display:flex;gap:6px;margin-top:8px">'+
+      '<button class="btn btn-sm btn-primary" onclick="verFichaVehiculo('+v.id+')">\uD83D\uDCCB Ver Ficha</button></div>'+
       (v.notas?'<div style="font-size:11px;color:var(--gray);margin-top:6px">'+v.notas+'</div>':'')+
     '</div>';
   });
@@ -11892,10 +12040,180 @@ window.guardarVehiculo=function(){
   var mat=document.getElementById('veh-matricula').value;
   var t=document.getElementById('veh-tipo').value;
   if(!n||!mat||!t){notifySaved('Completa campos obligatorios');return}
-  vehicles.push({id:vehicles.length+1,matricula:mat,nombre:n,tipo:t,marca:document.getElementById('veh-marca').value||'',modelo:document.getElementById('veh-modelo').value||'',año:parseInt(document.getElementById('veh-año').value)||2024,categoria:document.getElementById('veh-cat').value,capacidad:document.getElementById('veh-cap').value||'N/A',activo:true,kmActual:parseInt(document.getElementById('veh-km').value)||0,itv:document.getElementById('veh-itv').value||'N/A',seguro:'Pendiente',estado:'operativo',notas:document.getElementById('veh-notas').value||''});
+  var itvVal=document.getElementById('veh-itv').value||'N/A';
+  vehicles.push({id:vehicles.length+1,matricula:mat,nombre:n,tipo:t,marca:document.getElementById('veh-marca').value||'',modelo:document.getElementById('veh-modelo').value||'',año:parseInt(document.getElementById('veh-año').value)||2024,categoria:document.getElementById('veh-cat').value,capacidad:document.getElementById('veh-cap').value||'N/A',activo:true,kmActual:parseInt(document.getElementById('veh-km').value)||0,itv:{fecha:itvVal,estado:itvVal==='N/A'?'N/A':'vigente',proxima:''},seguro:{compania:'Pendiente',poliza:'-',prima:0,vence:'-'},estado:'operativo',notas:document.getElementById('veh-notas').value||'',documentos:[]});
   AgroStore.save('agri_vehicles',vehicles);closeModal('modal-pedido');
   renderTranspStats();renderFlotaTransp();renderEstadisticas();
   notifySaved('Veh\u00edculo a\u00f1adido');
+};
+
+// ---- FICHA VEHICULO ----
+window.verFichaVehiculo=function(id){
+  var v=vehicles.find(function(x){return x.id===id});
+  if(!v)return;
+  var el=document.getElementById('modal-pedido-content');
+  if(!el)return;
+  var catColor=v.categoria==='transporte'?'#059669':'#8B5CF6';
+  var catLabel=v.categoria==='transporte'?'\uD83D\uDE9A Transporte':'\uD83D\uDD27 Auxiliar';
+  var h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">';
+  h+='<div><h2 style="margin:0">\uD83D\uDE9B '+v.nombre+'</h2>';
+  h+='<div style="font-size:12px;color:var(--gray);margin-top:2px">'+v.matricula+' \u2022 '+v.marca+' '+v.modelo+' \u2022 '+v.tipo+'</div></div>';
+  h+='<div style="text-align:right"><span class="tag '+(v.estado==='operativo'?'tag-green':v.estado==='revision'?'tag-yellow':'tag-red')+'" style="font-size:11px">'+v.estado+'</span>';
+  h+='<div style="font-size:11px;margin-top:3px;color:'+catColor+';font-weight:600">'+catLabel+'</div></div></div>';
+  h+='<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">';
+  h+='<button class="btn btn-sm btn-primary" id="fv-tab-general" onclick="mostrarFichaVehTab('+id+',\'general\')">\uD83D\uDCCB General</button>';
+  h+='<button class="btn btn-sm btn-outline" id="fv-tab-documentos" onclick="mostrarFichaVehTab('+id+',\'documentos\')">\uD83D\uDCC4 Documentaci\u00f3n</button>';
+  h+='<button class="btn btn-sm btn-outline" id="fv-tab-rutas" onclick="mostrarFichaVehTab('+id+',\'rutas\')">\uD83D\uDDFA\uFE0F Rutas</button>';
+  h+='<button class="btn btn-sm btn-outline" id="fv-tab-mant" onclick="mostrarFichaVehTab('+id+',\'mant\')">\uD83D\uDD27 Mantenimiento</button>';
+  h+='</div><div id="ficha-veh-body"></div>';
+  h+='<div style="margin-top:16px"><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cerrar</button></div>';
+  el.innerHTML=h;
+  openModal('modal-pedido');
+  mostrarFichaVehTab(id,'general');
+};
+
+window.mostrarFichaVehTab=function(id,tab){
+  var v=vehicles.find(function(x){return x.id===id});
+  if(!v)return;
+  var body=document.getElementById('ficha-veh-body');
+  if(!body)return;
+  // Tab button styling
+  ['general','documentos','rutas','mant'].forEach(function(t){
+    var btn=document.getElementById('fv-tab-'+t);
+    if(btn){btn.className='btn btn-sm '+(t===tab?'btn-primary':'btn-outline');}
+  });
+  var h='';
+  var itvF=(v.itv&&v.itv.fecha)?v.itv.fecha:(v.itv||'N/A');
+  var segC=(v.seguro&&v.seguro.compania)?v.seguro.compania:(v.seguro||'Pendiente');
+  var segV=(v.seguro&&v.seguro.vence)?v.seguro.vence:'-';
+  var segPol=(v.seguro&&v.seguro.poliza)?v.seguro.poliza:'-';
+  var segPrima=(v.seguro&&v.seguro.prima)?v.seguro.prima:0;
+
+  if(tab==='general'){
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+    // Col izq — Datos Técnicos
+    h+='<div class="chart-container" style="margin:0;padding:14px">';
+    h+='<div style="font-weight:700;font-size:13px;margin-bottom:10px">\uD83D\uDE9B Datos T\u00e9cnicos</div>';
+    h+='<div style="font-size:12px;line-height:2">';
+    h+='<div><span style="color:var(--gray)">Matr\u00edcula:</span> <strong>'+v.matricula+'</strong></div>';
+    h+='<div><span style="color:var(--gray)">Marca / Modelo:</span> <strong>'+v.marca+' '+v.modelo+'</strong></div>';
+    h+='<div><span style="color:var(--gray)">Tipo:</span> '+v.tipo+'</div>';
+    h+='<div><span style="color:var(--gray)">A\u00f1o:</span> '+v.año+'</div>';
+    h+='<div><span style="color:var(--gray)">Categor\u00eda:</span> <span style="color:'+(v.categoria==='transporte'?'#059669':'#8B5CF6')+';font-weight:600">'+(v.categoria==='transporte'?'\uD83D\uDE9A Transporte':'\uD83D\uDD27 Auxiliar')+'</span></div>';
+    h+='<div><span style="color:var(--gray)">Capacidad:</span> <strong>'+v.capacidad+'</strong></div>';
+    h+='<div><span style="color:var(--gray)">Km Actual:</span> <strong>'+v.kmActual.toLocaleString('es')+' km</strong></div>';
+    h+='<div><span style="color:var(--gray)">Estado:</span> <span class="tag '+(v.estado==='operativo'?'tag-green':'tag-red')+'">'+v.estado+'</span></div>';
+    h+='</div></div>';
+    // Col der — Seguro & ITV
+    h+='<div>';
+    h+='<div class="chart-container" style="margin:0 0 12px 0;padding:14px">';
+    h+='<div style="font-weight:700;font-size:13px;margin-bottom:10px">\uD83C\uDFE6 Seguro</div>';
+    h+='<div style="font-size:12px;line-height:2">';
+    h+='<div><span style="color:var(--gray)">Compa\u00f1\u00eda:</span> <strong>'+segC+'</strong></div>';
+    h+='<div><span style="color:var(--gray)">P\u00f3liza:</span> '+segPol+'</div>';
+    h+='<div><span style="color:var(--gray)">Prima Anual:</span> <strong>'+segPrima+'\u20AC</strong></div>';
+    if(segV&&segV!=='-'){
+      var diasSeg=Math.ceil((new Date(segV)-new Date())/(86400000));
+      h+='<div><span style="color:var(--gray)">Vence:</span> <strong>'+segV+'</strong> <span class="tag '+(diasSeg>90?'tag-green':diasSeg>0?'tag-yellow':'tag-red')+'" style="font-size:9px">'+(diasSeg>0?diasSeg+'d':'VENCIDO')+'</span></div>';
+    }
+    h+='</div></div>';
+    h+='<div class="chart-container" style="margin:0;padding:14px">';
+    h+='<div style="font-weight:700;font-size:13px;margin-bottom:10px">\uD83D\uDEE1\uFE0F ITV</div>';
+    h+='<div style="font-size:12px;line-height:2">';
+    if(itvF&&itvF!=='N/A'){
+      var diasItv=Math.ceil((new Date(itvF)-new Date())/(86400000));
+      h+='<div><span style="color:var(--gray)">Fecha ITV:</span> <strong>'+itvF+'</strong></div>';
+      h+='<div><span style="color:var(--gray)">Estado:</span> <span class="tag '+(diasItv>90?'tag-green':diasItv>0?'tag-yellow':'tag-red')+'" style="font-size:10px">'+(diasItv>0?'Vigente ('+diasItv+'d)':'CADUCADA')+'</span></div>';
+      var proxItv=(v.itv&&v.itv.proxima)?v.itv.proxima:'';
+      if(proxItv)h+='<div><span style="color:var(--gray)">Pr\u00f3xima:</span> '+proxItv+'</div>';
+    }else{h+='<div style="color:var(--gray)">No aplica (N/A)</div>';}
+    h+='</div></div></div></div>';
+    // Notas
+    if(v.notas){h+='<div class="chart-container" style="margin:12px 0 0 0;padding:12px;background:rgba(212,168,67,.05);border-left:3px solid var(--gold)"><div style="font-size:12px"><strong>\uD83D\uDCDD Notas:</strong> '+v.notas+'</div></div>';}
+  }
+
+  else if(tab==='documentos'){
+    h+=window.renderDocumentosGrid('ficha-veh-body',v.documentos||[],v.nombre,'veh-doc-file');
+  }
+
+  else if(tab==='rutas'){
+    var vehRoutes=routes.filter(function(r){return r.vehiculo===v.matricula});
+    var compR=vehRoutes.filter(function(r){return r.estado==='completada'});
+    var pendR=vehRoutes.filter(function(r){return r.estado!=='completada'});
+    var totalKmR=vehRoutes.reduce(function(s,r){return s+(r.distanciaKm||0)},0);
+    var totalKgR=compR.reduce(function(s,r){return s+r.kg},0);
+    // KPIs
+    h+='<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px">';
+    h+='<div class="stat-mini s-blue"><div class="stat-icon" style="background:rgba(59,130,246,.12);color:#3B82F6">\uD83D\uDDFA\uFE0F</div><div class="stat-body"><div class="stat-val">'+vehRoutes.length+'</div><div class="stat-label">Rutas Total</div></div></div>';
+    h+='<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(44,110,73,.12);color:var(--accent)">\u2705</div><div class="stat-body"><div class="stat-val">'+compR.length+'</div><div class="stat-label">Completadas</div></div></div>';
+    h+='<div class="stat-mini s-gold"><div class="stat-icon" style="background:rgba(212,168,67,.12);color:var(--gold)">\uD83D\uDCCF</div><div class="stat-body"><div class="stat-val">'+totalKmR.toLocaleString('es')+'</div><div class="stat-label">Km Total</div></div></div>';
+    h+='<div class="stat-mini s-coral"><div class="stat-icon" style="background:rgba(231,111,81,.12);color:var(--coral)">\uD83D\uDCE6</div><div class="stat-body"><div class="stat-val">'+totalKgR.toLocaleString('es')+'</div><div class="stat-label">Kg Transport.</div></div></div></div>';
+    // Tabla rutas
+    if(vehRoutes.length===0){h+='<div class="card" style="text-align:center;color:var(--gray)">No hay rutas registradas para este veh\u00edculo</div>';}
+    else{
+      h+='<div style="overflow-x:auto"><table class="mini-table" style="width:100%;font-size:11px"><thead><tr><th>Fecha</th><th>Origen</th><th>Destino</th><th>Tipo</th><th>Kg</th><th>Km</th><th>Estado</th></tr></thead><tbody>';
+      vehRoutes.forEach(function(r){
+        var tr=getTipoRuta(r.tipoRuta);
+        h+='<tr><td>'+r.fecha+'</td><td>'+r.origen+'</td><td>'+r.destino+'</td>';
+        h+='<td><span style="background:'+tr.color+'15;color:'+tr.color+';padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600">'+tr.icon+' '+tr.label+'</span></td>';
+        h+='<td style="text-align:right">'+r.kg.toLocaleString('es')+'</td><td style="text-align:right">'+r.distanciaKm+'</td>';
+        h+='<td><span class="tag '+(r.estado==='completada'?'tag-green':'tag-yellow')+'" style="font-size:9px">'+r.estado+'</span></td></tr>';
+      });
+      h+='</tbody></table></div>';
+    }
+  }
+
+  else if(tab==='mant'){
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">';
+    // ITV countdown
+    h+='<div class="chart-container" style="margin:0;padding:14px">';
+    h+='<div style="font-weight:700;font-size:13px;margin-bottom:10px">\uD83D\uDEE1\uFE0F Pr\u00f3xima ITV</div>';
+    if(itvF&&itvF!=='N/A'){
+      var diasItv2=Math.ceil((new Date(itvF)-new Date())/(86400000));
+      var pctItv=Math.max(0,Math.min(100,diasItv2/365*100));
+      h+='<div style="font-size:24px;font-weight:700;color:'+(diasItv2>90?'var(--accent)':diasItv2>0?'var(--gold)':'var(--coral)')+'">'+diasItv2+' d\u00edas</div>';
+      h+='<div style="font-size:11px;color:var(--gray);margin:4px 0 8px">Vence: '+itvF+'</div>';
+      h+=svgProgressBar(pctItv,200,14,diasItv2>90?'#2C6E49':diasItv2>0?'#D4A843':'#E07A5F');
+    }else{h+='<div style="color:var(--gray);font-size:12px">No aplica (veh\u00edculo sin ITV)</div>';}
+    h+='</div>';
+    // Seguro countdown
+    h+='<div class="chart-container" style="margin:0;padding:14px">';
+    h+='<div style="font-weight:700;font-size:13px;margin-bottom:10px">\uD83C\uDFE6 Pr\u00f3ximo Seguro</div>';
+    if(segV&&segV!=='-'){
+      var diasSeg2=Math.ceil((new Date(segV)-new Date())/(86400000));
+      var pctSeg=Math.max(0,Math.min(100,diasSeg2/365*100));
+      h+='<div style="font-size:24px;font-weight:700;color:'+(diasSeg2>90?'var(--accent)':diasSeg2>0?'var(--gold)':'var(--coral)')+'">'+diasSeg2+' d\u00edas</div>';
+      h+='<div style="font-size:11px;color:var(--gray);margin:4px 0 8px">Vence: '+segV+' \u2022 '+segC+'</div>';
+      h+=svgProgressBar(pctSeg,200,14,diasSeg2>90?'#2C6E49':diasSeg2>0?'#D4A843':'#E07A5F');
+    }else{h+='<div style="color:var(--gray);font-size:12px">Sin datos de seguro</div>';}
+    h+='</div></div>';
+    // Incidencias en rutas
+    var vehInc=routes.filter(function(r){return r.vehiculo===v.matricula&&r.incidencias&&r.incidencias.length>0});
+    h+='<div class="chart-container" style="margin:0;padding:14px">';
+    h+='<div style="font-weight:700;font-size:13px;margin-bottom:10px">\u26A0\uFE0F Incidencias en Rutas ('+vehInc.length+')</div>';
+    if(vehInc.length===0){h+='<div style="color:var(--accent);font-size:12px">\u2705 Sin incidencias registradas</div>';}
+    else{
+      vehInc.forEach(function(r){
+        h+='<div style="padding:8px;margin-bottom:6px;background:rgba(231,111,81,.05);border-radius:8px;border-left:3px solid var(--coral);font-size:11px">';
+        h+='<div><strong>'+r.fecha+'</strong> \u2022 '+r.destino+'</div>';
+        h+='<div style="color:var(--coral);margin-top:2px">'+r.incidencias+'</div></div>';
+      });
+    }
+    h+='</div>';
+    // Resumen documentos próximos a vencer
+    var docsProx=(v.documentos||[]).filter(function(d){if(!d.vence)return false;return Math.ceil((new Date(d.vence)-new Date())/(86400000))<=90;});
+    if(docsProx.length>0){
+      h+='<div class="chart-container" style="margin:12px 0 0 0;padding:14px;border-left:3px solid var(--coral)">';
+      h+='<div style="font-weight:700;font-size:13px;margin-bottom:8px">\uD83D\uDCC4 Documentos Pr\u00f3ximos a Vencer</div>';
+      docsProx.forEach(function(d){
+        var dias=Math.ceil((new Date(d.vence)-new Date())/(86400000));
+        h+='<div style="font-size:12px;padding:4px 0;color:'+(dias<=0?'var(--coral)':'var(--gold)')+'">'+d.nombre+': <strong>'+(dias<=0?'CADUCADO':dias+' d\u00edas')+'</strong></div>';
+      });
+      h+='</div>';
+    }
+  }
+
+  body.innerHTML=h;
 };
 
 var _sp4=showPage;
