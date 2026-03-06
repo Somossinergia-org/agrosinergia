@@ -11534,14 +11534,31 @@ var _defVehicles=[
   {id:6,matricula:'ALI-3345-GL',nombre:'Nissan Navara NP300',tipo:'Pickup 4x4',marca:'Nissan',modelo:'Navara NP300',año:2022,categoria:'auxiliar',capacidad:'800 kg',activo:true,kmActual:58700,itv:'2026-12-05',seguro:'2026-11-20',estado:'operativo',notas:'Pickup para acceso a parcelas y transporte herramientas'},
   {id:7,matricula:'ALI-9901-HM',nombre:'Carretilla Toyota 8FBMT25',tipo:'Carretilla Elevadora',marca:'Toyota',modelo:'8FBMT25',año:2021,categoria:'auxiliar',capacidad:'2.500 kg',activo:true,kmActual:1850,itv:'N/A',seguro:'2026-09-15',estado:'operativo',notas:'Carretilla el\u00e9ctrica para carga/descarga almac\u00e9n'}
 ];
+var tipoRutaDef={comercial:{icon:'\uD83D\uDE9B',label:'Comercial',color:'#3B82F6'},campo:{icon:'\uD83D\uDE9C',label:'Campo',color:'#059669'},interna:{icon:'\uD83D\uDD04',label:'Interna',color:'#8B5CF6'},exportacion:{icon:'\uD83D\uDEA2',label:'Exportaci\u00f3n',color:'#E07A5F'}};
 var _defRoutes=[
-  {id:1,fecha:'2026-03-05',vehiculo:'ALI-4521-BT',conductor:'Pedro Navarro',origen:'Almac\u00e9n Central, Albatera',destino:'MercaMadrid',horaSalida:'05:00',horaLlegada:'11:30',estado:'completada',carga:'4 pallets brevas (LOT-2026-001, LOT-2026-002)',kg:3200,lotes:['LOT-2026-001','LOT-2026-002'],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'Entrega puntual',distanciaKm:420,tiempoEstimado:'6h 30min'},
-  {id:2,fecha:'2026-03-05',vehiculo:'ALI-7890-CT',conductor:'Pedro Navarro',origen:'Eco Granados, Albatera',destino:'Almac\u00e9n Central',horaSalida:'07:00',horaLlegada:'07:45',estado:'completada',carga:'Granadas 6 pallets',kg:4800,lotes:['LOT-2026-008','LOT-2026-009'],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'',distanciaKm:12,tiempoEstimado:'45min'},
-  {id:3,fecha:'2026-03-06',vehiculo:'ALI-4521-BT',conductor:'Pedro Navarro',origen:'Almac\u00e9n Central',destino:'Carrefour Alicante',horaSalida:'06:00',horaLlegada:'',estado:'pendiente',carga:'3 pallets higos + 2 pallets granadas',kg:5000,lotes:['LOT-2026-005','LOT-2026-008'],checklistSalida:false,checklistLlegada:false,incidencias:'',observ:'Confirmar con cliente antes de salir',distanciaKm:65,tiempoEstimado:'1h 15min'},
-  {id:4,fecha:'2026-03-06',vehiculo:'ALI-2233-DM',conductor:'Carlos Ruiz',origen:'Almac\u00e9n Central',destino:'Mercado Local Orihuela',horaSalida:'08:30',horaLlegada:'',estado:'pendiente',carga:'Brevas frescas 400kg',kg:400,lotes:['LOT-2026-004'],checklistSalida:false,checklistLlegada:false,incidencias:'',observ:'',distanciaKm:8,tiempoEstimado:'20min'},
-  {id:5,fecha:'2026-03-04',vehiculo:'ALI-4521-BT',conductor:'Pedro Navarro',origen:'Almac\u00e9n Central',destino:'MercaBarcelona',horaSalida:'04:00',horaLlegada:'12:15',estado:'completada',carga:'6 pallets mix',kg:6000,lotes:['LOT-2026-005','LOT-2026-006','LOT-2026-009'],checklistSalida:true,checklistLlegada:true,incidencias:'Retraso 30min por tr\u00e1fico en AP-7',observ:'Cliente satisfecho',distanciaKm:520,tiempoEstimado:'7h'},
-  {id:6,fecha:'2026-03-07',vehiculo:'ALI-8812-FK',conductor:'Miguel \u00c1ngel Torres',origen:'Almac\u00e9n Central',destino:'Puerto de Almer\u00eda',horaSalida:'05:30',horaLlegada:'',estado:'pendiente',carga:'8 pallets higos ECO exportaci\u00f3n',kg:6400,lotes:['LOT-2026-010','LOT-2026-011'],checklistSalida:false,checklistLlegada:false,incidencias:'',observ:'Exportaci\u00f3n mar\u00edtima - documentaci\u00f3n SOIVRE preparada',distanciaKm:180,tiempoEstimado:'2h 30min'},
-  {id:7,fecha:'2026-03-07',vehiculo:'ALI-7890-CT',conductor:'Pedro Navarro',origen:'Almac\u00e9n Central',destino:'Centro Distrib. Granada',horaSalida:'06:00',horaLlegada:'',estado:'pendiente',carga:'10 pallets mix granada+breva',kg:8000,lotes:['LOT-2026-012','LOT-2026-013'],checklistSalida:false,checklistLlegada:false,incidencias:'',observ:'Entrega programada 10:00h',distanciaKm:210,tiempoEstimado:'3h'}
+  // === RUTAS COMERCIALES ===
+  {id:1,fecha:'2026-03-05',vehiculo:'ALI-4521-BT',conductor:'Pedro Navarro',origen:'Almac\u00e9n Central',destino:'MercaMadrid',horaSalida:'05:00',horaLlegada:'11:30',estado:'completada',tipoRuta:'comercial',carga:'4 pallets brevas',kg:3200,lotes:['LOT-2026-001','LOT-2026-002'],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'Entrega puntual',distanciaKm:420,tiempoEstimado:'6h 30min',costoEstimado:189},
+  {id:5,fecha:'2026-03-04',vehiculo:'ALI-4521-BT',conductor:'Pedro Navarro',origen:'Almac\u00e9n Central',destino:'MercaBarcelona',horaSalida:'04:00',horaLlegada:'12:15',estado:'completada',tipoRuta:'comercial',carga:'6 pallets mix brevas+granadas',kg:6000,lotes:['LOT-2026-005','LOT-2026-006','LOT-2026-009'],checklistSalida:true,checklistLlegada:true,incidencias:'Retraso 30min por tr\u00e1fico en AP-7',observ:'Cliente satisfecho',distanciaKm:520,tiempoEstimado:'7h',costoEstimado:234},
+  {id:3,fecha:'2026-03-06',vehiculo:'ALI-4521-BT',conductor:'Pedro Navarro',origen:'Almac\u00e9n Central',destino:'Carrefour Alicante',horaSalida:'06:00',horaLlegada:'',estado:'pendiente',tipoRuta:'comercial',carga:'3 pallets higos + 2 pallets granadas',kg:5000,lotes:['LOT-2026-005','LOT-2026-008'],checklistSalida:false,checklistLlegada:false,incidencias:'',observ:'Confirmar con cliente antes de salir',distanciaKm:65,tiempoEstimado:'1h 15min',costoEstimado:29},
+  {id:4,fecha:'2026-03-06',vehiculo:'ALI-2233-DM',conductor:'Carlos Ruiz',origen:'Almac\u00e9n Central',destino:'Mercado Local Orihuela',horaSalida:'08:30',horaLlegada:'',estado:'pendiente',tipoRuta:'comercial',carga:'Brevas frescas 400kg',kg:400,lotes:['LOT-2026-004'],checklistSalida:false,checklistLlegada:false,incidencias:'',observ:'',distanciaKm:8,tiempoEstimado:'20min',costoEstimado:4},
+  {id:7,fecha:'2026-03-07',vehiculo:'ALI-7890-CT',conductor:'Pedro Navarro',origen:'Almac\u00e9n Central',destino:'Centro Distrib. Granada',horaSalida:'06:00',horaLlegada:'',estado:'pendiente',tipoRuta:'comercial',carga:'10 pallets mix granada+breva',kg:8000,lotes:['LOT-2026-012','LOT-2026-013'],checklistSalida:false,checklistLlegada:false,incidencias:'',observ:'Entrega programada 10:00h',distanciaKm:210,tiempoEstimado:'3h',costoEstimado:95},
+  // === RUTAS EXPORTACI\u00d3N ===
+  {id:6,fecha:'2026-03-07',vehiculo:'ALI-8812-FK',conductor:'Miguel \u00c1ngel Torres',origen:'Almac\u00e9n Central',destino:'Puerto de Almer\u00eda (Export)',horaSalida:'05:30',horaLlegada:'',estado:'pendiente',tipoRuta:'exportacion',carga:'8 pallets higos ECO exportaci\u00f3n',kg:6400,lotes:['LOT-2026-010','LOT-2026-011'],checklistSalida:false,checklistLlegada:false,incidencias:'',observ:'Exportaci\u00f3n mar\u00edtima - doc. SOIVRE preparada',distanciaKm:180,tiempoEstimado:'2h 30min',costoEstimado:81},
+  {id:15,fecha:'2026-02-28',vehiculo:'ALI-7890-CT',conductor:'Pedro Navarro',origen:'Almac\u00e9n Central',destino:'Puerto de Valencia (Export)',horaSalida:'04:00',horaLlegada:'07:30',estado:'completada',tipoRuta:'exportacion',carga:'12 pallets brevas ECO - destino Rungis',kg:9600,lotes:['LOT-2026-EXP-001'],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'Export Francia v\u00eda mar\u00edtima. Pierre Duval',distanciaKm:190,tiempoEstimado:'3h 30min',costoEstimado:86},
+  // === RUTAS CAMPO (finca \u2192 almac\u00e9n) ===
+  {id:2,fecha:'2026-03-05',vehiculo:'ALI-7890-CT',conductor:'Pedro Navarro',origen:'Finca Fruchesco Eco (Crevillente)',destino:'Almac\u00e9n Central',horaSalida:'07:00',horaLlegada:'07:45',estado:'completada',tipoRuta:'campo',carga:'Granadas ECO 6 pallets',kg:4800,lotes:['LOT-2026-008','LOT-2026-009'],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'',distanciaKm:5,tiempoEstimado:'15min',costoEstimado:3},
+  {id:8,fecha:'2026-03-05',vehiculo:'ALI-5566-EJ',conductor:'Hassan El Amrani',origen:'Finca El Rinc\u00f3n (Albatera)',destino:'Almac\u00e9n Central',horaSalida:'08:00',horaLlegada:'08:20',estado:'completada',tipoRuta:'campo',carga:'Brevas frescas cosecha ma\u00f1ana',kg:1200,lotes:['LOT-2026-014'],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'',distanciaKm:2,tiempoEstimado:'15min',costoEstimado:2},
+  {id:9,fecha:'2026-03-04',vehiculo:'ALI-5566-EJ',conductor:'Hassan El Amrani',origen:'Finca Los Bancales (Albatera)',destino:'Almac\u00e9n Central',horaSalida:'10:00',horaLlegada:'10:20',estado:'completada',tipoRuta:'campo',carga:'Brevas San Antonio 800kg',kg:800,lotes:['LOT-2026-015'],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'',distanciaKm:2,tiempoEstimado:'12min',costoEstimado:2},
+  {id:10,fecha:'2026-03-04',vehiculo:'ALI-7890-CT',conductor:'Carlos Ruiz',origen:'Finca La Solana (Albatera)',destino:'Almac\u00e9n Central',horaSalida:'11:00',horaLlegada:'11:25',estado:'completada',tipoRuta:'campo',carga:'Granadas Mollar 2.400kg',kg:2400,lotes:['LOT-2026-016'],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'',distanciaKm:3,tiempoEstimado:'15min',costoEstimado:2},
+  {id:11,fecha:'2026-03-03',vehiculo:'ALI-5566-EJ',conductor:'Hassan El Amrani',origen:'Finca La Dehesa (Albatera)',destino:'Almac\u00e9n Central',horaSalida:'09:00',horaLlegada:'09:20',estado:'completada',tipoRuta:'campo',carga:'Higos Colar + Granadas Mollar',kg:1600,lotes:['LOT-2026-017'],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'',distanciaKm:3,tiempoEstimado:'15min',costoEstimado:2},
+  {id:16,fecha:'2026-03-06',vehiculo:'ALI-5566-EJ',conductor:'Hassan El Amrani',origen:'Finca El Palmeral Eco (Catral)',destino:'Almac\u00e9n Central',horaSalida:'07:30',horaLlegada:'',estado:'pendiente',tipoRuta:'campo',carga:'Higos C. Dama ECO 900kg',kg:900,lotes:['LOT-2026-018'],checklistSalida:false,checklistLlegada:false,incidencias:'',observ:'Recogida programada cuadrilla eco',distanciaKm:4,tiempoEstimado:'18min',costoEstimado:3},
+  // === RUTAS INTERNAS (entre fincas / traslados) ===
+  {id:12,fecha:'2026-03-05',vehiculo:'ALI-3345-GL',conductor:'Ahmed Benaissa',origen:'Almac\u00e9n Central',destino:'Finca El Rinc\u00f3n (Albatera)',horaSalida:'06:30',horaLlegada:'06:45',estado:'completada',tipoRuta:'interna',carga:'Traslado cuadrilla poda + herramientas',kg:150,lotes:[],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'6 trabajadores + motosierras',distanciaKm:2,tiempoEstimado:'10min',costoEstimado:2},
+  {id:13,fecha:'2026-03-05',vehiculo:'ALI-2233-DM',conductor:'Mar\u00eda Garc\u00eda',origen:'Almac\u00e9n Central',destino:'Finca Fruchesco Eco (Crevillente)',horaSalida:'07:00',horaLlegada:'07:20',estado:'completada',tipoRuta:'interna',carga:'Insumos eco: abono NPK + aceite neem',kg:250,lotes:[],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'Entrega programada fertiriego',distanciaKm:5,tiempoEstimado:'15min',costoEstimado:3},
+  {id:14,fecha:'2026-03-04',vehiculo:'ALI-3345-GL',conductor:'Ahmed Benaissa',origen:'Finca El Rinc\u00f3n (Albatera)',destino:'Finca La Dehesa (Albatera)',horaSalida:'12:00',horaLlegada:'12:15',estado:'completada',tipoRuta:'interna',carga:'Traslado desbrozadora + cuadrilla',kg:80,lotes:[],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'Traslado entre fincas para poda tarde',distanciaKm:3,tiempoEstimado:'12min',costoEstimado:2},
+  {id:17,fecha:'2026-03-06',vehiculo:'ALI-3345-GL',conductor:'Ahmed Benaissa',origen:'Almac\u00e9n Central',destino:'Finca Los Bancales (Albatera)',horaSalida:'06:15',horaLlegada:'',estado:'pendiente',tipoRuta:'interna',carga:'Traslado equipo tratamiento fitosanitario',kg:200,lotes:[],checklistSalida:false,checklistLlegada:false,incidencias:'',observ:'Preparar atomizador + producto',distanciaKm:2,tiempoEstimado:'10min',costoEstimado:2},
+  {id:18,fecha:'2026-03-03',vehiculo:'ALI-2233-DM',conductor:'Mar\u00eda Garc\u00eda',origen:'Almac\u00e9n Central',destino:'Finca El Palmeral Eco (Catral)',horaSalida:'08:00',horaLlegada:'08:20',estado:'completada',tipoRuta:'interna',carga:'Muestras suelo para laboratorio + material riego',kg:120,lotes:[],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'An\u00e1lisis suelo programado CAECV',distanciaKm:4,tiempoEstimado:'15min',costoEstimado:3},
+  {id:19,fecha:'2026-03-02',vehiculo:'ALI-3345-GL',conductor:'Ahmed Benaissa',origen:'Finca La Solana (Albatera)',destino:'Finca Fruchesco Eco (Crevillente)',horaSalida:'14:00',horaLlegada:'14:20',estado:'completada',tipoRuta:'interna',carga:'Traslado cuadrilla recolectores',kg:100,lotes:[],checklistSalida:true,checklistLlegada:true,incidencias:'',observ:'Refuerzo cuadrilla eco para granada',distanciaKm:6,tiempoEstimado:'18min',costoEstimado:3}
 ];
 var vehicles=AgroStore.load('agri_vehicles',_defVehicles);
 var routes=AgroStore.load('agri_routes',_defRoutes);
@@ -11631,20 +11648,47 @@ window.filtrarFlota=function(f){
 };
 
 // ---- TAB RUTAS ----
+function getTipoRuta(t){return tipoRutaDef[t]||{icon:'\uD83D\uDE9A',label:t||'Otros',color:'#6B7280'}}
+var _rutaFiltro='todas';
+window.filtrarRutas=function(f){_rutaFiltro=f;renderRutas()};
 function renderRutas(){
   var el=document.getElementById('transp-rutas-list');if(!el)return;
   var pend=routes.filter(function(r){return r.estado!=='completada'}).sort(function(a,b){return a.fecha>b.fecha?1:-1});
-  if(!pend.length){el.innerHTML='<div class="card">\u2705 No hay rutas pendientes</div>';return}
-  var h='';
+  if(_rutaFiltro!=='todas')pend=pend.filter(function(r){return r.tipoRuta===_rutaFiltro});
+  var allPend=routes.filter(function(r){return r.estado!=='completada'});
+  var maxDist=Math.max.apply(null,allPend.map(function(r){return r.distanciaKm||0}))||1;
+  // Filtros
+  var h='<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">';
+  var tipos=[{k:'todas',l:'Todas ('+allPend.length+')',i:''},
+    {k:'comercial',l:'\uD83D\uDE9B Comercial',i:''},
+    {k:'campo',l:'\uD83D\uDE9C Campo',i:''},
+    {k:'interna',l:'\uD83D\uDD04 Interna',i:''},
+    {k:'exportacion',l:'\uD83D\uDEA2 Export.',i:''}];
+  tipos.forEach(function(t){h+='<button class="btn btn-sm '+(_rutaFiltro===t.k?'btn-primary':'btn-outline')+'" onclick="filtrarRutas(\''+t.k+'\')">'+t.l+'</button>'});
+  h+='</div>';
+  // Mini KPIs pendientes
+  var kmPend=allPend.reduce(function(s,r){return s+(r.distanciaKm||0)},0);
+  var kgPend=allPend.reduce(function(s,r){return s+r.kg},0);
+  var costePend=allPend.reduce(function(s,r){return s+(r.costoEstimado||0)},0);
+  h+='<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px">'+
+    '<div class="stat-mini s-gold"><div class="stat-icon" style="background:rgba(212,168,67,.12);color:var(--gold)">\u23F3</div><div class="stat-body"><div class="stat-val">'+allPend.length+'</div><div class="stat-label">Pendientes</div></div></div>'+
+    '<div class="stat-mini s-blue"><div class="stat-icon" style="background:rgba(59,130,246,.12);color:#3B82F6">\uD83D\uDCCF</div><div class="stat-body"><div class="stat-val">'+kmPend.toLocaleString('es')+'</div><div class="stat-label">Km Pendientes</div></div></div>'+
+    '<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(44,110,73,.12);color:var(--accent)">\uD83D\uDCE6</div><div class="stat-body"><div class="stat-val">'+kgPend.toLocaleString('es')+'</div><div class="stat-label">Kg Pendientes</div></div></div>'+
+    '<div class="stat-mini s-coral"><div class="stat-icon" style="background:rgba(231,111,81,.12);color:var(--coral)">\u20AC</div><div class="stat-body"><div class="stat-val">~'+costePend+'\u20AC</div><div class="stat-label">Coste Est.</div></div></div></div>';
+  // Cards
+  if(!pend.length){h+='<div class="card">\u2705 No hay rutas pendientes'+((_rutaFiltro!=='todas')?' de tipo '+_rutaFiltro:'')+'</div>';el.innerHTML=h;return}
   pend.forEach(function(r){
-    h+='<div class="route-card" style="border-left-color:'+(r.estado==='en-ruta'?'var(--blue)':'var(--gold)')+'">'+
-      '<div class="route-header"><h4>\uD83D\uDE9A '+r.vehiculo+' \u2014 '+r.conductor+'</h4>'+
-      '<span class="route-badge '+r.estado+'">'+r.estado.replace('-',' ')+'</span></div>'+
+    var tr=getTipoRuta(r.tipoRuta);
+    h+='<div class="route-card" style="border-left-color:'+tr.color+'">'+
+      '<div class="route-header"><h4>'+tr.icon+' '+r.vehiculo+' \u2014 '+r.conductor+'</h4>'+
+      '<div style="display:flex;gap:6px;align-items:center"><span class="tag" style="font-size:10px;background:'+tr.color+'20;color:'+tr.color+';border:1px solid '+tr.color+'40">'+tr.label+'</span>'+
+      '<span class="route-badge '+r.estado+'">'+r.estado.replace('-',' ')+'</span></div></div>'+
       '<div class="route-stops"><strong>'+r.origen+'</strong><span class="arrow">\u2192</span><strong>'+r.destino+'</strong></div>'+
-      '<div class="route-meta"><span>\uD83D\uDCC5 '+r.fecha+'</span><span>\u23F0 Salida: '+r.horaSalida+'</span><span>\uD83D\uDCE6 '+r.kg+' kg</span>'+(r.distanciaKm?'<span>\uD83D\uDCCF '+r.distanciaKm+' km</span>':'')+(r.tiempoEstimado?'<span>\u23F1\uFE0F '+r.tiempoEstimado+'</span>':'')+'</div>'+
-      '<div style="margin-top:4px;font-size:11px;color:var(--gray)">Lotes: '+r.lotes.join(', ')+'</div>'+
-      (r.observ?'<div style="margin-top:4px;font-size:12px;color:var(--gray)">'+r.observ+'</div>':'')+
-    '</div>';
+      '<div class="route-meta"><span>\uD83D\uDCC5 '+r.fecha+'</span><span>\u23F0 '+r.horaSalida+'</span><span>\uD83D\uDCE6 '+r.kg.toLocaleString('es')+' kg</span>'+(r.distanciaKm?'<span>\uD83D\uDCCF '+r.distanciaKm+' km</span>':'')+(r.tiempoEstimado?'<span>\u23F1\uFE0F '+r.tiempoEstimado+'</span>':'')+(r.costoEstimado?'<span>\uD83D\uDCB6 ~'+r.costoEstimado+'\u20AC</span>':'')+'</div>';
+    if(r.distanciaKm)h+='<div style="margin-top:6px">'+svgProgressBar(Math.min(100,r.distanciaKm/maxDist*100),280,10,tr.color)+'</div>';
+    if(r.lotes&&r.lotes.length)h+='<div style="margin-top:4px;font-size:11px;color:var(--gray)">Lotes: '+r.lotes.join(', ')+'</div>';
+    if(r.observ)h+='<div style="margin-top:4px;font-size:12px;color:var(--gray)">\uD83D\uDCDD '+r.observ+'</div>';
+    h+='</div>';
   });
   el.innerHTML=h;
 }
@@ -11653,53 +11697,138 @@ function renderRutas(){
 function renderHistorial(){
   var el=document.getElementById('transp-hist-list');if(!el)return;
   var comp=routes.filter(function(r){return r.estado==='completada'}).sort(function(a,b){return a.fecha<b.fecha?1:-1});
-  var h='<div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Veh\u00edculo</th><th>Conductor</th><th>Origen</th><th>Destino</th><th>Km</th><th>Kg</th><th>Estado</th><th>Incidencias</th></tr></thead><tbody>';
+  var totalKm=comp.reduce(function(s,r){return s+(r.distanciaKm||0)},0);
+  var totalKg=comp.reduce(function(s,r){return s+r.kg},0);
+  var totalCoste=comp.reduce(function(s,r){return s+(r.costoEstimado||0)},0);
+  var maxKm=Math.max.apply(null,comp.map(function(r){return r.distanciaKm||0}))||1;
+  // KPIs resumen
+  var h='<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px">'+
+    '<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(44,110,73,.12);color:var(--accent)">\u2705</div><div class="stat-body"><div class="stat-val">'+comp.length+'</div><div class="stat-label">Completadas</div></div></div>'+
+    '<div class="stat-mini s-blue"><div class="stat-icon" style="background:rgba(59,130,246,.12);color:#3B82F6">\uD83D\uDCCF</div><div class="stat-body"><div class="stat-val">'+totalKm.toLocaleString('es')+'</div><div class="stat-label">Km Total</div></div></div>'+
+    '<div class="stat-mini s-gold"><div class="stat-icon" style="background:rgba(212,168,67,.12);color:var(--gold)">\uD83D\uDCE6</div><div class="stat-body"><div class="stat-val">'+totalKg.toLocaleString('es')+'</div><div class="stat-label">Kg Total</div></div></div>'+
+    '<div class="stat-mini s-coral"><div class="stat-icon" style="background:rgba(231,111,81,.12);color:var(--coral)">\uD83D\uDCB6</div><div class="stat-body"><div class="stat-val">'+totalCoste+'\u20AC</div><div class="stat-label">Coste Total</div></div></div></div>';
+  // Tabla mejorada
+  h+='<div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Veh\u00edculo</th><th>Conductor</th><th>Origen \u2192 Destino</th><th>Distancia</th><th>Kg</th><th>Coste</th><th>Estado</th></tr></thead><tbody>';
   comp.forEach(function(r){
-    h+='<tr><td>'+r.fecha+'</td><td><strong>'+r.vehiculo+'</strong></td><td>'+r.conductor+'</td><td>'+r.origen+'</td><td>'+r.destino+'</td><td>'+(r.distanciaKm||'\u2014')+'</td><td><strong>'+r.kg.toLocaleString('es')+'</strong></td>'+
-      '<td><span class="route-badge completada">completada</span></td>'+
-      '<td style="font-size:12px">'+(r.incidencias||'\u2014')+'</td></tr>';
+    var tr=getTipoRuta(r.tipoRuta);
+    var distPct=r.distanciaKm?Math.min(100,r.distanciaKm/maxKm*100):0;
+    h+='<tr><td>'+r.fecha+'</td>'+
+      '<td><span class="tag" style="font-size:9px;background:'+tr.color+'15;color:'+tr.color+'">'+tr.icon+' '+tr.label+'</span></td>'+
+      '<td><strong>'+r.vehiculo+'</strong></td><td>'+r.conductor+'</td>'+
+      '<td style="font-size:12px">'+r.origen+' \u2192 '+r.destino+'</td>'+
+      '<td><div style="display:flex;align-items:center;gap:6px"><span style="font-size:12px;font-weight:600;min-width:40px">'+(r.distanciaKm||0)+' km</span>'+svgProgressBar(distPct,80,8,tr.color)+'</div></td>'+
+      '<td><strong>'+r.kg.toLocaleString('es')+'</strong></td>'+
+      '<td>'+(r.costoEstimado?r.costoEstimado+'\u20AC':'\u2014')+'</td>'+
+      '<td>'+(r.incidencias?'<span style="color:var(--coral)">\u26A0\uFE0F</span>':'<span style="color:var(--accent)">\u2705</span>')+'</td></tr>';
   });
   h+='</tbody></table></div>';
+  // Gr\u00e1ficos debajo
+  // Agrupar kg por destino
+  var destMap={};comp.forEach(function(r){if(!destMap[r.destino])destMap[r.destino]={kg:0,cnt:0};destMap[r.destino].kg+=r.kg;destMap[r.destino].cnt++});
+  var destArr=Object.keys(destMap).map(function(k){return{n:k.length>14?k.slice(0,12)+'..':k,v:destMap[k].kg}}).sort(function(a,b){return b.v-a.v}).slice(0,8);
+  // Agrupar por tipo
+  var tipoMap={};comp.forEach(function(r){var t=r.tipoRuta||'otros';if(!tipoMap[t])tipoMap[t]={v:0};tipoMap[t].v++});
+  var tipoArr=Object.keys(tipoMap).map(function(k){var tr=getTipoRuta(k);return{v:tipoMap[k].v,c:tr.color}});
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">';
+  h+='<div class="chart-container"><h3 style="margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCE6 Kg por Destino</h3>'+svgBarChart(destArr,400,220,destArr.map(function(){return C.accent}))+'</div>';
+  h+='<div class="chart-container"><h3 style="margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDE9B Rutas por Tipo</h3>'+svgDonut(tipoArr,200);
+  // Leyenda donut
+  h+='<div style="display:flex;gap:12px;justify-content:center;margin-top:10px;flex-wrap:wrap">';
+  Object.keys(tipoMap).forEach(function(k){var tr=getTipoRuta(k);h+='<span style="font-size:11px;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:'+tr.color+';display:inline-block"></span>'+tr.icon+' '+tr.label+' ('+tipoMap[k].v+')</span>'});
+  h+='</div></div></div>';
   el.innerHTML=h;
 }
 
 // ---- TAB ESTAD\u00cdSTICAS ----
 function renderEstadisticas(){
   var el=document.getElementById('transp-estadisticas-content');if(!el)return;
-  var totalKm=vehicles.reduce(function(s,v){return s+v.kmActual},0);
   var compRoutes=routes.filter(function(r){return r.estado==='completada'});
+  var totalKmFlota=vehicles.reduce(function(s,v){return s+v.kmActual},0);
+  var avgKm=vehicles.length?Math.round(totalKmFlota/vehicles.length):0;
   var totalKmRutas=compRoutes.reduce(function(s,r){return s+(r.distanciaKm||0)},0);
-  var costePorKm=totalKmRutas>0?(totalKmRutas*0.45).toFixed(0):0;
+  var totalKgRutas=compRoutes.reduce(function(s,r){return s+r.kg},0);
+  var totalCoste=compRoutes.reduce(function(s,r){return s+(r.costoEstimado||0)},0);
+  var costePorKg=totalKgRutas>0?(totalCoste/totalKgRutas*1000).toFixed(1):0;
   var transp=vehicles.filter(function(v){return v.categoria==='transporte'});
   var aux=vehicles.filter(function(v){return v.categoria==='auxiliar'});
+  var maxVehKm=Math.max.apply(null,vehicles.map(function(v){return v.kmActual}))||1;
 
-  var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">';
-  // Bar chart — km por veh\u00edculo
-  var barLabels=vehicles.map(function(v){return v.matricula.slice(-6)});
-  var barValues=vehicles.map(function(v){return v.kmActual});
-  var barColors=vehicles.map(function(v){return v.categoria==='transporte'?'#059669':'#8B5CF6'});
-  h+='<div class="chart-container"><h3 style="margin-bottom:8px">\uD83D\uDCCF Km por Veh\u00edculo</h3>'+svgBarChart(barLabels,barValues,barColors,320)+'</div>';
-  // Donut — categor\u00eda
-  h+='<div class="chart-container"><h3 style="margin-bottom:8px">\uD83D\uDE9B Distribuci\u00f3n por Categor\u00eda</h3>'+svgDonut([{label:'Transporte',value:transp.length,color:'#059669'},{label:'Auxiliar',value:aux.length,color:'#8B5CF6'}],200)+'</div>';
+  // 8 KPIs
+  var h='<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px">'+
+    '<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(44,110,73,.12);color:var(--accent)">\uD83D\uDE9B</div><div class="stat-body"><div class="stat-val">'+vehicles.length+'</div><div class="stat-label">Flota Total</div></div></div>'+
+    '<div class="stat-mini s-blue"><div class="stat-icon" style="background:rgba(59,130,246,.12);color:#3B82F6">\uD83D\uDCCF</div><div class="stat-body"><div class="stat-val">'+totalKmFlota.toLocaleString('es')+'</div><div class="stat-label">Km Flota</div></div></div>'+
+    '<div class="stat-mini s-purple"><div class="stat-icon" style="background:rgba(139,92,246,.12);color:#8B5CF6">\uD83D\uDCCA</div><div class="stat-body"><div class="stat-val">'+avgKm.toLocaleString('es')+'</div><div class="stat-label">Media Km/Veh</div></div></div>'+
+    '<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(16,185,129,.12);color:#10B981">\u2705</div><div class="stat-body"><div class="stat-val">'+compRoutes.length+'</div><div class="stat-label">Rutas Compl.</div></div></div>'+
+    '<div class="stat-mini s-blue"><div class="stat-icon" style="background:rgba(59,130,246,.12);color:#3B82F6">\uD83D\uDDFA\uFE0F</div><div class="stat-body"><div class="stat-val">'+totalKmRutas.toLocaleString('es')+'</div><div class="stat-label">Km en Rutas</div></div></div>'+
+    '<div class="stat-mini s-gold"><div class="stat-icon" style="background:rgba(212,168,67,.12);color:var(--gold)">\uD83D\uDCE6</div><div class="stat-body"><div class="stat-val">'+totalKgRutas.toLocaleString('es')+'</div><div class="stat-label">Kg Transport.</div></div></div>'+
+    '<div class="stat-mini s-coral"><div class="stat-icon" style="background:rgba(231,111,81,.12);color:var(--coral)">\uD83D\uDCB6</div><div class="stat-body"><div class="stat-val">'+totalCoste+'\u20AC</div><div class="stat-label">Coste Total</div></div></div>'+
+    '<div class="stat-mini s-purple"><div class="stat-icon" style="background:rgba(139,92,246,.12);color:#8B5CF6">\u2696\uFE0F</div><div class="stat-body"><div class="stat-val">'+costePorKg+'\u20AC</div><div class="stat-label">Coste \u20AC/Tn</div></div></div></div>';
+
+  // Grid 2x2 gr\u00e1ficos
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">';
+  // Bar km por veh\u00edculo
+  var bData=vehicles.map(function(v){return{n:v.matricula.slice(-6),v:v.kmActual}});
+  var bColors=vehicles.map(function(v){return v.categoria==='transporte'?'#059669':'#8B5CF6'});
+  h+='<div class="chart-container"><h3 style="margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCCF Km por Veh\u00edculo</h3>'+svgBarChart(bData,400,220,bColors)+'</div>';
+  // Donut categor\u00eda
+  h+='<div class="chart-container"><h3 style="margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDE9B Categor\u00eda Flota</h3>'+svgDonut([{v:transp.length,c:'#059669'},{v:aux.length,c:'#8B5CF6'}],200);
+  h+='<div style="display:flex;gap:16px;justify-content:center;margin-top:10px"><span style="font-size:11px;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#059669;display:inline-block"></span>\uD83D\uDE9A Transporte ('+transp.length+')</span><span style="font-size:11px;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#8B5CF6;display:inline-block"></span>\uD83D\uDD27 Auxiliar ('+aux.length+')</span></div></div>';
+  // Bar kg por tipo ruta
+  var tipoMap={};compRoutes.forEach(function(r){var t=r.tipoRuta||'otros';if(!tipoMap[t])tipoMap[t]={kg:0,km:0,cnt:0,coste:0};tipoMap[t].kg+=r.kg;tipoMap[t].km+=(r.distanciaKm||0);tipoMap[t].cnt++;tipoMap[t].coste+=(r.costoEstimado||0)});
+  var tBarData=Object.keys(tipoMap).map(function(k){var tr=getTipoRuta(k);return{n:tr.icon+' '+tr.label,v:tipoMap[k].kg}});
+  var tBarColors=Object.keys(tipoMap).map(function(k){return getTipoRuta(k).color});
+  h+='<div class="chart-container"><h3 style="margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCE6 Kg por Tipo de Ruta</h3>'+svgBarChart(tBarData,400,220,tBarColors)+'</div>';
+  // Donut rutas por tipo
+  var tDonutData=Object.keys(tipoMap).map(function(k){return{v:tipoMap[k].cnt,c:getTipoRuta(k).color}});
+  h+='<div class="chart-container"><h3 style="margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDDFA\uFE0F Rutas por Tipo</h3>'+svgDonut(tDonutData,200);
+  h+='<div style="display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap">';
+  Object.keys(tipoMap).forEach(function(k){var tr=getTipoRuta(k);h+='<span style="font-size:11px;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:'+tr.color+';display:inline-block"></span>'+tr.label+' ('+tipoMap[k].cnt+')</span>'});
+  h+='</div></div></div>';
+
+  // Line chart — evoluci\u00f3n kg por fecha
+  var fechaMap={};compRoutes.sort(function(a,b){return a.fecha>b.fecha?1:-1}).forEach(function(r){if(!fechaMap[r.fecha])fechaMap[r.fecha]=0;fechaMap[r.fecha]+=r.kg});
+  var lineData=Object.keys(fechaMap).map(function(f){return{n:f.slice(5),v:fechaMap[f]}});
+  if(lineData.length>=2){
+    h+='<div class="chart-container" style="margin-bottom:16px"><h3 style="margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCC8 Evoluci\u00f3n Kg Transportados por Fecha</h3>'+svgLineChart(lineData,600,180,C.accent)+'</div>';
+  }
+
+  // Progress bars — utilizaci\u00f3n por veh\u00edculo
+  h+='<div class="chart-container" style="margin-bottom:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDE9B Kilometraje por Veh\u00edculo</h3>';
+  vehicles.sort(function(a,b){return b.kmActual-a.kmActual}).forEach(function(v){
+    var pct=v.kmActual/maxVehKm*100;
+    var col=v.categoria==='transporte'?'#059669':'#8B5CF6';
+    h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'+
+      '<span style="min-width:160px;font-size:12px;font-weight:600;text-align:right">'+v.matricula.slice(-6)+' '+v.nombre.split(' ').slice(0,2).join(' ')+'</span>'+
+      svgProgressBar(pct,300,14,col)+
+      '<span style="font-size:12px;font-weight:700;color:'+col+';min-width:70px">'+v.kmActual.toLocaleString('es')+' km</span></div>';
+  });
   h+='</div>';
 
-  // Tabla resumen flota
-  h+='<div class="chart-container"><h3 style="margin-bottom:10px">\uD83D\uDCCA Resumen Flota</h3>';
-  h+='<div class="tbl-wrap"><table><thead><tr><th>Veh\u00edculo</th><th>Matr\u00edcula</th><th>Categor\u00eda</th><th>Km</th><th>Capacidad</th><th>ITV</th><th>Seguro</th><th>Estado</th></tr></thead><tbody>';
-  vehicles.forEach(function(v){
-    var catBadge=v.categoria==='transporte'?'<span class="tag tag-green" style="font-size:10px">\uD83D\uDE9A Transporte</span>':'<span class="tag tag-purple" style="font-size:10px">\uD83D\uDD27 Auxiliar</span>';
-    h+='<tr><td><strong>'+v.nombre+'</strong></td><td>'+v.matricula+'</td><td>'+catBadge+'</td><td>'+v.kmActual.toLocaleString('es')+'</td><td>'+v.capacidad+'</td><td>'+v.itv+'</td><td>'+v.seguro+'</td><td><span class="tag tag-green" style="font-size:10px">'+v.estado+'</span></td></tr>';
+  // Tabla Top Destinos
+  var destMap={};compRoutes.forEach(function(r){if(!destMap[r.destino])destMap[r.destino]={freq:0,km:0,kg:0,coste:0};destMap[r.destino].freq++;destMap[r.destino].km+=(r.distanciaKm||0);destMap[r.destino].kg+=r.kg;destMap[r.destino].coste+=(r.costoEstimado||0)});
+  var destArr=Object.keys(destMap).sort(function(a,b){return destMap[b].kg-destMap[a].kg});
+  var maxDestKg=destArr.length?destMap[destArr[0]].kg:1;
+  h+='<div class="chart-container" style="margin-bottom:16px"><h3 style="margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83C\uDFC6 Ranking Destinos</h3>';
+  h+='<div class="tbl-wrap"><table><thead><tr><th>Destino</th><th>Viajes</th><th>Km Total</th><th>Kg Total</th><th>Coste \u20AC</th><th>% del Total</th></tr></thead><tbody>';
+  destArr.forEach(function(d){
+    var dd=destMap[d];var pct=totalKgRutas>0?Math.round(dd.kg/totalKgRutas*100):0;
+    h+='<tr><td><strong>'+d+'</strong></td><td style="text-align:center">'+dd.freq+'</td><td>'+dd.km.toLocaleString('es')+'</td><td><strong>'+dd.kg.toLocaleString('es')+'</strong></td><td>'+dd.coste+'\u20AC</td>'+
+      '<td><div style="display:flex;align-items:center;gap:6px">'+svgProgressBar(pct,100,10,C.accent)+'<span style="font-size:11px;font-weight:600">'+pct+'%</span></div></td></tr>';
   });
   h+='</tbody></table></div></div>';
 
-  // Resumen rutas
-  h+='<div class="chart-container" style="margin-top:16px"><h3 style="margin-bottom:10px">\uD83D\uDDFA\uFE0F Resumen Rutas Completadas</h3>';
-  h+='<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:12px">'+
-    '<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(44,110,73,.12);color:var(--accent)">\u2705</div><div class="stat-body"><div class="stat-val">'+compRoutes.length+'</div><div class="stat-label">Completadas</div></div></div>'+
-    '<div class="stat-mini s-blue"><div class="stat-icon" style="background:rgba(59,130,246,.12);color:#3B82F6">\uD83D\uDCCF</div><div class="stat-body"><div class="stat-val">'+totalKmRutas.toLocaleString('es')+'</div><div class="stat-label">Km Recorridos</div></div></div>'+
-    '<div class="stat-mini s-gold"><div class="stat-icon" style="background:rgba(212,168,67,.12);color:var(--gold)">\uD83D\uDCE6</div><div class="stat-body"><div class="stat-val">'+compRoutes.reduce(function(s,r){return s+r.kg},0).toLocaleString('es')+'</div><div class="stat-label">Kg Transportados</div></div></div>'+
-    '<div class="stat-mini s-coral"><div class="stat-icon" style="background:rgba(231,111,81,.12);color:var(--coral)">\u20AC</div><div class="stat-body"><div class="stat-val">~'+parseInt(costePorKm).toLocaleString('es')+'\u20AC</div><div class="stat-label">Coste Est. Rutas</div></div></div>'+
-  '</div></div>';
+  // Tabla rutas finca-a-finca
+  var fincaRoutes=compRoutes.filter(function(r){return r.tipoRuta==='campo'||r.tipoRuta==='interna'});
+  if(fincaRoutes.length){
+    var fMap={};fincaRoutes.forEach(function(r){var key=r.origen+' \u2192 '+r.destino;if(!fMap[key])fMap[key]={viajes:0,km:0,kg:0,tipo:r.tipoRuta};fMap[key].viajes++;fMap[key].km+=(r.distanciaKm||0);fMap[key].kg+=r.kg});
+    h+='<div class="chart-container"><h3 style="margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83C\uDF3E Rutas Finca a Finca / Campo</h3>';
+    h+='<div class="tbl-wrap"><table><thead><tr><th>Ruta</th><th>Tipo</th><th>Viajes</th><th>Km Medio</th><th>Kg Total</th></tr></thead><tbody>';
+    Object.keys(fMap).forEach(function(k){
+      var f=fMap[k];var tr=getTipoRuta(f.tipo);
+      h+='<tr><td style="font-size:12px">'+k+'</td><td><span class="tag" style="font-size:9px;background:'+tr.color+'15;color:'+tr.color+'">'+tr.icon+' '+tr.label+'</span></td><td style="text-align:center">'+f.viajes+'</td><td>'+Math.round(f.km/f.viajes)+' km</td><td><strong>'+f.kg.toLocaleString('es')+'</strong></td></tr>';
+    });
+    h+='</tbody></table></div></div>';
+  }
   el.innerHTML=h;
 }
 
@@ -11707,6 +11836,7 @@ window.nuevaRutaModal=function(){
   var h='<h2>\uD83D\uDE9A Nueva Ruta de Transporte</h2>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px">'+
     '<div><label class="form-label">Fecha *</label><input type="date" class="form-control" id="ruta-fecha" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
+    '<div><label class="form-label">Tipo Ruta *</label><select class="form-control" id="ruta-tipo"><option value="comercial">\uD83D\uDE9B Comercial</option><option value="campo">\uD83D\uDE9C Campo</option><option value="interna">\uD83D\uDD04 Interna</option><option value="exportacion">\uD83D\uDEA2 Exportaci\u00f3n</option></select></div>'+
     '<div><label class="form-label">Veh\u00edculo *</label><select class="form-control" id="ruta-vehiculo">'+vehicles.filter(function(v){return v.activo}).map(function(v){return '<option>'+v.matricula+' ('+v.tipo+')</option>'}).join('')+'</select></div>'+
     '<div><label class="form-label">Conductor *</label><input type="text" class="form-control" id="ruta-conductor" placeholder="Nombre conductor"></div>'+
     '<div><label class="form-label">Hora Salida *</label><input type="time" class="form-control" id="ruta-hora"></div>'+
@@ -11730,7 +11860,9 @@ window.guardarRuta=function(){
   var or=document.getElementById('ruta-origen').value;
   var de=document.getElementById('ruta-destino').value;
   if(!f||!v||!c||!or||!de){notifySaved('Completa campos obligatorios');return}
-  routes.push({id:routes.length+1,fecha:f,vehiculo:v,conductor:c,origen:or,destino:de,horaSalida:ho,horaLlegada:'',estado:'pendiente',carga:document.getElementById('ruta-carga').value,kg:parseInt(document.getElementById('ruta-kg').value)||0,lotes:[],checklistSalida:false,checklistLlegada:false,incidencias:'',observ:document.getElementById('ruta-obs').value,distanciaKm:parseInt(document.getElementById('ruta-distancia').value)||0,tiempoEstimado:document.getElementById('ruta-tiempo').value||''});
+  var dist=parseInt(document.getElementById('ruta-distancia').value)||0;
+  var tipoR=document.getElementById('ruta-tipo').value;
+  routes.push({id:routes.length+1,fecha:f,vehiculo:v,conductor:c,origen:or,destino:de,horaSalida:ho,horaLlegada:'',estado:'pendiente',tipoRuta:tipoR,carga:document.getElementById('ruta-carga').value,kg:parseInt(document.getElementById('ruta-kg').value)||0,lotes:[],checklistSalida:false,checklistLlegada:false,incidencias:'',observ:document.getElementById('ruta-obs').value,distanciaKm:dist,tiempoEstimado:document.getElementById('ruta-tiempo').value||'',costoEstimado:Math.round(dist*0.45)});
   AgroStore.save('agri_routes',routes);closeModal('modal-pedido');
   renderTranspStats();renderRutas();renderHistorial();renderFlotaTransp();
   notifySaved('Ruta creada');
