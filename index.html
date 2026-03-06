@@ -131,6 +131,8 @@ tr:hover td{background:rgba(76,149,108,.03)}
 .conv-last{font-size:13px;color:var(--text);padding:12px 16px;background:var(--light);border-radius:10px;line-height:1.55;border-left:3px solid var(--accent)}
 
 .stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-bottom:22px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.stat-row>.kpi-grid{grid-column:1/-1}
 .stat-mini{background:var(--white);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,.04);position:relative;overflow:hidden;transition:all .25s}
 .stat-mini:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
 .stat-mini::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0}
@@ -255,7 +257,8 @@ textarea.form-control{min-height:80px;resize:vertical}
   .btn-sm{padding:8px 14px;font-size:12px;min-height:36px}
   .card{padding:16px}.card .value{font-size:22px}
   .section-title{font-size:15px;margin:18px 0 10px}
-  .stat-row{grid-template-columns:1fr 1fr !important}
+  .stat-row{grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) !important}
+  .kpi-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) !important}
   .modal-overlay{align-items:flex-start;padding:10px 0;overflow-y:auto}
   .modal{width:95%;padding:20px;max-width:none;border-radius:14px;max-height:calc(100vh - 20px)}
   .modal h2{font-size:18px}
@@ -270,7 +273,8 @@ textarea.form-control{min-height:80px;resize:vertical}
 }
 @media(max-width:480px){
   .cards{grid-template-columns:1fr}
-  .stat-row{grid-template-columns:1fr !important}
+  .stat-row{grid-template-columns:repeat(2,1fr) !important}
+  .kpi-grid{grid-template-columns:repeat(2,1fr) !important}
   .main .page{padding:12px 10px}
   .card .value{font-size:20px}
   .header h1{font-size:16px}
@@ -811,7 +815,7 @@ function showPage(id){
   // Fix inline grids on mobile
   setTimeout(function(){fixMobileGrids('.page.active')},100);
 }
-function fixMobileGrids(scope){if(window.innerWidth>=769)return;document.querySelectorAll(scope+' [style*="grid-template-columns"]').forEach(function(el){el.style.gridTemplateColumns='1fr';var ch=el.querySelectorAll('[style*="grid-column"]');ch.forEach(function(c){c.style.gridColumn='auto'})})}
+function fixMobileGrids(scope){if(window.innerWidth>=769)return;document.querySelectorAll(scope+' [style*="grid-template-columns"]').forEach(function(el){if(el.classList.contains('kpi-grid')||el.classList.contains('stat-row'))return;el.style.gridTemplateColumns='1fr';var ch=el.querySelectorAll('[style*="grid-column"]');ch.forEach(function(c){c.style.gridColumn='auto'})})}
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("overlay").classList.toggle("show")}
 function openModal(id){document.getElementById(id).classList.add("show");setTimeout(function(){fixMobileGrids('#'+id)},50)}
 function closeModal(id){document.getElementById(id).classList.remove("show")}
@@ -9756,7 +9760,7 @@ M.innerHTML+=`<div class="page" id="page-meteo">
   <div class="chart-container"><div class="chart-title">\u{1F4A7} Precipitaci\u00f3n y Humedad</div><div class="chart-subtitle">\u00daltimos 10 d\u00edas</div><div id="meteo-rain-chart"></div></div>
 </div>
 <div class="section-title">\u{1F4C5} Previsi\u00f3n 7 d\u00edas</div>
-<div id="meteo-forecast" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:24px"></div>
+<div id="meteo-forecast" class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:24px"></div>
 <div class="grid2">
   <div class="chart-container"><div class="chart-title">\u{1F32C}\uFE0F Viento</div><div class="chart-subtitle">Velocidad media (km/h)</div><div id="meteo-wind-chart"></div></div>
   <div>
@@ -10185,10 +10189,12 @@ function renderRecStats(){
   var avgDestr=n?totalDestr/n:0;
   var meses=Object.keys(porMes).sort();var sparkVals=meses.map(function(m){return porMes[m]});
   var kgPerCaja=totalCajas?(totalKg/totalCajas).toFixed(1):'0';
-  el.innerHTML='<div class="card" style="padding:16px;text-align:center"><div class="value" style="color:var(--accent);font-size:26px">'+totalKg.toLocaleString('es')+'</div><div style="font-size:11px;color:var(--gray)">KG TOTALES</div>'+(sparkVals.length>1?'<div style="margin-top:6px">'+svgMiniSparkline(sparkVals,120,28,'#2C6E49')+'</div>':'')+'</div>'+
+  el.innerHTML='<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px">'+
+  '<div class="card" style="padding:16px;text-align:center"><div class="value" style="color:var(--accent);font-size:26px">'+totalKg.toLocaleString('es')+'</div><div style="font-size:11px;color:var(--gray)">KG TOTALES</div>'+(sparkVals.length>1?'<div style="margin-top:6px">'+svgMiniSparkline(sparkVals,120,28,'#2C6E49')+'</div>':'')+'</div>'+
   '<div class="card" style="padding:16px;text-align:center"><div class="value" style="color:var(--primary);font-size:26px">'+totalCajas.toLocaleString('es')+'</div><div style="font-size:11px;color:var(--gray)">CAJAS</div><div style="font-size:12px;color:var(--gray);margin-top:4px">'+kgPerCaja+' kg/caja</div></div>'+
   '<div class="card" style="padding:16px;text-align:center"><div class="value" style="color:var(--gold);font-size:26px">'+n+'</div><div style="font-size:11px;color:var(--gray)">LOTES</div></div>'+
-  '<div class="card" style="padding:16px;text-align:center"><div class="value" style="color:'+(avgDestr>5?'var(--coral)':'var(--primary)')+';font-size:26px">'+avgDestr.toFixed(1)+'%</div><div style="font-size:11px;color:var(--gray)">DESTRÍO MEDIO</div>'+svgProgressBar(avgDestr*10,120,6,avgDestr>5?'#E07A5F':'#2C6E49')+'</div>';
+  '<div class="card" style="padding:16px;text-align:center"><div class="value" style="color:'+(avgDestr>5?'var(--coral)':'var(--primary)')+';font-size:26px">'+avgDestr.toFixed(1)+'%</div><div style="font-size:11px;color:var(--gray)">DESTRÍO MEDIO</div>'+svgProgressBar(avgDestr*10,120,6,avgDestr>5?'#E07A5F':'#2C6E49')+'</div>'+
+  '</div>';
 }
 function renderCosechas(data){
   var tb=_sel('rec-tbody');if(!tb)return;
@@ -10386,7 +10392,7 @@ function renderRiegoStats(){
       (spark?'<div style="margin-top:8px">'+spark+'</div>':'')+
     '</div>';
   }
-  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px">'+
+  el.innerHTML='<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px">'+
     kpi('\uD83D\uDCA7','Agua Total',(tL/1000).toFixed(1),'m\u00B3','consumo acumulado','var(--blue)',svgMiniSparkline(sparkVals,120,28,'#3B82F6'))+
     kpi('\uD83D\uDEBF','Riegos',riegos.length,'','aplicaciones','var(--accent)','')+
     kpi('\uD83E\uDDEA','Fertirrigaciones',tF,'','tratamientos','#7C3AED','')+
@@ -10518,7 +10524,7 @@ function renderTratStats(){
   var ap=0,pl=0,cT=0,costePorParc={};
   tratamientos.forEach(function(t){if(t.estado==='aplicado')ap++;else pl++;cT+=t.coste||0;if(!costePorParc[t.parcela])costePorParc[t.parcela]=0;costePorParc[t.parcela]+=t.coste||0});
   var pctAp=tratamientos.length?(ap/tratamientos.length*100).toFixed(0):0;
-  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:16px">'+
+  el.innerHTML='<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px">'+
     '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Aplicados</div><div style="font-size:32px;font-weight:800;color:var(--accent)">'+ap+'</div><div style="font-size:11px;color:var(--gray)">'+pctAp+'% completados</div></div>'+
     '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Planificados</div><div style="font-size:32px;font-weight:800;color:var(--gold)">'+pl+'</div><div style="font-size:11px;color:var(--gray)">pendientes</div></div>'+
     '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Coste Total</div><div style="font-size:32px;font-weight:800;color:var(--coral)">'+cT.toLocaleString('es')+'\u20ac</div><div style="font-size:11px;color:var(--gray)">fitosanitarios</div></div>'+
@@ -10630,7 +10636,7 @@ function renderIncStats(){
   var ab=0,ce=0,alta=0,media=0,baja=0;
   incidencias.forEach(function(i){if(i.estado==='abierta'){ab++;if(i.severidad==='alta')alta++;else if(i.severidad==='media')media++;else baja++}else ce++});
   var tasaResol=incidencias.length?Math.round(ce/incidencias.length*100):0;
-  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:16px">'+
+  el.innerHTML='<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px">'+
     '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Abiertas</div><div style="font-size:32px;font-weight:800;color:var(--coral)">'+ab+'</div><div style="font-size:11px;color:var(--gray)">requieren atención</div></div>'+
     '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Cerradas</div><div style="font-size:32px;font-weight:800;color:var(--accent)">'+ce+'</div><div style="font-size:11px;color:var(--gray)">resueltas</div></div>'+
     '<div class="card" style="padding:16px;text-align:center"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gray);margin-bottom:8px;font-weight:600">Tasa Resolución</div><div style="font-size:32px;font-weight:800;color:'+(tasaResol>=70?'var(--accent)':'var(--coral)')+'">'+tasaResol+'%</div>'+svgProgressBar(tasaResol,160,8,tasaResol>=70?'#2C6E49':'#E07A5F')+'</div>'+
@@ -10646,7 +10652,7 @@ function renderIncStats(){
   incidencias.filter(function(i){return i.estado==='abierta'}).forEach(function(i){porParc[i.parcela]=(porParc[i.parcela]||0)+1});
   incidencias.forEach(function(i){porTipo[i.tipo]=(porTipo[i.tipo]||0)+1});
   var heatCols=function(n){return n===0?'#d1fae5':n<=1?'#a7f3d0':n<=2?'#fde68a':n<=3?'#fbbf24':'#ef4444'};
-  var hm='<div class="card" style="padding:16px"><h4 style="margin-bottom:12px">\uD83D\uDDFA Mapa Calor — Incidencias Abiertas por Parcela</h4><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">';
+  var hm='<div class="card" style="padding:16px"><h4 style="margin-bottom:12px">\uD83D\uDDFA Mapa Calor — Incidencias Abiertas por Parcela</h4><div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">';
   _pn.forEach(function(p){var n=porParc[p]||0;hm+='<div style="background:'+heatCols(n)+';border-radius:10px;padding:12px;text-align:center"><div style="font-weight:700;font-size:13px;color:#1a1a1a">'+p+'</div><div style="font-size:24px;font-weight:800;color:#1a1a1a;margin:4px 0">'+n+'</div><div style="font-size:10px;color:#333">'+(n===0?'Sin incidencias':n===1?'1 incidencia':n+' incidencias')+'</div></div>'});
   hm+='</div></div>';
   var tipoCols={Plaga:'#e07a5f',Enfermedad:'#7C3AED',Riego:'#3B82F6',Clima:'#D4A843',Estructura:'#6B7280',Robo:'#1B3A2D',Otro:'#9CA3AF'};
@@ -10750,7 +10756,7 @@ function renderTrazStats(){
     '<span style="font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3B82F6;margin-right:4px"></span>Almacenados ('+alm+')</span>'+
     '<span style="font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#D4A843;margin-right:4px"></span>En Proceso ('+proc+')</span>'+
     '<span style="font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2C6E49;margin-right:4px"></span>Expedidos ('+exp+')</span></div>';
-  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:16px">'+
+  el.innerHTML='<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:16px">'+
     kpi('\uD83D\uDCE6',lotes.length,'LOTES TOTAL','var(--accent)')+
     kpi('\u2696\uFE0F',(tkgs/1000).toFixed(1)+'t','KG TOTAL','var(--primary)')+
     kpi('\uD83D\uDCE5',tcaj.toLocaleString('es'),'CAJAS TOTAL','var(--blue)')+
@@ -10893,7 +10899,7 @@ function renderRentStats(){
   var best=_parcData.map(function(p){var ct=totalCostes(p.costes);return{n:p.nombre,pct:p.ingresosVenta>0?((p.ingresosVenta-ct)/p.ingresosVenta*100):0}}).sort(function(a,b){return b.pct-a.pct})[0];
   var costRatio=tIng>0?(tCost/tIng*100):0;
   var kpi=function(ic,tit,val,sub,clr,extra){return '<div class="card" style="padding:16px;text-align:center"><div style="font-size:20px;margin-bottom:4px">'+ic+'</div><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:6px;font-weight:600">'+tit+'</div><div style="font-size:26px;font-weight:800;color:'+clr+'">'+val+'</div><div style="font-size:11px;color:var(--gray);margin-top:2px">'+sub+'</div>'+(extra||'')+'</div>'};
-  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:16px">'+
+  el.innerHTML='<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px">'+
     kpi('\uD83C\uDF31','SUPERFICIE',tSup.toFixed(1)+' ha',_parcData.length+' parcelas','var(--primary)','')+
     kpi('\uD83C\uDF3E','PRODUCCI\u00d3N',(tProd/1000).toFixed(0)+' t','kg totales','var(--accent)','<div style="margin-top:6px">'+svgMiniSparkline(sparkProd,120,26,'#4C956C')+'</div>')+
     kpi('\uD83D\uDCB0','INGRESOS',(tIng/1000).toFixed(0)+'k\u20ac',eurHa.toLocaleString('es')+' \u20ac/ha','var(--primary)','')+
@@ -11543,7 +11549,7 @@ var M=document.getElementById('main-content');
 M.innerHTML+='<div class="page" id="page-transporte">'+
 '<div class="header"><h1>\uD83D\uDE9A Transporte</h1>'+
 '<button class="btn" onclick="nuevaRutaModal()">+ Nueva Ruta</button></div>'+
-'<div id="transp-stats" class="stat-row" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:20px"></div>'+
+'<div id="transp-stats" class="stat-row kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px"></div>'+
 '<div class="tabs" style="margin-bottom:16px">'+
   '<button class="tab-btn active" data-group="transp" data-tab="rutas" onclick="showTab(\'transp\',\'rutas\')">Rutas</button>'+
   '<button class="tab-btn" data-group="transp" data-tab="historial" onclick="showTab(\'transp\',\'historial\')">Historial</button>'+
@@ -11682,7 +11688,7 @@ M.innerHTML+='<div class="page" id="page-fichajes">'+
   '</div>'+
 '</div>'+
 '<div id="fichaje-clock-area"></div>'+
-'<div id="fichaje-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-bottom:20px"></div>'+
+'<div id="fichaje-stats" class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px"></div>'+
 '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px" id="fichaje-charts-row">'+
   '<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCC5 Vista Semanal</h3><div id="fichaje-weekly"></div></div>'+
   '<div class="card" style="padding:16px"><h3 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDCCA Horas por Día (7 días)</h3><div id="fichaje-chart"></div></div>'+
@@ -11706,7 +11712,7 @@ M.innerHTML+='<div class="page" id="page-cuadrillas">'+
   '<div><h1>\uD83D\uDC65 Cuadrillas y Equipos</h1><p class="sub" style="margin:4px 0 0;font-size:13px;color:var(--gray)">Gestión de equipos · Asignación de personal y habilidades</p></div>'+
   '<button class="btn btn-primary" onclick="openNuevaCuadrilla()">\u2795 Nueva Cuadrilla</button>'+
 '</div>'+
-'<div id="cuadrillas-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:20px"></div>'+
+'<div id="cuadrillas-stats" class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px"></div>'+
 '<div id="cuadrillas-content"></div>'+
 '<div class="card" style="padding:16px;margin-top:20px"><h3 style="margin:0 0 14px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83C\uDFAF Matriz de Habilidades y Certificaciones</h3><div id="cuadrillas-skills"></div></div>'+
 '<div class="card" style="padding:16px;margin-top:16px"><h3 style="margin:0 0 14px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">\uD83D\uDDFA\uFE0F Asignación Actual de Cuadrillas</h3><div id="cuadrillas-asignacion"></div></div>'+
