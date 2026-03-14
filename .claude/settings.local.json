@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(gh repo create agrosinergia --public --source=. --push --description \"AgroSinergia - Plataforma de Gestión Agrícola Integral para Fruitum 2016 SL y Fruchesco\")",
+      "Bash(gh api repos/Somossinergia-org/agrosinergia/pages -X POST -f \"build_type=legacy\" -f \"source[branch]=master\" -f \"source[path]=/\")",
+      "Bash(gh api repos/Somossinergia-org/agrosinergia/pages --jq '.status')",
+      "Bash(git push -u origin feature/siex-improvements-v2)",
+      "Bash(git add agrosinergia.html)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(git add index.html agrosinergia.html AGRI_NOTES.md AGRI_EMPLOYEE_AUTH_NOTES.md)",
+      "Bash(git push origin feature/siex-improvements-v2)",
+      "Bash(git checkout master)",
+      "Bash(git merge feature/siex-improvements-v2 --no-edit)",
+      "Bash(git push origin master)",
+      "Bash(gh api repos/Somossinergia-org/agrosinergia/pages)",
+      "WebFetch(domain:somossinergia-org.github.io)",
+      "Bash(git add index.html agrosinergia.html)",
+      "Bash(git cherry-pick 8a89efa 429bee3)",
+      "Bash(git push -u origin feature/agriculture-deep-enhancements)",
+      "Bash(gh pr:*)"
+    ]
+  }
+}

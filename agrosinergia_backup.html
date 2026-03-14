@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroSinergia — Fruitum &amp; Fruchesco</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+:root{
+  --dark:#1B3A2D;--primary:#2C6E49;--accent:#4C956C;--light:#F4F7F5;
+  --gold:#D4A843;--coral:#E07A5F;--white:#FFFFFF;--gray:#64748B;
+  --border:#E2E8F0;--text:#1E293B;--sidebar-w:260px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 12px rgba(0,0,0,.08);--shadow-lg:0 8px 30px rgba(0,0,0,.12);--radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--light);color:var(--text);display:flex;min-height:100vh;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(44,110,73,.3);border-radius:3px}
+
+.sidebar{width:var(--sidebar-w);background:linear-gradient(180deg,#142E22 0%,#1B3A2D 40%,#234A38 100%);color:var(--white);position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:100;transition:transform .3s}
+.sidebar-brand{padding:28px 22px 22px;text-align:center}
+.sidebar-logo{width:52px;height:52px;background:linear-gradient(135deg,var(--accent),var(--gold));border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px;box-shadow:0 4px 15px rgba(76,149,108,.4)}
+.sidebar-brand h2{font-size:19px;font-weight:700;letter-spacing:.5px}
+.sidebar-brand small{color:rgba(255,255,255,.5);font-size:11.5px}
+.nav-section{padding:8px 14px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.3);margin-top:8px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:pointer;color:rgba(255,255,255,.6);font-size:13.5px;transition:all .2s;margin:1px 10px;border-radius:8px;position:relative}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:linear-gradient(90deg,rgba(76,149,108,.3),rgba(76,149,108,.1));color:var(--gold);font-weight:600}
+.nav-item.active::before{content:'';position:absolute;left:-10px;top:50%;transform:translateY(-50%);width:3px;height:24px;background:var(--gold);border-radius:0 3px 3px 0}
+.nav-item .icon{width:22px;text-align:center;font-size:15px}
+.nav-item .nav-badge{margin-left:auto;background:var(--coral);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;min-width:20px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);position:absolute;bottom:0;left:0;right:0}
+.sidebar-footer small{color:rgba(255,255,255,.3);font-size:10.5px}
+
+.main{margin-left:var(--sidebar-w);flex:1;padding:28px 32px 60px;max-width:1200px}
+.page{display:none;animation:fadeIn .35s ease}.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:24px;font-weight:700;color:var(--dark);letter-spacing:-.3px}
+.header .badge{background:linear-gradient(135deg,var(--accent),var(--primary));color:#fff;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;box-shadow:0 2px 8px rgba(44,110,73,.3)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;margin-bottom:28px}
+.card{background:var(--white);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow-sm);transition:all .25s;border:1px solid rgba(0,0,0,.04);position:relative;overflow:hidden}
+.card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--gold));opacity:0;transition:opacity .25s}
+.card:hover::after{opacity:1}
+.card h3{font-size:12px;color:var(--gray);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.card .value{font-size:28px;font-weight:800;color:var(--dark);letter-spacing:-.5px}
+.card .sub{font-size:12px;color:var(--accent);margin-top:6px;font-weight:500}
+.card-icon{position:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.card-icon.green{background:rgba(76,149,108,.1)}.card-icon.gold{background:rgba(212,168,67,.1)}.card-icon.coral{background:rgba(224,122,95,.1)}.card-icon.blue{background:rgba(59,130,246,.1)}
+
+.chart-container{background:var(--white);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow-sm);margin-bottom:24px;border:1px solid rgba(0,0,0,.04)}
+.chart-title{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px}
+.chart-subtitle{font-size:12px;color:var(--gray);margin-bottom:20px}
+.svg-chart{width:100%;overflow:visible}
+.bar-rect{transition:all .3s;cursor:pointer;rx:4}.bar-rect:hover{filter:brightness(1.1)}
+.chart-label{font-family:'Inter',sans-serif;fill:var(--gray);font-size:11px}
+.chart-value{font-family:'Inter',sans-serif;fill:var(--dark);font-size:11px;font-weight:700}
+.chart-grid{stroke:#E8ECF0;stroke-width:1}
+
+.donut-wrap{display:flex;align-items:center;gap:32px;flex-wrap:wrap}
+.donut-svg{width:180px;height:180px;flex-shrink:0}
+.donut-legend{display:flex;flex-direction:column;gap:10px;flex:1}
+.legend-item{display:flex;align-items:center;gap:10px;font-size:13px}
+.legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.legend-value{margin-left:auto;font-weight:700;color:var(--dark)}
+
+.progress-bar-wrap{margin-bottom:14px}
+.progress-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.progress-label span:first-child{font-weight:600;color:var(--dark)}
+.progress-label span:last-child{color:var(--gray)}
+.progress-track{height:8px;background:#E8ECF0;border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width 1s ease}
+
+.tbl-wrap{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:22px;border:1px solid rgba(0,0,0,.04)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:linear-gradient(135deg,var(--dark),#234A38);color:#fff;text-align:left;padding:12px 16px;font-weight:600;white-space:nowrap;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+td{padding:11px 16px;border-bottom:1px solid #F1F5F3}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(76,149,108,.03)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.tag-green{background:#ECFDF5;color:#047857}.tag-blue{background:#EFF6FF;color:#1D4ED8}
+.tag-yellow{background:#FFFBEB;color:#B45309}.tag-red{background:#FEF2F2;color:#B91C1C}
+.tag-purple{background:#F5F3FF;color:#7C3AED}.tag-gray{background:#F1F5F9;color:#475569}
+
+.section-title{font-size:17px;font-weight:700;color:var(--dark);margin:24px 0 14px;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';width:4px;height:20px;background:linear-gradient(to bottom,var(--accent),var(--gold));border-radius:2px}
+
+.alert-card{background:var(--white);border-radius:var(--radius);padding:16px 20px;margin-bottom:12px;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,.04);display:flex;gap:14px;align-items:flex-start;transition:all .2s}
+.alert-card:hover{box-shadow:var(--shadow-md)}
+.alert-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.alert-icon.warn{background:rgba(224,122,95,.12)}.alert-icon.ok{background:rgba(76,149,108,.12)}
+.alert-body{flex:1}
+.a-title{font-weight:700;font-size:13.5px;color:var(--dark)}
+.a-desc{font-size:12.5px;color:var(--gray);margin-top:3px;line-height:1.5}
+.a-date{font-size:11px;color:var(--coral);margin-top:5px;font-weight:600}
+.a-date.ok{color:var(--accent)}
+
+.conv-card{background:var(--white);border-radius:var(--radius);padding:20px;margin-bottom:14px;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,.04);transition:all .2s}
+.conv-card:hover{box-shadow:var(--shadow-md)}
+.conv-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.conv-avatar{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.conv-header-text h4{font-size:14px;color:var(--dark);font-weight:700}
+.conv-header-text .conv-meta{font-size:11.5px;color:var(--gray);margin-top:2px}
+.conv-last{font-size:13px;color:var(--text);padding:12px 16px;background:var(--light);border-radius:10px;line-height:1.55;border-left:3px solid var(--accent)}
+
+.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.stat-mini{background:var(--white);border-radius:10px;padding:14px 16px;text-align:center;box-shadow:var(--shadow-sm)}
+.stat-mini .stat-num{font-size:22px;font-weight:800;color:var(--dark)}
+.stat-mini .stat-label{font-size:11px;color:var(--gray);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.detail-card{background:var(--white);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,.04)}
+.detail-card h3{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:4px}
+.detail-card .dc-sub{font-size:12px;color:var(--gray);margin-bottom:14px}
+.detail-card p{font-size:13px;color:#475569;line-height:1.65}
+
+.pheno-stage{display:flex;align-items:center;gap:6px;margin:12px 0}
+.pheno-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
+.pheno-line{flex:1;height:3px;border-radius:2px}
+
+/* FORMS & PROCESS */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--dark);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-control{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13.5px;font-family:inherit;color:var(--text);transition:border-color .2s;background:var(--white)}
+.form-control:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(76,149,108,.12)}
+select.form-control{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%2364748B' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+textarea.form-control{min-height:80px;resize:vertical}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .2s;border:none}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--primary));color:#fff;box-shadow:0 2px 8px rgba(44,110,73,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(44,110,73,.4)}
+.btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--accent)}
+.btn-outline:hover{background:rgba(76,149,108,.06)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#C49B35);color:#fff;box-shadow:0 2px 8px rgba(212,168,67,.3)}
+.btn-coral{background:linear-gradient(135deg,var(--coral),#C4654B);color:#fff}
+.btn-sm{padding:6px 14px;font-size:12px}
+.btn-group{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+
+/* KANBAN */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kanban-col{background:var(--light);border-radius:var(--radius);padding:14px;min-height:200px}
+.kanban-col-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.kanban-col-title .count{background:var(--white);border-radius:10px;padding:1px 8px;font-size:11px;color:var(--gray)}
+.kanban-card{background:var(--white);border-radius:8px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow-sm);border-left:3px solid transparent;cursor:pointer;transition:all .2s}
+.kanban-card:hover{box-shadow:var(--shadow-md);transform:translateX(2px)}
+.kanban-card .kc-title{font-size:13px;font-weight:600;color:var(--dark);margin-bottom:4px}
+.kanban-card .kc-meta{font-size:11px;color:var(--gray)}
+.kanban-card .kc-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:28px;margin-bottom:20px}
+.timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--border)}
+.timeline-item{position:relative;margin-bottom:18px}
+.timeline-item::before{content:'';position:absolute;left:-22px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid var(--accent);background:var(--white)}
+.timeline-item.done::before{background:var(--accent)}
+.timeline-item .tl-date{font-size:11px;color:var(--gray);font-weight:600}
+.timeline-item .tl-text{font-size:13px;color:var(--dark);margin-top:2px}
+
+/* CHECKLIST */
+.checklist-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:var(--white);border-radius:8px;margin-bottom:6px;box-shadow:var(--shadow-sm);transition:all .2s;cursor:pointer}
+.checklist-item:hover{background:rgba(76,149,108,.03)}
+.check-box{width:22px;height:22px;border:2px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;transition:all .2s}
+.checklist-item.checked .check-box{background:var(--accent);border-color:var(--accent);color:#fff}
+.checklist-item.checked .check-text{text-decoration:line-through;color:var(--gray)}
+.check-text{font-size:13px;color:var(--dark);line-height:1.4}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:20px;background:var(--white);padding:4px;border-radius:10px;box-shadow:var(--shadow-sm)}
+.tab-btn{padding:8px 18px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:500;color:var(--gray);cursor:pointer;border-radius:8px;transition:all .2s}
+.tab-btn.active{background:var(--accent);color:#fff;font-weight:600}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* PIPELINE */
+.pipeline{display:flex;gap:0;margin-bottom:24px;overflow-x:auto}
+.pipe-step{flex:1;text-align:center;padding:12px 16px;background:var(--white);position:relative;font-size:12px;font-weight:600;color:var(--gray);min-width:110px}
+.pipe-step:first-child{border-radius:8px 0 0 8px}
+.pipe-step:last-child{border-radius:0 8px 8px 0}
+.pipe-step.active{background:var(--accent);color:#fff}
+.pipe-step.done{background:var(--primary);color:rgba(255,255,255,.8)}
+.pipe-step .pipe-num{font-size:18px;font-weight:800;display:block;margin-bottom:2px}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--white);border-radius:16px;padding:28px;max-width:560px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal h2{font-size:20px;font-weight:700;color:var(--dark);margin-bottom:4px}
+.modal .modal-sub{font-size:13px;color:var(--gray);margin-bottom:20px}
+.modal-close{position:absolute;top:16px;right:20px;background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray)}
+
+/* NOTIFICATION DOT */
+.notif-dot{width:8px;height:8px;background:var(--coral);border-radius:50%;display:inline-block;margin-left:4px}
+
+@media(max-width:900px){.kanban{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
+  .main{margin-left:0;padding:18px 14px 90px}
+  .mobile-bar{display:flex !important}.hamburger{display:flex !important}
+  .cards{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}
+  .kanban{grid-template-columns:1fr}.donut-wrap{flex-direction:column}
+  .header h1{font-size:20px}.pipeline{flex-wrap:wrap}.pipe-step{border-radius:8px !important;margin:2px}
+}
+@media(max-width:480px){.cards{grid-template-columns:1fr}}
+@media(min-width:769px){.mobile-bar{display:none !important}.hamburger{display:none !important}}
+.hamburger{position:fixed;top:14px;left:14px;z-index:200;background:var(--dark);color:#fff;border:none;border-radius:10px;width:42px;height:42px;font-size:20px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:var(--shadow-md)}
+.mobile-bar{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(180deg,#1B3A2D,#142E22);z-index:100;justify-content:space-around;padding:8px 0 env(safe-area-inset-bottom,8px);display:none;box-shadow:0 -4px 20px rgba(0,0,0,.15)}
+.mob-btn{color:rgba(255,255,255,.5);background:none;border:none;font-size:18px;padding:6px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .2s}
+.mob-btn span{font-size:9px;font-weight:500}.mob-btn.active{color:var(--gold)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;backdrop-filter:blur(2px)}.overlay.show{display:block}
+@keyframes growUp{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.animate-bar{animation:growUp .8s ease forwards;transform-origin:bottom}
+</style>
+</head>
+<body>
+<button class="hamburger" onclick="toggleSidebar()">&#9776;</button>
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-logo">&#127793;</div>
+    <h2>AgroSinergia</h2>
+    <small>Fruitum &middot; Fruchesco</small>
+  </div>
+  <div id="nav-list"></div>
+  <div class="sidebar-footer"><small>&copy; 2026 Somos Sinergia</small></div>
+</nav>
+
+<main class="main" id="main-content"></main>
+<div class="mobile-bar" id="mobile-bar"></div>
+
+<!-- MODAL NUEVO PEDIDO -->
+<div class="modal-overlay" id="modal-pedido">
+<div class="modal" style="position:relative">
+  <button class="modal-close" onclick="closeModal('modal-pedido')">&times;</button>
+  <h2>Nuevo Pedido de Exportaci&oacute;n</h2>
+  <div class="modal-sub">Complete los datos del pedido para tramitar la orden</div>
+  <div class="form-group"><label>Cliente</label><select class="form-control"><option>Pierre Duval - Rungis (Francia)</option><option>Green Fresh Ltd - Londres (UK)</option><option>Frucht Import GmbH - Hamburgo (Alemania)</option><option>De Groot BV - Rotterdam (Pa&iacute;ses Bajos)</option><option>Nuevo cliente...</option></select></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="form-group"><label>Producto</label><select class="form-control"><option>Breva Colar</option><option>Higo Colar</option><option>Higo San Antonio</option><option>Granada Mollar</option><option>Granada Wonderful ECO</option><option>Higo Colar ECO</option></select></div>
+    <div class="form-group"><label>Calibre</label><select class="form-control"><option>35-40mm</option><option>40-45mm</option><option>45-50mm</option><option>50-55mm</option><option>Mix</option></select></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+    <div class="form-group"><label>Cantidad (pallets)</label><input type="number" class="form-control" value="12" min="1"></div>
+    <div class="form-group"><label>Fecha Entrega</label><input type="date" class="form-control" value="2026-03-11"></div>
+    <div class="form-group"><label>Precio &euro;/kg</label><input type="number" class="form-control" value="3.20" step="0.05"></div>
+  </div>
+  <div class="form-group"><label>Destino</label><input type="text" class="form-control" placeholder="Ej: Rungis MIN, Par&iacute;s" value="Rungis MIN, Par&iacute;s"></div>
+  <div class="form-group"><label>Transporte</label><select class="form-control"><option>Furg&oacute;n propio Iveco refrigerado</option><option>Transportista externo - Logifruit</option><option>Transportista externo - TFE Express</option><option>Recogida en almac&eacute;n</option></select></div>
+  <div class="form-group"><label>Observaciones</label><textarea class="form-control" placeholder="Requisitos especiales, instrucciones de entrega..."></textarea></div>
+  <div class="form-group"><label>Certificados requeridos</label>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px">
+      <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0"><input type="checkbox" checked> GlobalGAP</label>
+      <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0"><input type="checkbox"> CAECV / EU Organic</label>
+      <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0"><input type="checkbox" checked> Fitosanitario</label>
+      <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0"><input type="checkbox"> GRASP</label>
+    </div>
+  </div>
+  <div class="btn-group"><button class="btn btn-primary" onclick="closeModal('modal-pedido')">Crear Pedido</button><button class="btn btn-outline" onclick="closeModal('modal-pedido')">Cancelar</button></div>
+</div>
+</div>
+
+<!-- MODAL NUEVA AUDITORIA -->
+<div class="modal-overlay" id="modal-auditoria">
+<div class="modal" style="position:relative">
+  <button class="modal-close" onclick="closeModal('modal-auditoria')">&times;</button>
+  <h2>Iniciar Auditor&iacute;a / Inspecci&oacute;n</h2>
+  <div class="modal-sub">Seleccione el tipo de auditor&iacute;a y la explotaci&oacute;n</div>
+  <div class="form-group"><label>Tipo de Auditor&iacute;a</label><select class="form-control"><option>Auditor&iacute;a Interna Calidad</option><option>Auditor&iacute;a GlobalGAP</option><option>Auditor&iacute;a CAECV Ecol&oacute;gica</option><option>Inspecci&oacute;n SIEX / Cuaderno Digital</option><option>Inspecci&oacute;n ITEAF</option><option>Revisi&oacute;n Seguridad Alimentaria</option></select></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="form-group"><label>Explotaci&oacute;n</label><select class="form-control"><option>Fruitum 2016 SL</option><option>Fruchesco (Ecol&oacute;gico)</option><option>Ambas</option></select></div>
+    <div class="form-group"><label>Fecha Programada</label><input type="date" class="form-control" value="2026-04-20"></div>
+  </div>
+  <div class="form-group"><label>Auditor / Inspector</label><input type="text" class="form-control" placeholder="Nombre del auditor" value="CAECV - Auditor externo"></div>
+  <div class="form-group"><label>Notas Previas</label><textarea class="form-control" placeholder="Documentaci&oacute;n a preparar, puntos cr&iacute;ticos a revisar..."></textarea></div>
+  <div class="btn-group"><button class="btn btn-gold" onclick="closeModal('modal-auditoria')">Programar Auditor&iacute;a</button><button class="btn btn-outline" onclick="closeModal('modal-auditoria')">Cancelar</button></div>
+</div>
+</div>
+
+<!-- MODAL NUEVO MENSAJE -->
+<div class="modal-overlay" id="modal-mensaje">
+<div class="modal" style="position:relative">
+  <button class="modal-close" onclick="closeModal('modal-mensaje')">&times;</button>
+  <h2>Nuevo Mensaje</h2>
+  <div class="modal-sub">Enviar comunicaci&oacute;n interna o a contactos externos</div>
+  <div class="form-group"><label>Destinatario</label><select class="form-control"><option>Pierre Duval (Export Rungis)</option><option>Laura S&aacute;nchez (ATRIA Vega Baja)</option><option>CAECV - Certificadora</option><option>Ahmed Benaissa (Capataz)</option><option>Mar&iacute;a Garc&iacute;a (T&eacute;cnica)</option><option>Jos&eacute; Mart&iacute;nez (Jefe Confecci&oacute;n)</option><option>Todos los trabajadores</option></select></div>
+  <div class="form-group"><label>Canal</label><select class="form-control"><option>Mensaje interno AgroSinergia</option><option>Email</option><option>WhatsApp Business</option></select></div>
+  <div class="form-group"><label>Asunto</label><input type="text" class="form-control" placeholder="Asunto del mensaje"></div>
+  <div class="form-group"><label>Mensaje</label><textarea class="form-control" rows="5" placeholder="Escribe tu mensaje aqu&iacute;..."></textarea></div>
+  <div class="form-group"><label>Adjuntar</label>
+    <div style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;color:var(--gray);font-size:13px;cursor:pointer">
+      Arrastra archivos aqu&iacute; o <span style="color:var(--accent);font-weight:600">selecciona</span><br>
+      <span style="font-size:11px">(Albaranes, certificados, informes, fotos)</span>
+    </div>
+  </div>
+  <div class="btn-group"><button class="btn btn-primary" onclick="closeModal('modal-mensaje')">Enviar Mensaje</button><button class="btn btn-outline" onclick="closeModal('modal-mensaje')">Cancelar</button></div>
+</div>
+</div>
+
+<script>
+const C={dark:'#1B3A2D',primary:'#2C6E49',accent:'#4C956C',gold:'#D4A843',coral:'#E07A5F',blue:'#3B82F6',purple:'#7C3AED'};
+
+const pages=[
+  {id:"dashboard",icon:"\u{1F4CA}",label:"Dashboard",section:"Principal"},
+  {id:"pedidos",icon:"\u{1F4E6}",label:"Pedidos",section:"Comercial",badge:"3"},
+  {id:"procesos",icon:"\u2699\ufe0f",label:"Procesos",section:"Comercial"},
+  {id:"auditorias",icon:"\u{1F4CB}",label:"Auditor\u00edas",section:"Calidad",badge:"1"},
+  {id:"comunicacion",icon:"\u{1F4AC}",label:"Comunicaci\u00f3n",section:"Equipo",badge:"5"},
+  {id:"parcelas",icon:"\u{1F33F}",label:"Parcelas",section:"Fincas"},
+  {id:"intervenciones",icon:"\u{1F527}",label:"Intervenciones",section:"Operaciones"},
+  {id:"partes",icon:"\u{1F9D1}\u200d\u{1F33E}",label:"Partes Trabajo",section:"Operaciones"},
+  {id:"stock",icon:"\u{1F4E6}",label:"Stock",section:"Recursos"},
+  {id:"maquinaria",icon:"\u{1F69C}",label:"Maquinaria",section:"Recursos"},
+  {id:"costes",icon:"\u{1F4B0}",label:"Costes",section:"Finanzas"},
+  {id:"seguimiento",icon:"\u{1F331}",label:"Seguimiento",section:"Cultivos"},
+  {id:"siex",icon:"\u2705",label:"SIEX",section:"Cumplimiento"},
+  {id:"explotaciones",icon:"\u{1F3E2}",label:"Explotaciones",section:"Admin"},
+  {id:"usuarios",icon:"\u{1F465}",label:"Usuarios",section:"Admin"}
+];
+
+const navList=document.getElementById("nav-list");
+const mobileBar=document.getElementById("mobile-bar");
+const mobilePages=["dashboard","pedidos","comunicacion","auditorias","siex"];
+let lastSec="";
+pages.forEach(p=>{
+  if(p.section!==lastSec){const s=document.createElement("div");s.className="nav-section";s.textContent=p.section;navList.appendChild(s);lastSec=p.section}
+  const d=document.createElement("div");d.className="nav-item"+(p.id==="dashboard"?" active":"");
+  d.innerHTML=`<span class="icon">${p.icon}</span>${p.label}${p.badge?'<span class="nav-badge">'+p.badge+'</span>':''}`;
+  d.onclick=()=>showPage(p.id);d.dataset.page=p.id;navList.appendChild(d);
+});
+mobilePages.forEach(pid=>{
+  const p=pages.find(x=>x.id===pid);
+  const b=document.createElement("button");b.className="mob-btn"+(pid==="dashboard"?" active":"");
+  b.innerHTML=`${p.icon}<span>${p.label}</span>`;b.onclick=()=>showPage(pid);b.dataset.page=pid;mobileBar.appendChild(b);
+});
+
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+  document.querySelectorAll(".mob-btn").forEach(b=>b.classList.remove("active"));
+  const pg=document.getElementById("page-"+id);if(pg)pg.classList.add("active");
+  document.querySelectorAll(`[data-page="${id}"]`).forEach(n=>n.classList.add("active"));
+  if(window.innerWidth<769){document.getElementById("sidebar").classList.remove("open");document.getElementById("overlay").classList.remove("show")}
+}
+function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("overlay").classList.toggle("show")}
+function openModal(id){document.getElementById(id).classList.add("show")}
+function closeModal(id){document.getElementById(id).classList.remove("show")}
+function showTab(group,tab){
+  document.querySelectorAll(`.tab-btn[data-group="${group}"]`).forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(`.tab-content[data-group="${group}"]`).forEach(c=>c.classList.remove("active"));
+  document.querySelector(`.tab-btn[data-group="${group}"][data-tab="${tab}"]`).classList.add("active");
+  document.getElementById(`tab-${group}-${tab}`).classList.add("active");
+}
+function toggleCheck(el){el.classList.toggle("checked")}
+
+// SVG HELPERS
+function svgBarChart(data,w,h,colors){
+  const pad={t:20,r:20,b:45,l:55},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  const maxV=Math.max(...data.map(d=>d.v))*1.15;
+  const bw=Math.min(42,cw/data.length*.65);
+  const gap=(cw-bw*data.length)/(data.length+1);
+  let svg=`<svg viewBox="0 0 ${w} ${h}" class="svg-chart">`;
+  for(let i=0;i<=4;i++){const y=pad.t+ch-ch*(i/4);const val=Math.round(maxV*i/4);
+    svg+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" class="chart-grid" stroke-dasharray="${i===0?'0':'4,4'}"/>`;
+    svg+=`<text x="${pad.l-8}" y="${y+4}" text-anchor="end" class="chart-label">${val>=1000?(val/1000).toFixed(0)+'k':val}</text>`}
+  data.forEach((d,i)=>{const x=pad.l+gap+(bw+gap)*i;const bh=ch*(d.v/maxV);const y=pad.t+ch-bh;const c=colors?colors[i%colors.length]:C.accent;
+    svg+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${c}" class="bar-rect animate-bar" style="animation-delay:${i*80}ms"/>`;
+    svg+=`<text x="${x+bw/2}" y="${y-6}" text-anchor="middle" class="chart-value">${d.v>=1000?(d.v/1000).toFixed(0)+'k':d.v}</text>`;
+    svg+=`<text x="${x+bw/2}" y="${h-pad.b+18}" text-anchor="middle" class="chart-label" style="font-size:10px">${d.n}</text>`});
+  svg+=`</svg>`;return svg;
+}
+function svgDonut(data,size){
+  const cx=size/2,cy=size/2,r=size*.35,sw=size*.14;
+  const total=data.reduce((s,d)=>s+d.v,0);
+  let angle=-90,svg=`<svg viewBox="0 0 ${size} ${size}" class="donut-svg">`;
+  data.forEach(d=>{const pct=d.v/total;const sa=angle*Math.PI/180;const ea=(angle+pct*360)*Math.PI/180;
+    const x1=cx+r*Math.cos(sa),y1=cy+r*Math.sin(sa),x2=cx+r*Math.cos(ea),y2=cy+r*Math.sin(ea);
+    svg+=`<path d="M${x1},${y1} A${r},${r} 0 ${pct>.5?1:0} 1 ${x2},${y2}" fill="none" stroke="${d.c}" stroke-width="${sw}" stroke-linecap="round" opacity=".9"/>`;angle+=pct*360});
+  svg+=`<text x="${cx}" y="${cy-4}" text-anchor="middle" style="font-family:Inter;font-size:20px;font-weight:800;fill:${C.dark}">${total>=1000?(total/1000).toFixed(0)+'k':total}</text>`;
+  svg+=`<text x="${cx}" y="${cy+14}" text-anchor="middle" style="font-family:Inter;font-size:10px;fill:${C.accent};text-transform:uppercase;letter-spacing:1px">TOTAL</text></svg>`;return svg;
+}
+function svgLineChart(data,w,h,color){
+  const pad={t:20,r:20,b:40,l:50},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  const maxV=Math.max(...data.map(d=>d.v))*1.15;const step=cw/(data.length-1);
+  let svg=`<svg viewBox="0 0 ${w} ${h}" class="svg-chart">`;
+  for(let i=0;i<=4;i++){const y=pad.t+ch-ch*(i/4);svg+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" class="chart-grid" stroke-dasharray="4,4"/>`;
+    svg+=`<text x="${pad.l-8}" y="${y+4}" text-anchor="end" class="chart-label">${Math.round(maxV*i/4)}k</text>`}
+  let pts=data.map((d,i)=>`${pad.l+step*i},${pad.t+ch-ch*(d.v/maxV)}`).join(' ');
+  svg+=`<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity=".3"/><stop offset="100%" stop-color="${color}" stop-opacity=".02"/></linearGradient></defs>`;
+  svg+=`<path d="M${pad.l},${pad.t+ch} L${pts} L${pad.l+step*(data.length-1)},${pad.t+ch} Z" fill="url(#ag)"/>`;
+  svg+=`<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  data.forEach((d,i)=>{const x=pad.l+step*i,y=pad.t+ch-ch*(d.v/maxV);
+    svg+=`<circle cx="${x}" cy="${y}" r="4" fill="${color}" stroke="#fff" stroke-width="2"/>`;
+    svg+=`<text x="${x}" y="${h-pad.b+16}" text-anchor="middle" class="chart-label" style="font-size:10px">${d.n}</text>`});
+  svg+=`</svg>`;return svg;
+}
+
+const M=document.getElementById("main-content");
+
+// ==================== DASHBOARD ====================
+M.innerHTML+=`<div class="page active" id="page-dashboard">
+<div class="header"><h1>Dashboard Campa\u00f1a 2025/2026</h1><span class="badge">Albatera, Alicante</span></div>
+<div class="cards">
+  <div class="card"><div class="card-icon green">\u{1F33F}</div><h3>Superficie Total</h3><div class="value">64,4 ha</div><div class="sub">7 fincas + 2 instalaciones</div></div>
+  <div class="card"><div class="card-icon blue">\u{1F527}</div><h3>Intervenciones Mes</h3><div class="value">23</div><div class="sub">\u2191 15% vs mes anterior</div></div>
+  <div class="card"><div class="card-icon coral">\u{1F4B0}</div><h3>Coste Acumulado</h3><div class="value">487.300 \u20ac</div><div class="sub">62% del presupuesto</div></div>
+  <div class="card"><div class="card-icon gold">\u{1F4E6}</div><h3>Pedidos Activos</h3><div class="value">3</div><div class="sub">12 pallets pendientes</div></div>
+</div>
+<div class="grid2">
+  <div class="chart-container"><div class="chart-title">Rentabilidad por Finca</div><div class="chart-subtitle">Miles de euros</div><div id="dash-rent"></div></div>
+  <div class="chart-container"><div class="chart-title">Distribuci\u00f3n de Costes</div><div class="chart-subtitle">487.300 \u20ac total</div><div id="dash-donut" class="donut-wrap"></div></div>
+</div>
+<div class="chart-container"><div class="chart-title">Evoluci\u00f3n Mensual de Costes</div><div id="dash-line"></div></div>
+<div class="section-title">Alertas Activas</div>
+<div class="alert-card"><div class="alert-icon warn">\u26a0\ufe0f</div><div class="alert-body"><div class="a-title">Registro Tratamiento Pendiente &mdash; Finca El Rinc\u00f3n</div><div class="a-desc">Azufre 28/02 sin registrar en SIEX.</div><div class="a-date">Vence: 05/03/2026</div></div></div>
+<div class="alert-card"><div class="alert-icon warn">\u26a0\ufe0f</div><div class="alert-body"><div class="a-title">An\u00e1lisis Suelo &mdash; Fruchesco Eco Granados</div><div class="a-desc">Obligatorio cada 3 a\u00f1os. \u00daltimo: marzo 2023.</div><div class="a-date">Vence: 31/03/2026</div></div></div>
+<div class="alert-card"><div class="alert-icon ok">\u2705</div><div class="alert-body"><div class="a-title">Certificaci\u00f3n CAECV Renovada</div><div class="a-desc">Cert. ecol\u00f3gico Fruchesco v\u00e1lido hasta dic 2026.</div><div class="a-date ok">OK</div></div></div>
+</div>`;
+
+document.getElementById("dash-rent").innerHTML=svgBarChart([{n:"El Rinc\u00f3n",v:285},{n:"La Dehesa",v:198},{n:"Los Llanos",v:165},{n:"Eco Gran.",v:210},{n:"Eco Hig.",v:118},{n:"La Ca\u00f1ada",v:150}],560,220,[C.accent,C.accent,C.accent,C.gold,C.gold,C.accent]);
+const dd=[{n:"M. Obra",v:199,c:C.primary},{n:"Confec.",v:67,c:C.gold},{n:"Fito.",v:53,c:C.accent},{n:"Maq.",v:46,c:C.coral},{n:"Otros",v:122,c:'#94A3B8'}];
+document.getElementById("dash-donut").innerHTML=svgDonut(dd,180)+`<div class="donut-legend">${dd.map(d=>`<div class="legend-item"><div class="legend-dot" style="background:${d.c}"></div><span>${d.n}</span><span class="legend-value">${d.v}k\u20ac</span></div>`).join('')}</div>`;
+document.getElementById("dash-line").innerHTML=svgLineChart([{n:"Sep",v:38},{n:"Oct",v:52},{n:"Nov",v:45},{n:"Dic",v:58},{n:"Ene",v:72},{n:"Feb",v:85},{n:"Mar",v:68}],700,180,C.accent);
+
+// ==================== PEDIDOS ====================
+M.innerHTML+=`<div class="page" id="page-pedidos">
+<div class="header"><h1>Gesti\u00f3n de Pedidos</h1><button class="btn btn-primary" onclick="openModal('modal-pedido')">+ Nuevo Pedido</button></div>
+<div class="stat-row">
+  <div class="stat-mini"><div class="stat-num">3</div><div class="stat-label">En Proceso</div></div>
+  <div class="stat-mini"><div class="stat-num">47</div><div class="stat-label">Completados</div></div>
+  <div class="stat-mini"><div class="stat-num" style="color:${C.accent}">342k \u20ac</div><div class="stat-label">Facturado</div></div>
+  <div class="stat-mini"><div class="stat-num" style="color:${C.gold}">98%</div><div class="stat-label">Tasa Entrega</div></div>
+</div>
+
+<div class="section-title">Pipeline de Pedidos</div>
+<div class="kanban">
+  <div class="kanban-col">
+    <div class="kanban-col-title" style="color:${C.blue}">\u{1F4DD} Solicitud <span class="count">1</span></div>
+    <div class="kanban-card" style="border-left-color:${C.blue}">
+      <div class="kc-title">PED-051 &mdash; Green Fresh Ltd</div>
+      <div class="kc-meta">8 pallets Granada Mollar &bull; 15/03/2026</div>
+      <div class="kc-tags"><span class="tag tag-green">GlobalGAP</span><span class="tag tag-blue">UK</span></div>
+    </div>
+  </div>
+  <div class="kanban-col">
+    <div class="kanban-col-title" style="color:${C.gold}">\u{1F4E6} Confecci\u00f3n <span class="count">1</span></div>
+    <div class="kanban-card" style="border-left-color:${C.gold}">
+      <div class="kc-title">PED-050 &mdash; Pierre Duval</div>
+      <div class="kc-meta">12 pallets Breva Colar 40-45mm &bull; 11/03/2026</div>
+      <div class="kc-tags"><span class="tag tag-green">GlobalGAP</span><span class="tag tag-purple">\u{1F1EB}\u{1F1F7} Rungis</span></div>
+    </div>
+  </div>
+  <div class="kanban-col">
+    <div class="kanban-col-title" style="color:${C.coral}">\u{1F69A} Transporte <span class="count">1</span></div>
+    <div class="kanban-card" style="border-left-color:${C.coral}">
+      <div class="kc-title">PED-049 &mdash; De Groot BV</div>
+      <div class="kc-meta">6 pallets Higo Eco &bull; 08/03/2026</div>
+      <div class="kc-tags"><span class="tag tag-purple">CAECV</span><span class="tag tag-blue">\u{1F1F3}\u{1F1F1} Rotterdam</span></div>
+    </div>
+  </div>
+  <div class="kanban-col">
+    <div class="kanban-col-title" style="color:${C.accent}">\u2705 Entregado <span class="count">47</span></div>
+    <div class="kanban-card" style="border-left-color:${C.accent}">
+      <div class="kc-title">PED-048 &mdash; Frucht Import</div>
+      <div class="kc-meta">10 pallets Granada &bull; Entregado 28/02</div>
+      <div class="kc-tags"><span class="tag tag-green">Completado</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">Detalle Pedido PED-050</div>
+<div class="pipeline">
+  <div class="pipe-step done"><span class="pipe-num">1</span>Solicitud</div>
+  <div class="pipe-step done"><span class="pipe-num">2</span>Confirmado</div>
+  <div class="pipe-step active"><span class="pipe-num">3</span>Confecci\u00f3n</div>
+  <div class="pipe-step"><span class="pipe-num">4</span>Control Cal.</div>
+  <div class="pipe-step"><span class="pipe-num">5</span>Carga</div>
+  <div class="pipe-step"><span class="pipe-num">6</span>Transporte</div>
+  <div class="pipe-step"><span class="pipe-num">7</span>Entregado</div>
+</div>
+<div class="grid2">
+  <div class="detail-card">
+    <h3>PED-050 &mdash; Pierre Duval (Rungis)</h3>
+    <div class="dc-sub">12 pallets &bull; Breva Colar 40-45mm &bull; Entrega: 11/03/2026</div>
+    <p><strong>Precio:</strong> 3,20 \u20ac/kg &bull; <strong>Valor estimado:</strong> 18.432 \u20ac<br>
+    <strong>Transporte:</strong> Furg\u00f3n refrigerado Iveco<br>
+    <strong>Certificados:</strong> GlobalGAP + Fitosanitario<br>
+    <strong>Destino:</strong> Rungis MIN, Par\u00eds</p>
+  </div>
+  <div class="detail-card">
+    <h3>Historial del Pedido</h3>
+    <div class="dc-sub">Trazabilidad completa</div>
+    <div class="timeline">
+      <div class="timeline-item done"><div class="tl-date">02/03 09:15</div><div class="tl-text">Pedido recibido de Pierre Duval</div></div>
+      <div class="timeline-item done"><div class="tl-date">02/03 11:30</div><div class="tl-text">Confirmado por David &mdash; Stock verificado</div></div>
+      <div class="timeline-item done"><div class="tl-date">03/03 07:00</div><div class="tl-text">Inicio confecci\u00f3n &mdash; L\u00ednea MAF</div></div>
+      <div class="timeline-item"><div class="tl-date">Pendiente</div><div class="tl-text">Control de calidad y empaquetado</div></div>
+      <div class="timeline-item"><div class="tl-date">Pendiente</div><div class="tl-text">Carga y salida transporte</div></div>
+    </div>
+  </div>
+</div>
+</div>`;
+
+// ==================== PROCESOS ====================
+M.innerHTML+=`<div class="page" id="page-procesos">
+<div class="header"><h1>Procesos y Flujos</h1></div>
+<div class="tabs">
+  <button class="tab-btn active" data-group="proc" data-tab="recepcion" onclick="showTab('proc','recepcion')">Recepci\u00f3n Campo</button>
+  <button class="tab-btn" data-group="proc" data-tab="confeccion" onclick="showTab('proc','confeccion')">Confecci\u00f3n</button>
+  <button class="tab-btn" data-group="proc" data-tab="calidad" onclick="showTab('proc','calidad')">Control Calidad</button>
+  <button class="tab-btn" data-group="proc" data-tab="expedicion" onclick="showTab('proc','expedicion')">Expedici\u00f3n</button>
+</div>
+
+<div class="tab-content active" data-group="proc" id="tab-proc-recepcion">
+  <div class="chart-container">
+    <div class="chart-title">\u{1F69C} Formulario Recepci\u00f3n de Campo</div>
+    <div class="chart-subtitle">Registro de entrada de fruta desde finca</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><label>Finca Origen</label><select class="form-control"><option>El Rinc\u00f3n - Higueras</option><option>La Dehesa - Higueras</option><option>Los Llanos - Granados</option><option>Eco Granados BIO</option><option>Eco Higueras BIO</option><option>La Ca\u00f1ada - Higueras</option></select></div>
+      <div class="form-group"><label>Producto</label><select class="form-control"><option>Breva Colar</option><option>Higo Colar</option><option>Higo San Antonio</option><option>Granada Mollar</option><option>Granada Wonderful ECO</option></select></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div class="form-group"><label>Kg Recibidos</label><input type="number" class="form-control" placeholder="0" value="2400"></div>
+      <div class="form-group"><label>N\u00ba Cajas/Bins</label><input type="number" class="form-control" placeholder="0" value="48"></div>
+      <div class="form-group"><label>Fecha/Hora</label><input type="datetime-local" class="form-control" value="2026-03-03T08:30"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><label>Responsable Recepci\u00f3n</label><select class="form-control"><option>Jos\u00e9 Mart\u00ednez</option><option>Mar\u00eda Garc\u00eda</option></select></div>
+      <div class="form-group"><label>Temperatura (\u00b0C)</label><input type="number" class="form-control" value="14" step="0.5"></div>
+    </div>
+    <div class="form-group"><label>Estado Visual</label>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <label style="font-size:13px;display:flex;gap:5px;cursor:pointer;text-transform:none;letter-spacing:0"><input type="radio" name="visual" checked> \u2705 Bueno</label>
+        <label style="font-size:13px;display:flex;gap:5px;cursor:pointer;text-transform:none;letter-spacing:0"><input type="radio" name="visual"> \u26a0\ufe0f Aceptable</label>
+        <label style="font-size:13px;display:flex;gap:5px;cursor:pointer;text-transform:none;letter-spacing:0"><input type="radio" name="visual"> \u274c Rechazado</label>
+      </div>
+    </div>
+    <div class="form-group"><label>Observaciones</label><textarea class="form-control" placeholder="Incidencias, estado de la fruta, calibres observados..."></textarea></div>
+    <div class="btn-group"><button class="btn btn-primary">Registrar Recepci\u00f3n</button><button class="btn btn-outline">Generar Albar\u00e1n</button></div>
+  </div>
+</div>
+
+<div class="tab-content" data-group="proc" id="tab-proc-confeccion">
+  <div class="chart-container">
+    <div class="chart-title">\u{1F3ED} Formulario Orden de Confecci\u00f3n</div>
+    <div class="chart-subtitle">Crear orden de procesado en l\u00ednea</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div class="form-group"><label>Pedido Asociado</label><select class="form-control"><option>PED-050 (Duval - Breva)</option><option>PED-051 (Green Fresh)</option><option>Stock general</option></select></div>
+      <div class="form-group"><label>L\u00ednea</label><select class="form-control"><option>L\u00ednea MAF Principal</option><option>L\u00ednea Manual</option></select></div>
+      <div class="form-group"><label>Calibre Objetivo</label><select class="form-control"><option>40-45mm</option><option>35-40mm</option><option>45-50mm</option><option>Mix</option></select></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><label>Kg a Procesar</label><input type="number" class="form-control" value="5760"></div>
+      <div class="form-group"><label>Envase</label><select class="form-control"><option>Caja 40x30 - Breva</option><option>Caja 60x40 - Higo</option><option>Alv\u00e9olo Granada</option><option>Granel Bin</option></select></div>
+    </div>
+    <div class="form-group"><label>Instrucciones Especiales</label><textarea class="form-control" placeholder="Etiquetado, peso por caja, separaci\u00f3n calibres...">Etiquetado cliente Duval. Peso neto 5kg/caja. Separar calibre >45mm aparte.</textarea></div>
+    <div class="btn-group"><button class="btn btn-gold">Crear Orden Confecci\u00f3n</button></div>
+  </div>
+</div>
+
+<div class="tab-content" data-group="proc" id="tab-proc-calidad">
+  <div class="chart-container">
+    <div class="chart-title">\u{1F50D} Formulario Control de Calidad</div>
+    <div class="chart-subtitle">Inspecci\u00f3n de lote antes de expedici\u00f3n</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><label>Lote / Pedido</label><select class="form-control"><option>LOT-2026-0303-A (PED-050)</option><option>LOT-2026-0303-B (Stock)</option></select></div>
+      <div class="form-group"><label>Inspector</label><select class="form-control"><option>Mar\u00eda Garc\u00eda</option><option>David Miquel</option></select></div>
+    </div>
+    <div class="section-title" style="font-size:14px">Checklist de Calidad</div>
+    <div class="checklist-item checked" onclick="toggleCheck(this)"><div class="check-box">\u2713</div><div class="check-text">Calibre dentro de rango solicitado (40-45mm)</div></div>
+    <div class="checklist-item checked" onclick="toggleCheck(this)"><div class="check-box">\u2713</div><div class="check-text">Color y madurez uniforme</div></div>
+    <div class="checklist-item checked" onclick="toggleCheck(this)"><div class="check-box">\u2713</div><div class="check-text">Sin da\u00f1os mec\u00e1nicos ni plagas visibles</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-text">Peso neto por caja verificado (5 kg \u00b1 50g)</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-text">Etiquetado correcto (cliente, lote, trazabilidad)</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-text">Temperatura c\u00e1mara \u2264 4\u00b0C confirmada</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-text">Documentaci\u00f3n: albar\u00e1n + certificado fitosanitario</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+      <div class="form-group"><label>Resultado</label><select class="form-control"><option>Aprobado</option><option>Aprobado con observaciones</option><option>Rechazado - Reprocesar</option><option>Rechazado - Destr\u00edase</option></select></div>
+      <div class="form-group"><label>% Descarte</label><input type="number" class="form-control" value="3.2" step="0.1"></div>
+    </div>
+    <div class="form-group"><label>Observaciones</label><textarea class="form-control" placeholder="Detalles del control..."></textarea></div>
+    <div class="btn-group"><button class="btn btn-primary">Registrar Control</button><button class="btn btn-outline">Generar Informe PDF</button></div>
+  </div>
+</div>
+
+<div class="tab-content" data-group="proc" id="tab-proc-expedicion">
+  <div class="chart-container">
+    <div class="chart-title">\u{1F69A} Formulario Expedici\u00f3n</div>
+    <div class="chart-subtitle">Registro de salida y transporte</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div class="form-group"><label>Pedido</label><select class="form-control"><option>PED-050 (Duval)</option><option>PED-049 (De Groot)</option></select></div>
+      <div class="form-group"><label>Matr\u00edcula Veh\u00edculo</label><input type="text" class="form-control" value="1234-BCD (Iveco Refrig.)"></div>
+      <div class="form-group"><label>Conductor</label><input type="text" class="form-control" value="Transportes Fruitum"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div class="form-group"><label>N\u00ba Pallets</label><input type="number" class="form-control" value="12"></div>
+      <div class="form-group"><label>Peso Total (kg)</label><input type="number" class="form-control" value="5760"></div>
+      <div class="form-group"><label>Temp. Carga (\u00b0C)</label><input type="number" class="form-control" value="3.5" step="0.5"></div>
+    </div>
+    <div class="form-group"><label>Documentos Adjuntos</label>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px">
+        <label style="font-size:13px;display:flex;gap:5px;cursor:pointer;text-transform:none;letter-spacing:0"><input type="checkbox" checked> Albar\u00e1n de entrega</label>
+        <label style="font-size:13px;display:flex;gap:5px;cursor:pointer;text-transform:none;letter-spacing:0"><input type="checkbox" checked> Certificado fitosanitario</label>
+        <label style="font-size:13px;display:flex;gap:5px;cursor:pointer;text-transform:none;letter-spacing:0"><input type="checkbox" checked> CMR (Carta de porte)</label>
+        <label style="font-size:13px;display:flex;gap:5px;cursor:pointer;text-transform:none;letter-spacing:0"><input type="checkbox"> Certificado ecol\u00f3gico</label>
+      </div>
+    </div>
+    <div class="btn-group"><button class="btn btn-coral">Confirmar Expedici\u00f3n</button><button class="btn btn-outline">Generar CMR</button></div>
+  </div>
+</div>
+</div>`;
+
+// ==================== AUDITORIAS ====================
+M.innerHTML+=`<div class="page" id="page-auditorias">
+<div class="header"><h1>Auditor\u00edas e Inspecciones</h1><button class="btn btn-gold" onclick="openModal('modal-auditoria')">+ Nueva Auditor\u00eda</button></div>
+<div class="stat-row">
+  <div class="stat-mini"><div class="stat-num">1</div><div class="stat-label">Programada</div></div>
+  <div class="stat-mini"><div class="stat-num">3</div><div class="stat-label">Completadas</div></div>
+  <div class="stat-mini"><div class="stat-num" style="color:${C.accent}">92%</div><div class="stat-label">Conformidad</div></div>
+  <div class="stat-mini"><div class="stat-num" style="color:${C.gold}">2</div><div class="stat-label">Cert. Activas</div></div>
+</div>
+
+<div class="section-title">Pr\u00f3xima: Auditor\u00eda CAECV Ecol\u00f3gica (20/04/2026)</div>
+<div class="grid2">
+  <div class="chart-container">
+    <div class="chart-title">Checklist Preparaci\u00f3n Auditor\u00eda</div>
+    <div class="chart-subtitle">Documentaci\u00f3n y requisitos CAECV</div>
+    <div class="checklist-item checked" onclick="toggleCheck(this)"><div class="check-box">\u2713</div><div class="check-text">Cuaderno de explotaci\u00f3n ecol\u00f3gica actualizado</div></div>
+    <div class="checklist-item checked" onclick="toggleCheck(this)"><div class="check-box">\u2713</div><div class="check-text">Registro de insumos ecol\u00f3gicos con facturas</div></div>
+    <div class="checklist-item checked" onclick="toggleCheck(this)"><div class="check-box">\u2713</div><div class="check-text">Plan de conversi\u00f3n y manejo ecol\u00f3gico</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-text">An\u00e1lisis de suelo actualizados (Eco Granados)</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-text">Registro de trampas y capturas (mosca fruta)</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-text">Etiquetado productos almac\u00e9n verificado</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-text">Trazabilidad lotes \u00faltimos 6 meses lista</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)"><div class="check-box"></div><div class="check-text">Se\u00f1alizaci\u00f3n parcelas eco en campo</div></div>
+    <div style="margin-top:12px"><div class="progress-label"><span>Progreso</span><span>3/8 (37%)</span></div><div class="progress-track"><div class="progress-fill" style="width:37%;background:${C.gold}"></div></div></div>
+  </div>
+  <div>
+    <div class="chart-container">
+      <div class="chart-title">Calendario de Auditor\u00edas 2026</div>
+      <div class="timeline" style="margin-top:12px">
+        <div class="timeline-item done"><div class="tl-date">15/01/2026</div><div class="tl-text"><strong>Auditor\u00eda Interna</strong> &mdash; Completada. 4 NC menores corregidas.</div></div>
+        <div class="timeline-item done"><div class="tl-date">10/02/2026</div><div class="tl-text"><strong>Inspecci\u00f3n SIEX</strong> &mdash; Cuaderno digital verificado. OK.</div></div>
+        <div class="timeline-item"><div class="tl-date">20/04/2026</div><div class="tl-text"><strong>Auditor\u00eda CAECV</strong> &mdash; Programada. Fruchesco Eco.</div></div>
+        <div class="timeline-item"><div class="tl-date">15/05/2026</div><div class="tl-text"><strong>Auditor\u00eda GlobalGAP</strong> &mdash; Programada. Ambas explotaciones.</div></div>
+        <div class="timeline-item"><div class="tl-date">Jun 2026</div><div class="tl-text"><strong>Revisi\u00f3n ITEAF</strong> &mdash; Atomizador Fede 2000L.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">Historial de Auditor\u00edas</div>
+<div class="tbl-wrap"><table>
+<tr><th>Fecha</th><th>Tipo</th><th>Explotaci\u00f3n</th><th>Resultado</th><th>NC</th><th>Estado</th></tr>
+<tr><td>15/01/2026</td><td>Auditor\u00eda Interna</td><td>Ambas</td><td><span class="tag tag-green">\u2713 Conforme</span></td><td>4 menores</td><td><span class="tag tag-green">Cerrada</span></td></tr>
+<tr><td>10/02/2026</td><td>Inspecci\u00f3n SIEX</td><td>Fruitum</td><td><span class="tag tag-green">\u2713 Conforme</span></td><td>0</td><td><span class="tag tag-green">Cerrada</span></td></tr>
+<tr><td>20/04/2026</td><td>CAECV Ecol\u00f3gica</td><td>Fruchesco</td><td><span class="tag tag-yellow">Pendiente</span></td><td>-</td><td><span class="tag tag-yellow">Programada</span></td></tr>
+<tr><td>15/05/2026</td><td>GlobalGAP</td><td>Ambas</td><td><span class="tag tag-yellow">Pendiente</span></td><td>-</td><td><span class="tag tag-yellow">Programada</span></td></tr>
+</table></div>
+</div>`;
+
+// ==================== COMUNICACION ====================
+M.innerHTML+=`<div class="page" id="page-comunicacion">
+<div class="header"><h1>Centro de Comunicaci\u00f3n</h1><button class="btn btn-primary" onclick="openModal('modal-mensaje')">+ Nuevo Mensaje</button></div>
+<div class="tabs">
+  <button class="tab-btn active" data-group="comm" data-tab="bandeja" onclick="showTab('comm','bandeja')">Bandeja (5)</button>
+  <button class="tab-btn" data-group="comm" data-tab="clientes" onclick="showTab('comm','clientes')">Clientes Export</button>
+  <button class="tab-btn" data-group="comm" data-tab="equipo" onclick="showTab('comm','equipo')">Equipo Interno</button>
+  <button class="tab-btn" data-group="comm" data-tab="organismos" onclick="showTab('comm','organismos')">Organismos</button>
+</div>
+
+<div class="tab-content active" data-group="comm" id="tab-comm-bandeja">
+  <div class="conv-card" style="border-left:4px solid ${C.coral}">
+    <div class="conv-header"><div class="conv-avatar" style="background:linear-gradient(135deg,#3B82F6,#60A5FA)">\u{1F1EB}\u{1F1F7}</div><div class="conv-header-text"><h4>Pierre Duval &mdash; Confirmaci\u00f3n PED-050 <span class="notif-dot"></span></h4><div class="conv-meta">Export Rungis &bull; Hace 2h &bull; Pedidos</div></div></div>
+    <div class="conv-last">"Bonjour David, nous confirmons la commande de 12 palettes de figues Colar calibre 40-45mm pour la semaine 12. Livraison Rungis mercredi. Merci de confirmer le transport."</div>
+    <div class="btn-group"><button class="btn btn-sm btn-primary" onclick="openModal('modal-mensaje')">Responder</button><button class="btn btn-sm btn-outline">Ver Pedido</button></div>
+  </div>
+  <div class="conv-card">
+    <div class="conv-header"><div class="conv-avatar" style="background:linear-gradient(135deg,${C.gold},#E8B84D)">\u{1F9EA}</div><div class="conv-header-text"><h4>Laura S\u00e1nchez &mdash; Revisi\u00f3n trampas <span class="notif-dot"></span></h4><div class="conv-meta">ATRIA Vega Baja &bull; Ayer &bull; Calidad</div></div></div>
+    <div class="conv-last">"David, recuerda que la pr\u00f3xima semana paso por Fruchesco Eco para la revisi\u00f3n de trampas de mosca de la fruta. Preparad los registros de capturas de febrero."</div>
+    <div class="btn-group"><button class="btn btn-sm btn-primary" onclick="openModal('modal-mensaje')">Responder</button></div>
+  </div>
+  <div class="conv-card">
+    <div class="conv-header"><div class="conv-avatar" style="background:linear-gradient(135deg,${C.accent},${C.primary})">\u{1F33F}</div><div class="conv-header-text"><h4>CAECV &mdash; Auditor\u00eda programada <span class="notif-dot"></span></h4><div class="conv-meta">Certificadora &bull; 25/02 &bull; Auditor\u00edas</div></div></div>
+    <div class="conv-last">"Estimado David, la auditor\u00eda de seguimiento CAECV para Fruchesco est\u00e1 programada para el 20/04/2026. Tenga preparada la documentaci\u00f3n de insumos ecol\u00f3gicos."</div>
+    <div class="btn-group"><button class="btn btn-sm btn-primary" onclick="openModal('modal-mensaje')">Responder</button><button class="btn btn-sm btn-outline">Ver Auditor\u00eda</button></div>
+  </div>
+  <div class="conv-card">
+    <div class="conv-header"><div class="conv-avatar" style="background:linear-gradient(135deg,#059669,#34D399)">\u{1F1EC}\u{1F1E7}</div><div class="conv-header-text"><h4>Green Fresh Ltd &mdash; Nuevo pedido <span class="notif-dot"></span></h4><div class="conv-meta">Export UK &bull; Hoy &bull; Pedidos</div></div></div>
+    <div class="conv-last">"Hi David, we would like to place an order for 8 pallets of Mollar pomegranate for mid-March delivery. Please confirm availability and price."</div>
+    <div class="btn-group"><button class="btn btn-sm btn-primary" onclick="openModal('modal-mensaje')">Responder</button><button class="btn btn-sm btn-outline">Crear Pedido</button></div>
+  </div>
+  <div class="conv-card">
+    <div class="conv-header"><div class="conv-avatar" style="background:linear-gradient(135deg,#F59E0B,#FBBF24)">\u{1F527}</div><div class="conv-header-text"><h4>Ahmed Benaissa &mdash; Parte de campo <span class="notif-dot"></span></h4><div class="conv-meta">Capataz &bull; Hoy &bull; Operaciones</div></div></div>
+    <div class="conv-last">"Jefe, terminamos la aplicaci\u00f3n de cobre en El Rinc\u00f3n. Todo correcto. Ma\u00f1ana empezamos poda en La Ca\u00f1ada como estaba previsto."</div>
+    <div class="btn-group"><button class="btn btn-sm btn-primary" onclick="openModal('modal-mensaje')">Responder</button></div>
+  </div>
+</div>
+
+<div class="tab-content" data-group="comm" id="tab-comm-clientes">
+  <div class="tbl-wrap"><table>
+  <tr><th>Cliente</th><th>Pa\u00eds</th><th>Contacto</th><th>Pedidos 2025/26</th><th>\u00dalt. Comunicaci\u00f3n</th><th>Estado</th></tr>
+  <tr><td><strong>Pierre Duval</strong></td><td>\u{1F1EB}\u{1F1F7} Francia</td><td>pierre@rungis-import.fr</td><td>18</td><td>Hoy</td><td><span class="tag tag-green">Activo</span></td></tr>
+  <tr><td><strong>Green Fresh Ltd</strong></td><td>\u{1F1EC}\u{1F1E7} UK</td><td>orders@greenfresh.co.uk</td><td>12</td><td>Hoy</td><td><span class="tag tag-green">Activo</span></td></tr>
+  <tr><td><strong>Frucht Import GmbH</strong></td><td>\u{1F1E9}\u{1F1EA} Alemania</td><td>einkauf@fruchtimport.de</td><td>8</td><td>22/02/2026</td><td><span class="tag tag-green">Activo</span></td></tr>
+  <tr><td><strong>De Groot BV</strong></td><td>\u{1F1F3}\u{1F1F1} Pa\u00edses Bajos</td><td>info@degroot-fruit.nl</td><td>9</td><td>28/02/2026</td><td><span class="tag tag-green">Activo</span></td></tr>
+  </table></div>
+</div>
+
+<div class="tab-content" data-group="comm" id="tab-comm-equipo">
+  <div class="tbl-wrap"><table>
+  <tr><th>Miembro</th><th>Rol</th><th>Canal Preferido</th><th>Mensajes Hoy</th><th>Estado</th></tr>
+  <tr><td><strong>Ahmed Benaissa</strong></td><td>Capataz</td><td>WhatsApp</td><td>3</td><td><span class="tag tag-green">\u{1F7E2} En campo</span></td></tr>
+  <tr><td><strong>Jos\u00e9 Mart\u00ednez</strong></td><td>Jefe Confecci\u00f3n</td><td>AgroSinergia</td><td>2</td><td><span class="tag tag-green">\u{1F7E2} En almac\u00e9n</span></td></tr>
+  <tr><td><strong>Mar\u00eda Garc\u00eda</strong></td><td>T\u00e9cnica</td><td>Email</td><td>1</td><td><span class="tag tag-green">\u{1F7E2} Disponible</span></td></tr>
+  <tr><td><strong>Hassan El Amrani</strong></td><td>Enc. Riego</td><td>WhatsApp</td><td>0</td><td><span class="tag tag-yellow">\u{1F7E1} En finca</span></td></tr>
+  <tr><td><strong>Rachid Ouahmane</strong></td><td>Operario</td><td>WhatsApp</td><td>1</td><td><span class="tag tag-green">\u{1F7E2} En campo</span></td></tr>
+  </table></div>
+</div>
+
+<div class="tab-content" data-group="comm" id="tab-comm-organismos">
+  <div class="tbl-wrap"><table>
+  <tr><th>Organismo</th><th>Tipo</th><th>Contacto</th><th>\u00dalt. Comunicaci\u00f3n</th><th>Pr\u00f3xima Acci\u00f3n</th></tr>
+  <tr><td><strong>CAECV</strong></td><td>Certificadora Eco</td><td>info@caecv.com</td><td>25/02/2026</td><td>Auditor\u00eda 20/04</td></tr>
+  <tr><td><strong>ATRIA Vega Baja</strong></td><td>Asesor\u00eda T\u00e9cnica</td><td>laura@atriavegabaja.es</td><td>01/03/2026</td><td>Visita pr\u00f3x. semana</td></tr>
+  <tr><td><strong>GlobalGAP</strong></td><td>Certificadora</td><td>audits@globalgap.org</td><td>Jan 2026</td><td>Auditor\u00eda mayo 2026</td></tr>
+  <tr><td><strong>Conselleria Agricultura</strong></td><td>Administraci\u00f3n</td><td>agricultura@gva.es</td><td>15/02/2026</td><td>PAC - Resoluci\u00f3n</td></tr>
+  </table></div>
+</div>
+</div>`;
+
+// ==================== PARCELAS ====================
+M.innerHTML+=`<div class="page" id="page-parcelas">
+<div class="header"><h1>Parcelas</h1><span class="badge">64,4 ha</span></div>
+<div class="stat-row">
+  <div class="stat-mini"><div class="stat-num">7</div><div class="stat-label">Fincas</div></div>
+  <div class="stat-mini"><div class="stat-num">2</div><div class="stat-label">Instalaciones</div></div>
+  <div class="stat-mini"><div class="stat-num" style="color:${C.accent}">43,5 ha</div><div class="stat-label">Fruitum</div></div>
+  <div class="stat-mini"><div class="stat-num" style="color:${C.gold}">20,9 ha</div><div class="stat-label">Fruchesco</div></div>
+</div>
+<div class="tbl-wrap"><table>
+<tr><th>Finca</th><th>Sup.</th><th>Cultivo</th><th>Variedad</th><th>Municipio</th><th>Explot.</th></tr>
+<tr><td><strong>El Rinc\u00f3n</strong></td><td>14,2 ha</td><td>Higuera</td><td>Colar (Breva/Higo)</td><td>Albatera</td><td><span class="tag tag-green">Fruitum</span></td></tr>
+<tr><td><strong>La Dehesa</strong></td><td>10,8 ha</td><td>Higuera</td><td>San Antonio</td><td>Albatera</td><td><span class="tag tag-green">Fruitum</span></td></tr>
+<tr><td><strong>Los Llanos</strong></td><td>9,5 ha</td><td>Granado</td><td>Mollar de Elche</td><td>Crevillente</td><td><span class="tag tag-green">Fruitum</span></td></tr>
+<tr><td><strong>La Ca\u00f1ada</strong></td><td>9,0 ha</td><td>Higuera</td><td>Cuello Dama Negro</td><td>Albatera</td><td><span class="tag tag-green">Fruitum</span></td></tr>
+<tr><td><strong>Eco Granados</strong></td><td>12,3 ha</td><td>Granado</td><td>Wonderful (Eco)</td><td>Crevillente</td><td><span class="tag tag-purple">Fruchesco</span></td></tr>
+<tr><td><strong>Eco Higueras</strong></td><td>8,6 ha</td><td>Higuera</td><td>Colar (Eco)</td><td>Albatera</td><td><span class="tag tag-purple">Fruchesco</span></td></tr>
+<tr><td>Central Confecci\u00f3n</td><td>0,8 ha</td><td>\u2014</td><td>Almac\u00e9n</td><td>Albatera</td><td><span class="tag tag-blue">Instal.</span></td></tr>
+<tr><td>C\u00e1mara Frigor\u00edfica</td><td>0,4 ha</td><td>\u2014</td><td>Conservaci\u00f3n</td><td>Albatera</td><td><span class="tag tag-blue">Instal.</span></td></tr>
+</table></div>
+<div class="chart-container"><div class="chart-title">Superficie por Finca</div><div id="parc-chart"></div></div>
+</div>`;
+document.getElementById("parc-chart").innerHTML=svgBarChart([{n:"El Rinc.",v:14.2},{n:"Eco Gr.",v:12.3},{n:"Dehesa",v:10.8},{n:"Llanos",v:9.5},{n:"Ca\u00f1ada",v:9},{n:"Eco Hig.",v:8.6}],560,200,[C.accent,C.gold,C.accent,C.accent,C.accent,C.gold]);
+
+// ==================== INTERVENCIONES ====================
+M.innerHTML+=`<div class="page" id="page-intervenciones">
+<div class="header"><h1>Intervenciones</h1><span class="badge">2025/26</span></div>
+<div class="stat-row"><div class="stat-mini"><div class="stat-num">23</div><div class="stat-label">Este Mes</div></div><div class="stat-mini"><div class="stat-num">156</div><div class="stat-label">Total</div></div><div class="stat-mini"><div class="stat-num" style="color:${C.accent}">89%</div><div class="stat-label">Completadas</div></div></div>
+<div class="tbl-wrap"><table>
+<tr><th>Fecha</th><th>Finca</th><th>Tipo</th><th>Descripci\u00f3n</th><th>Estado</th></tr>
+<tr><td>03/03</td><td>El Rinc\u00f3n</td><td><span class="tag tag-green">Tratam.</span></td><td>Cobre 50% post-poda preventivo</td><td><span class="tag tag-yellow">En curso</span></td></tr>
+<tr><td>28/02</td><td>El Rinc\u00f3n</td><td><span class="tag tag-green">Tratam.</span></td><td>Azufre mojable anti-o\u00eddio</td><td><span class="tag tag-green">Completada</span></td></tr>
+<tr><td>25/02</td><td>Los Llanos</td><td><span class="tag tag-blue">Poda</span></td><td>Poda formaci\u00f3n granados</td><td><span class="tag tag-green">Completada</span></td></tr>
+<tr><td>22/02</td><td>Eco Granados</td><td><span class="tag tag-purple">Fertiliz.</span></td><td>Abono org\u00e1nico NPK eco</td><td><span class="tag tag-green">Completada</span></td></tr>
+<tr><td>20/02</td><td>La Dehesa</td><td><span class="tag tag-blue">Riego</span></td><td>Revisi\u00f3n goteros sector 3</td><td><span class="tag tag-green">Completada</span></td></tr>
+<tr><td>04/03</td><td>La Ca\u00f1ada</td><td><span class="tag tag-blue">Poda</span></td><td>Poda aclareo Cuello Dama</td><td><span class="tag tag-yellow">Planificada</span></td></tr>
+</table></div>
+</div>`;
+
+// ==================== PARTES ====================
+M.innerHTML+=`<div class="page" id="page-partes">
+<div class="header"><h1>Partes de Trabajo</h1></div>
+<div class="stat-row"><div class="stat-mini"><div class="stat-num">182 h</div><div class="stat-label">Horas Sem.</div></div><div class="stat-mini"><div class="stat-num">14</div><div class="stat-label">Trabajadores</div></div><div class="stat-mini"><div class="stat-num">2.730 \u20ac</div><div class="stat-label">Coste Sem.</div></div></div>
+<div class="tbl-wrap"><table>
+<tr><th>Fecha</th><th>Trabajador</th><th>Finca</th><th>Tarea</th><th>Horas</th><th>Coste</th></tr>
+<tr><td>03/03</td><td><strong>Ahmed B.</strong></td><td>El Rinc\u00f3n</td><td>Aplicaci\u00f3n cobre</td><td>6h</td><td>96\u20ac</td></tr>
+<tr><td>03/03</td><td><strong>Jos\u00e9 M.</strong></td><td>Confecci\u00f3n</td><td>Calibrado l\u00ednea</td><td>8h</td><td>120\u20ac</td></tr>
+<tr><td>02/03</td><td><strong>Mar\u00eda G.</strong></td><td>Eco Granados</td><td>Superv. poda eco</td><td>5h</td><td>90\u20ac</td></tr>
+<tr><td>02/03</td><td><strong>Hassan E.</strong></td><td>La Dehesa</td><td>Mant. riego</td><td>7h</td><td>105\u20ac</td></tr>
+<tr><td>01/03</td><td><strong>Rachid O.</strong></td><td>Los Llanos</td><td>Poda granados</td><td>8h</td><td>112\u20ac</td></tr>
+</table></div>
+</div>`;
+
+// ==================== STOCK ====================
+M.innerHTML+=`<div class="page" id="page-stock">
+<div class="header"><h1>Stock &amp; Almac\u00e9n</h1></div>
+<div class="section-title">Niveles de Stock</div>
+<div style="max-width:600px">
+${[{n:"Azufre Mojable 80%",v:80,u:"320 kg",c:C.accent},{n:"Cobre 50% WP",v:42,u:"85 kg",c:C.gold},{n:"Abono Org. NPK",v:90,u:"2.400 kg",c:C.accent},{n:"B. thuringiensis",v:75,u:"45 L",c:C.accent},{n:"Aceite de Neem",v:22,u:"18 L",c:C.coral},{n:"Cajas Breva",v:85,u:"4.500 uds",c:C.accent},{n:"Alv\u00e9olos Granada",v:92,u:"6.200 uds",c:C.accent},{n:"Film Paletizar",v:45,u:"28 rollos",c:C.gold}].map(s=>`<div class="progress-bar-wrap"><div class="progress-label"><span>${s.n}</span><span>${s.u}</span></div><div class="progress-track"><div class="progress-fill" style="width:${s.v}%;background:${s.c}"></div></div></div>`).join('')}
+</div></div>`;
+
+// ==================== MAQUINARIA ====================
+M.innerHTML+=`<div class="page" id="page-maquinaria">
+<div class="header"><h1>Maquinaria</h1></div>
+<div class="tbl-wrap"><table>
+<tr><th>M\u00e1quina</th><th>Tipo</th><th>A\u00f1o</th><th>Uso</th><th>Estado</th><th>Rev.</th></tr>
+<tr><td><strong>John Deere 5075E</strong></td><td>Tractor</td><td>2020</td><td>3.200h</td><td><span class="tag tag-green">\u2713</span></td><td>Abr 26</td></tr>
+<tr><td><strong>Kubota L3560</strong></td><td>Tractor</td><td>2022</td><td>1.450h</td><td><span class="tag tag-green">\u2713</span></td><td>Jun 26</td></tr>
+<tr><td><strong>Atomizador Fede</strong></td><td>Pulv.</td><td>2019</td><td>950h</td><td><span class="tag tag-green">\u2713</span></td><td>Mar 26</td></tr>
+<tr><td><strong>Trituradora Belafer</strong></td><td>Trit.</td><td>2021</td><td>680h</td><td><span class="tag tag-green">\u2713</span></td><td>May 26</td></tr>
+<tr><td><strong>Furg\u00f3n Iveco</strong></td><td>Transp.</td><td>2021</td><td>82.000km</td><td><span class="tag tag-yellow">\u26a0</span></td><td>Mar 26</td></tr>
+<tr><td><strong>L\u00ednea MAF</strong></td><td>Confec.</td><td>2018</td><td>5.600h</td><td><span class="tag tag-green">\u2713</span></td><td>Jul 26</td></tr>
+<tr><td><strong>Carretilla Linde</strong></td><td>Log.</td><td>2020</td><td>2.100h</td><td><span class="tag tag-green">\u2713</span></td><td>Abr 26</td></tr>
+</table></div></div>`;
+
+// ==================== COSTES ====================
+M.innerHTML+=`<div class="page" id="page-costes">
+<div class="header"><h1>An\u00e1lisis de Costes</h1><span class="badge">487.300 \u20ac</span></div>
+<div class="grid2">
+  <div class="chart-container"><div class="chart-title">Por Categor\u00eda</div><div id="cost-bar"></div></div>
+  <div class="chart-container"><div class="chart-title">Distribuci\u00f3n</div><div id="cost-donut" class="donut-wrap"></div></div>
+</div>
+<div class="cards" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">
+  <div class="card"><h3>Mano de Obra</h3><div class="value" style="font-size:20px">198.500\u20ac</div><div class="sub">40,7%</div></div>
+  <div class="card"><h3>Confecci\u00f3n</h3><div class="value" style="font-size:20px">67.300\u20ac</div><div class="sub">13,8%</div></div>
+  <div class="card"><h3>Fitosanitarios</h3><div class="value" style="font-size:20px">52.800\u20ac</div><div class="sub">10,8%</div></div>
+  <div class="card"><h3>Maquinaria</h3><div class="value" style="font-size:20px">45.600\u20ac</div><div class="sub">9,4%</div></div>
+  <div class="card"><h3>Fertilizantes</h3><div class="value" style="font-size:20px">38.200\u20ac</div><div class="sub">7,8%</div></div>
+  <div class="card"><h3>Transporte</h3><div class="value" style="font-size:20px">35.800\u20ac</div><div class="sub">7,3%</div></div>
+</div>
+<div class="chart-container"><div class="chart-title">Evoluci\u00f3n Mensual</div><div id="cost-line"></div></div>
+</div>`;
+document.getElementById("cost-bar").innerHTML=svgBarChart([{n:"M.Obra",v:199},{n:"Confec.",v:67},{n:"Fito.",v:53},{n:"Maq.",v:46},{n:"Fert.",v:38},{n:"Transp.",v:36}],500,200,[C.primary,C.gold,C.accent,C.coral,C.accent,C.blue]);
+const cd=[{n:"M.Obra",v:199,c:C.primary},{n:"Confec.",v:67,c:C.gold},{n:"Fito.",v:53,c:C.accent},{n:"Otros",v:168,c:'#94A3B8'}];
+document.getElementById("cost-donut").innerHTML=svgDonut(cd,180)+`<div class="donut-legend">${cd.map(d=>`<div class="legend-item"><div class="legend-dot" style="background:${d.c}"></div><span>${d.n}</span><span class="legend-value">${d.v}k\u20ac</span></div>`).join('')}</div>`;
+document.getElementById("cost-line").innerHTML=svgLineChart([{n:"Sep",v:38},{n:"Oct",v:52},{n:"Nov",v:45},{n:"Dic",v:58},{n:"Ene",v:72},{n:"Feb",v:85},{n:"Mar",v:68}],700,180,C.coral);
+
+// ==================== SEGUIMIENTO ====================
+M.innerHTML+=`<div class="page" id="page-seguimiento">
+<div class="header"><h1>Seguimiento de Cultivos</h1></div>
+<div class="grid2">
+  <div class="detail-card" style="border-top:4px solid ${C.accent}">
+    <h3>Higueras</h3><div class="dc-sub">Reposo \u2192 Brotaci\u00f3n</div>
+    <div class="pheno-stage"><div class="pheno-dot" style="background:${C.gray}">1</div><div class="pheno-line" style="background:${C.accent}"></div><div class="pheno-dot" style="background:${C.accent}">2</div><div class="pheno-line" style="background:#E8ECF0"></div><div class="pheno-dot" style="background:#E8ECF0;color:${C.gray}">3</div><div class="pheno-line" style="background:#E8ECF0"></div><div class="pheno-dot" style="background:#E8ECF0;color:${C.gray}">4</div></div>
+    <p style="font-size:11px;color:var(--gray)">1:Reposo 2:Brotaci\u00f3n 3:Floraci\u00f3n 4:Maduraci\u00f3n</p>
+    <p style="margin-top:10px">Previsi\u00f3n breva: <strong>mayo-junio 2026</strong></p>
+  </div>
+  <div class="detail-card" style="border-top:4px solid ${C.gold}">
+    <h3>Granados</h3><div class="dc-sub">Reposo \u2192 Pre-brotaci\u00f3n</div>
+    <div class="pheno-stage"><div class="pheno-dot" style="background:${C.gray}">1</div><div class="pheno-line" style="background:${C.gold}"></div><div class="pheno-dot" style="background:${C.gold}">2</div><div class="pheno-line" style="background:#E8ECF0"></div><div class="pheno-dot" style="background:#E8ECF0;color:${C.gray}">3</div><div class="pheno-line" style="background:#E8ECF0"></div><div class="pheno-dot" style="background:#E8ECF0;color:${C.gray}">4</div></div>
+    <p style="font-size:11px;color:var(--gray)">1:Reposo 2:Pre-brotaci\u00f3n 3:Floraci\u00f3n 4:Recol.</p>
+    <p style="margin-top:10px">Previsi\u00f3n floraci\u00f3n: <strong>abril-mayo 2026</strong></p>
+  </div>
+</div>
+<div class="section-title">An\u00e1lisis de Suelo (Ene 2026)</div>
+<div class="tbl-wrap"><table>
+<tr><th>Finca</th><th>pH</th><th>M.O.%</th><th>N</th><th>P</th><th>K</th><th>CE</th></tr>
+<tr><td>El Rinc\u00f3n</td><td>7.8</td><td>1.9</td><td>42</td><td>28</td><td>185</td><td>1.2</td></tr>
+<tr><td>La Dehesa</td><td>7.6</td><td>2.1</td><td>48</td><td>32</td><td>210</td><td>1.1</td></tr>
+<tr><td>Los Llanos</td><td>8.0</td><td>1.5</td><td>35</td><td>22</td><td>160</td><td>1.4</td></tr>
+<tr><td>Eco Granados</td><td>7.4</td><td>2.8</td><td>55</td><td>38</td><td>230</td><td>0.9</td></tr>
+<tr><td>Eco Higueras</td><td>7.7</td><td>2.4</td><td>45</td><td>30</td><td>195</td><td>1.0</td></tr>
+</table></div>
+</div>`;
+
+// ==================== SIEX ====================
+M.innerHTML+=`<div class="page" id="page-siex">
+<div class="header"><h1>Cumplimiento SIEX</h1><span class="badge">Cuaderno Digital</span></div>
+<div class="cards">
+  <div class="card"><div class="card-icon green">\u{1F4CB}</div><h3>Registros</h3><div class="value" style="color:${C.accent}">87%</div><div style="margin-top:8px"><div class="progress-track"><div class="progress-fill" style="width:87%;background:${C.accent}"></div></div></div></div>
+  <div class="card"><div class="card-icon coral">\u26a0\ufe0f</div><h3>Alertas</h3><div class="value" style="color:${C.coral}">3</div></div>
+  <div class="card"><div class="card-icon green">\u{1F3C6}</div><h3>GlobalGAP</h3><div class="value" style="color:${C.accent}">\u2713</div></div>
+  <div class="card"><div class="card-icon gold">\u{1F33F}</div><h3>CAECV</h3><div class="value" style="color:${C.gold}">\u2713</div></div>
+</div>
+<div class="section-title">Alertas</div>
+<div class="alert-card"><div class="alert-icon warn">\u26a0\ufe0f</div><div class="alert-body"><div class="a-title">Registro Tratamiento Pendiente</div><div class="a-desc">Azufre 28/02 en El Rinc\u00f3n sin registrar.</div><div class="a-date">Vence: 30/03/2026</div></div></div>
+<div class="alert-card"><div class="alert-icon warn">\u26a0\ufe0f</div><div class="alert-body"><div class="a-title">An\u00e1lisis Suelo Eco Granados</div><div class="a-desc">Obligatorio cada 3 a\u00f1os. \u00daltimo: mar 2023.</div><div class="a-date">Vence: 31/03/2026</div></div></div>
+<div class="alert-card"><div class="alert-icon ok">\u2705</div><div class="alert-body"><div class="a-title">PAC 2026 Presentada</div><div class="a-desc">Solicitud enviada 15/02/2026.</div><div class="a-date ok">Tramitada</div></div></div>
+<div class="alert-card"><div class="alert-icon ok">\u2705</div><div class="alert-body"><div class="a-title">CAECV Vigente</div><div class="a-desc">Cert. ecol\u00f3gico Fruchesco renovado.</div><div class="a-date ok">V\u00e1lido: 31/12/2026</div></div></div>
+</div>`;
+
+// ==================== EXPLOTACIONES ====================
+M.innerHTML+=`<div class="page" id="page-explotaciones">
+<div class="header"><h1>Explotaciones</h1></div>
+<div class="grid2">
+  <div class="detail-card" style="border-top:4px solid ${C.accent}"><h3>Fruitum 2016 SL</h3><div class="dc-sub">Convencional</div>
+    <p><strong>CIF:</strong> B-54XXXXXX<br><strong>Superficie:</strong> 43,5 ha (5 fincas)<br><strong>Cultivos:</strong> Higuera, Granado<br><strong>Cert.:</strong> GlobalGAP, GRASP<br><strong>Export:</strong> 90% (FR, UK, NL, DE)</p>
+    <div style="margin-top:14px"><div class="progress-label"><span>Presupuesto</span><span>62%</span></div><div class="progress-track"><div class="progress-fill" style="width:62%;background:${C.accent}"></div></div></div>
+  </div>
+  <div class="detail-card" style="border-top:4px solid ${C.gold}"><h3>Fruchesco</h3><div class="dc-sub">Ecol\u00f3gico \u{1F33F}</div>
+    <p><strong>Superficie:</strong> 20,9 ha (2 fincas)<br><strong>Cultivos:</strong> Granado Wonderful Eco, Higuera Colar Eco<br><strong>Cert.:</strong> CAECV, EU Organic, GlobalGAP<br><strong>Marca:</strong> Sello BIO</p>
+    <div style="margin-top:14px"><div class="progress-label"><span>Presupuesto</span><span>58%</span></div><div class="progress-track"><div class="progress-fill" style="width:58%;background:${C.gold}"></div></div></div>
+  </div>
+</div></div>`;
+
+// ==================== USUARIOS ====================
+M.innerHTML+=`<div class="page" id="page-usuarios">
+<div class="header"><h1>Usuarios</h1></div>
+<div class="tbl-wrap"><table>
+<tr><th>Nombre</th><th>Rol</th><th>Correo</th><th>Explot.</th><th>Estado</th></tr>
+<tr><td><strong>David Miquel Jord\u00e1</strong></td><td>Gerente</td><td>orihuela@somossinergia.es</td><td>Ambas</td><td><span class="tag tag-green">\u2713 Activo</span></td></tr>
+<tr><td><strong>Mar\u00eda Garc\u00eda</strong></td><td>T\u00e9cnica</td><td>maria.garcia@fruitum.es</td><td>Ambas</td><td><span class="tag tag-green">\u2713 Activo</span></td></tr>
+<tr><td><strong>Ahmed Benaissa</strong></td><td>Capataz</td><td>ahmed.b@fruitum.es</td><td>Fruitum</td><td><span class="tag tag-green">\u2713 Activo</span></td></tr>
+<tr><td><strong>Jos\u00e9 Mart\u00ednez</strong></td><td>Jefe Confec.</td><td>jose.m@fruitum.es</td><td>Fruitum</td><td><span class="tag tag-green">\u2713 Activo</span></td></tr>
+<tr><td><strong>Hassan El Amrani</strong></td><td>Enc. Riego</td><td>hassan.e@fruitum.es</td><td>Fruchesco</td><td><span class="tag tag-green">\u2713 Activo</span></td></tr>
+<tr><td><strong>Rachid Ouahmane</strong></td><td>Operario</td><td>rachid.o@fruitum.es</td><td>Fruitum</td><td><span class="tag tag-green">\u2713 Activo</span></td></tr>
+</table></div></div>`;
+</script>
+</body>
+</html>
