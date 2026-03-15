@@ -19,7 +19,8 @@
       "Bash(git add index.html agrosinergia.html)",
       "Bash(git cherry-pick 8a89efa 429bee3)",
       "Bash(git push -u origin feature/agriculture-deep-enhancements)",
-      "Bash(gh pr:*)"
+      "Bash(gh pr:*)",
+      "Bash(ls \"C:\\\\Users\\\\orihu\\\\.claude\\\\projects\\\\C--Users-orihu-OneDrive-Escritorio-prueba-fruitum\\\\memory\"\" 2>/dev/null; cat \"C:Usersorihu.claudeprojectsC--Users-orihu-OneDrive-Escritorio-prueba-fruitummemoryMEMORY.md\" 2>/dev/null || echo \"No memory file found \")"
     ]
   }
 }

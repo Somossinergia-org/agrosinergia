@@ -982,20 +982,20 @@ function initReveal(){
 }
 setTimeout(initReveal,2500);
 
-// SVG HELPERS
 function svgBarChart(data,w,h,colors){
   const pad={t:20,r:20,b:45,l:55},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
-  const maxV=Math.max(...data.map(d=>d.v))*1.15;
-  const bw=Math.min(42,cw/data.length*.65);
+  const rawMax=Math.max(...data.map(d=>d.v||0));
+  const maxV=(rawMax>0?rawMax:1)*1.15;
+  const bw=Math.min(42,cw/Math.max(data.length,1)*.65);
   const gap=(cw-bw*data.length)/(data.length+1);
   let svg=`<svg viewBox="0 0 ${w} ${h}" class="svg-chart">`;
   for(let i=0;i<=4;i++){const y=pad.t+ch-ch*(i/4);const val=Math.round(maxV*i/4);
     svg+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" class="chart-grid" stroke-dasharray="${i===0?'0':'4,4'}"/>`;
     svg+=`<text x="${pad.l-8}" y="${y+4}" text-anchor="end" class="chart-label">${val>=1000?(val/1000).toFixed(0)+'k':val}</text>`}
-  data.forEach((d,i)=>{const x=pad.l+gap+(bw+gap)*i;const bh=ch*(d.v/maxV);const y=pad.t+ch-bh;const c=colors?colors[i%colors.length]:C.accent;
+  data.forEach((d,i)=>{const x=pad.l+gap+(bw+gap)*i;const v=d.v||0;const bh=Math.max(0,ch*(v/maxV));const y=pad.t+ch-bh;const c=colors?colors[i%colors.length]:C.accent;
     svg+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${c}" class="bar-rect animate-bar" style="animation-delay:${i*80}ms"/>`;
-    svg+=`<text x="${x+bw/2}" y="${y-6}" text-anchor="middle" class="chart-value">${d.v>=1000?(d.v/1000).toFixed(0)+'k':d.v}</text>`;
-    svg+=`<text x="${x+bw/2}" y="${h-pad.b+18}" text-anchor="middle" class="chart-label" style="font-size:10px">${d.n}</text>`});
+    if(v>0)svg+=`<text x="${x+bw/2}" y="${y-6}" text-anchor="middle" class="chart-value">${v>=1000?(v/1000).toFixed(0)+'k':v}</text>`;
+    svg+=`<text x="${x+bw/2}" y="${h-pad.b+18}" text-anchor="middle" class="chart-label" style="font-size:10px">${d.n}</text>`;});
   svg+=`</svg>`;return svg;
 }
 function svgDonut(data,size){
@@ -1010,7 +1010,7 @@ function svgDonut(data,size){
 }
 function svgLineChart(data,w,h,color){
   const pad={t:20,r:20,b:40,l:50},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
-  const maxV=Math.max(...data.map(d=>d.v))*1.15;const step=cw/(data.length-1);
+  const rawMax=Math.max(...data.map(d=>d.v||0));const maxV=(rawMax>0?rawMax:1)*1.15;const step=data.length>1?cw/(data.length-1):cw;
   let svg=`<svg viewBox="0 0 ${w} ${h}" class="svg-chart">`;
   for(let i=0;i<=4;i++){const y=pad.t+ch-ch*(i/4);svg+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" class="chart-grid" stroke-dasharray="4,4"/>`;
     svg+=`<text x="${pad.l-8}" y="${y+4}" text-anchor="end" class="chart-label">${Math.round(maxV*i/4)}k</text>`}
@@ -13480,6 +13480,2930 @@ showPage=function(id){
 migrateExistingLinks();
 if(document.querySelector('#page-cartografia.active'))setTimeout(injectUI,500);
 
+})();
+
+// ================================================================
+// ██████╗  LIVE SYNC ENGINE — BroadcastChannel + Tiempo Real ██████
+// ================================================================
+(function(){
+'use strict';
+
+// ── CSS ──────────────────────────────────────────────────────────
+var _css=document.createElement('style');
+_css.textContent=`
+.live-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(76,149,108,.12);color:var(--accent);border:1px solid rgba(76,149,108,.2);transition:all .3s;cursor:default;user-select:none}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:livePulse 1.5s ease infinite;flex-shrink:0}
+.live-badge.offline .live-dot{background:var(--gray);animation:none}
+.live-badge.offline{color:var(--gray);border-color:var(--border);background:transparent}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+.activity-toast{position:fixed;top:68px;right:20px;background:var(--white);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.18);border:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;gap:14px;font-size:13px;z-index:9997;transform:translateX(130%);transition:transform .38s cubic-bezier(.4,0,.2,1);max-width:340px;border-left:4px solid var(--accent)}
+.activity-toast.show{transform:translateX(0)}
+.activity-toast .at-icon{font-size:24px;flex-shrink:0}
+.activity-toast .at-who{font-weight:700;color:var(--dark);font-size:13px}
+.activity-toast .at-what{font-size:12px;color:var(--gray);margin-top:2px}
+.new-row-flash td{animation:rowFlash 2.5s ease forwards!important}
+@keyframes rowFlash{0%{background:rgba(76,149,108,.2)}100%{background:transparent}}
+.presencia-panel{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);margin-bottom:16px;border:1px solid rgba(0,0,0,.04);flex-wrap:wrap}
+.presencia-header{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:10px;display:flex;align-items:center;gap:8px;width:100%}
+.pres-av-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:default}
+.pres-av{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;position:relative}
+.pres-av .pres-on{position:absolute;bottom:-2px;right:-2px;width:12px;height:12px;border-radius:50%;border:2px solid var(--white)}
+.pres-name{font-size:10px;font-weight:600;color:var(--dark);max-width:52px;text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pres-time{font-size:10px;color:var(--accent);font-weight:700}
+.activity-feed-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);animation:fadeIn .4s ease}
+.activity-feed-item:last-child{border-bottom:none}
+.af-icon-wrap{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.af-who{font-size:13px;font-weight:700;color:var(--dark)}
+.af-what{font-size:12px;color:var(--gray);margin-top:1px}
+.af-time{font-size:10px;color:var(--gray);margin-top:3px}
+.jornada-bar-wrap{background:var(--border);border-radius:4px;height:9px;margin-top:8px;overflow:hidden;border-radius:20px}
+.jornada-bar-fill{height:100%;border-radius:20px;transition:width .6s ease}
+@media(max-width:768px){.activity-toast{top:auto;bottom:90px;right:10px;left:10px;transform:translateY(100px);max-width:none}.activity-toast.show{transform:translateY(0)}}
+`;
+document.head.appendChild(_css);
+
+// ── BroadcastChannel ─────────────────────────────────────────────
+var _ch=null;
+try{_ch=new BroadcastChannel('agrosinergia-live')}catch(e){}
+
+// Activity log
+window._activityLog=window._activityLog||[];
+
+// Key → pages mapping
+var _keyPages={
+  'agri_cosechas':['recoleccion','ceo'],
+  'agri_fichajes':['fichajes','mi-panel','ceo'],
+  'agri_incidencias':['incidencias','mi-panel','ceo'],
+  'agri_form_submissions':['formularios','mi-panel'],
+  'agri_riegos':['riego','ceo'],
+  'agri_tratamientos':['tratamientos','ceo'],
+  'agri_routes':['transporte','mi-panel'],
+  'agri_lotes':['trazabilidad'],
+  'agri_movimientos':['trazabilidad']
+};
+var _keyLabels={
+  'agri_cosechas':'registró una cosecha','agri_fichajes':'fichó su jornada',
+  'agri_incidencias':'abrió una incidencia','agri_form_submissions':'envió un formulario',
+  'agri_riegos':'registró un riego','agri_tratamientos':'aplicó un tratamiento',
+  'agri_routes':'actualizó una ruta','agri_lotes':'registró un lote','agri_movimientos':'registró un movimiento'
+};
+var _keyIcons={
+  'agri_cosechas':'🍇','agri_fichajes':'⏰','agri_incidencias':'⚠️',
+  'agri_form_submissions':'📋','agri_riegos':'💧','agri_tratamientos':'🐛',
+  'agri_routes':'🚛','agri_lotes':'📦','agri_movimientos':'📦'
+};
+
+// ── Patch AgroStore.save ──────────────────────────────────────────
+var _origSave=AgroStore.save.bind(AgroStore);
+AgroStore.save=function(key,data){
+  _origSave(key,data);
+  try{
+    var user=window.getCurrentUser?window.getCurrentUser():null;
+    var roleColor=(user&&window.ROLES&&window.ROLES[user.role])?window.ROLES[user.role].color:'#4C956C';
+    var msg={key:key,actor:user?user.fullName:'Sistema',role:user?user.role:'',roleColor:roleColor,
+      label:_keyLabels[key]||'actualizó datos',icon:_keyIcons[key]||'📊',ts:Date.now()};
+    if(_ch)_ch.postMessage(msg);
+    _addToLog(msg);
+    // Flash effect: add new-row-flash to first row of current table
+    setTimeout(function(){
+      var trs=document.querySelectorAll('.page.active tbody tr:first-child');
+      trs.forEach(function(tr){tr.classList.add('new-row-flash');setTimeout(function(){tr.classList.remove('new-row-flash')},2600)});
+    },300);
+  }catch(e){}
+};
+
+function _addToLog(msg){
+  window._activityLog.unshift(msg);
+  window._activityLog=window._activityLog.slice(0,60);
+}
+
+// ── Activity Toast ────────────────────────────────────────────────
+var _toastEl=null,_toastTimer=null;
+function _showToast(msg){
+  if(!_toastEl){
+    _toastEl=document.createElement('div');
+    _toastEl.className='activity-toast';
+    _toastEl.innerHTML='<div class="at-icon"></div><div><div class="at-who"></div><div class="at-what"></div></div>';
+    document.body.appendChild(_toastEl);
+  }
+  _toastEl.querySelector('.at-icon').textContent=msg.icon||'📊';
+  _toastEl.querySelector('.at-who').textContent=msg.actor||'Alguien';
+  _toastEl.querySelector('.at-what').textContent=msg.label||'actualizó datos';
+  _toastEl.style.borderLeftColor=msg.roleColor||'var(--accent)';
+  if(_toastTimer)clearTimeout(_toastTimer);
+  _toastEl.classList.add('show');
+  _toastTimer=setTimeout(function(){_toastEl.classList.remove('show')},4000);
+  _updateLiveBadge(true);
+  // Refresh CEO feed if visible
+  if(window._currentActivePage==='ceo')setTimeout(window.renderCeoActivityFeed,200);
+  if(window._currentActivePage==='fichajes'&&msg.key==='agri_fichajes')setTimeout(_renderPresencia,300);
+}
+
+// ── Incoming from other tabs ──────────────────────────────────────
+if(_ch){
+  _ch.onmessage=function(e){
+    try{
+      var msg=e.data;
+      _addToLog(msg);
+      _showToast(msg);
+      // Badge flash only — do NOT call showPage to avoid potential cascade errors
+      var badge=document.getElementById('live-badge');
+      if(badge){badge.style.background='rgba(76,149,108,.28)';setTimeout(function(){badge.style.background=''},700);}
+      // Only refresh CEO feed if already visible, without full page reload
+      if(window._currentActivePage==='ceo')setTimeout(function(){try{window.renderCeoActivityFeed&&window.renderCeoActivityFeed()}catch(e2){}},400);
+    }catch(ex){console.warn('LiveSync msg error:',ex);}
+  };
+}
+
+// ── LIVE badge ────────────────────────────────────────────────────
+var _liveTimer=null;
+function _updateLiveBadge(active){
+  var badge=document.getElementById('live-badge');
+  var text=document.getElementById('live-badge-text');
+  if(!badge||!text)return;
+  if(active){badge.classList.remove('offline');text.textContent='EN VIVO';
+    if(_liveTimer)clearTimeout(_liveTimer);
+    _liveTimer=setTimeout(function(){_updateLiveBadge(false)},30000);
+  }else{badge.classList.add('offline');text.textContent='OFFLINE';}
+}
+function _injectLiveBadge(){
+  var tbr=document.querySelector('.top-bar-right');
+  if(!tbr||document.getElementById('live-badge'))return;
+  var b=document.createElement('div');
+  b.id='live-badge';b.className='live-badge offline';
+  b.title='Sincronización en tiempo real · BroadcastChannel';
+  b.innerHTML='<span class="live-dot"></span><span id="live-badge-text">OFFLINE</span>';
+  tbr.insertBefore(b,tbr.firstChild);
+}
+
+// ── Update user pill with actual logged-in user ───────────────────
+function _updateUserPill(){
+  var pill=document.querySelector('.user-pill');
+  var user=window.getCurrentUser?window.getCurrentUser():null;
+  if(!pill||!user)return;
+  var rd=(window.ROLES&&window.ROLES[user.role])||{label:user.role,color:'#4C956C'};
+  var ini=(user.firstName||'?').charAt(0)+(user.lastName||'?').charAt(0);
+  pill.innerHTML='<div class="user-avatar" style="background:'+rd.color+'">'+ini+'</div>'+
+    '<div><span>'+user.firstName+' '+user.lastName+'</span><br><small>'+rd.label+'</small></div>';
+}
+
+// ── Presencia panel for Fichajes ──────────────────────────────────
+function _renderPresencia(){
+  var page=document.getElementById('page-fichajes');
+  if(!page||!page.classList.contains('active'))return;
+  var wrap=document.getElementById('presencia-panel');
+  if(!wrap){wrap=document.createElement('div');wrap.id='presencia-panel';page.insertBefore(wrap,page.firstChild);}
+  var fichajes=AgroStore.load('agri_fichajes',[]);
+  var empleados=AgroStore.load('agri_employees',[]);
+  var hoy=new Date().toISOString().slice(0,10);
+  var activos=fichajes.filter(function(f){return f.fecha===hoy&&f.entrada&&!f.salida;});
+  var cerrados=fichajes.filter(function(f){return f.fecha===hoy&&f.salida;});
+  var h='<div class="presencia-panel"><div class="presencia-header">🟢 Presencia Ahora · '+activos.length+' activos · '+(activos.length+cerrados.length)+' fichados hoy</div>';
+  activos.forEach(function(f){
+    var emp=empleados.find(function(e){return e.id===f.empleadoId;});
+    var col=(window.ROLES&&emp&&window.ROLES[emp.role])?window.ROLES[emp.role].color:'#4C956C';
+    var ini=f.empleado.split(' ').map(function(w){return w.charAt(0);}).slice(0,2).join('');
+    var elapsed='';
+    if(f.entrada){var ep=f.entrada.split(':');var eh=parseInt(ep[0])*60+parseInt(ep[1]);var now=new Date();var nm=now.getHours()*60+now.getMinutes()-eh;if(nm>0)elapsed=Math.floor(nm/60)+'h'+(nm%60>0?' '+(nm%60)+'m':'');}
+    h+='<div class="pres-av-wrap"><div class="pres-av" style="background:'+col+'" title="'+f.empleado+'">'+ini+'<span class="pres-on" style="background:#22c55e"></span></div>'+
+      '<div class="pres-name">'+f.empleado.split(' ')[0]+'</div>'+
+      '<div class="pres-time">'+(elapsed||f.entrada)+'</div></div>';
+  });
+  if(activos.length===0)h+='<div style="color:var(--gray);font-size:13px">Sin empleados activos ahora</div>';
+  if(cerrados.length>0)h+='<div style="width:100%;font-size:11px;color:var(--gray);margin-top:6px;padding-top:8px;border-top:1px solid var(--border)">También ficharon hoy: '+cerrados.map(function(f){return f.empleado.split(' ')[0];}).join(', ')+'</div>';
+  h+='</div>';
+  wrap.innerHTML=h;
+}
+
+// ── CEO Activity Feed ─────────────────────────────────────────────
+window.renderCeoActivityFeed=function(){
+  var el=document.getElementById('ceo-activity-feed');if(!el)return;
+  var log=window._activityLog;
+  if(!log||!log.length){
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--gray);font-size:13px">Sin actividad reciente.<br><span style="font-size:11px">Abre otra pestaña con otro usuario para ver la sincronización en vivo.</span></div>';
+    return;
+  }
+  var h='';
+  log.slice(0,20).forEach(function(item){
+    var ago='';var diff=Math.floor((Date.now()-item.ts)/1000);
+    if(diff<60)ago='Hace '+diff+'s';else if(diff<3600)ago='Hace '+Math.floor(diff/60)+'min';else ago='Hace '+Math.floor(diff/3600)+'h';
+    h+='<div class="activity-feed-item">'+
+      '<div class="af-icon-wrap" style="background:'+(item.roleColor||'var(--accent)')+'18;color:'+(item.roleColor||'var(--accent)')+'">'+( item.icon||'📊')+'</div>'+
+      '<div><div class="af-who">'+item.actor+'</div><div class="af-what">'+item.label+'</div><div class="af-time">'+ago+'</div></div></div>';
+  });
+  el.innerHTML=h;
+};
+
+function _injectCeoFeed(){
+  var ceoPage=document.getElementById('page-ceo');
+  if(!ceoPage||document.getElementById('ceo-activity-feed'))return;
+  var card=document.createElement('div');card.className='chart-container';
+  card.style.cssText='border-left:4px solid var(--accent);margin-top:0';
+  card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
+    '<div><div class="chart-title">🔴 Actividad en Tiempo Real</div>'+
+    '<div class="chart-subtitle">Se actualiza en vivo desde cualquier pestaña abierta</div></div>'+
+    '<button class="btn btn-sm btn-outline" onclick="renderCeoActivityFeed()">⟳ Actualizar</button></div>'+
+    '<div id="ceo-activity-feed"><div style="text-align:center;padding:24px;color:var(--gray);font-size:13px">Sin actividad reciente.<br><span style="font-size:11px">Abre otra pestaña con otro usuario.</span></div></div>';
+  ceoPage.appendChild(card);
+}
+
+// ── Mi Panel: Jornada progress bar ───────────────────────────────
+function _injectJornadaBar(){
+  var user=window.getCurrentUser?window.getCurrentUser():null;if(!user)return;
+  var hoy=new Date().toISOString().slice(0,10);
+  var fichajes=AgroStore.load('agri_fichajes',[]);
+  var mf=fichajes.find(function(f){return f.empleadoId===user.id&&f.fecha===hoy;});
+  var existing=document.getElementById('jornada-bar-card');
+  if(existing)existing.remove();
+  if(!mf||!mf.entrada)return;
+  var ep=mf.entrada.split(':');var eh=parseInt(ep[0])*60+parseInt(ep[1]);
+  var now=new Date();var nm=Math.max(0,now.getHours()*60+now.getMinutes()-eh-(mf.pausa||0));
+  var horas=nm/60;var meta=8;var pct=Math.min(100,(horas/meta)*100);
+  var col=pct>=100?'#22c55e':pct>=75?'var(--accent)':pct>=50?'var(--gold)':'var(--coral)';
+  var panelContent=document.getElementById('mi-panel-content');if(!panelContent)return;
+  var card=document.createElement('div');card.id='jornada-bar-card';
+  card.style.cssText='background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm);margin-bottom:14px;border:1px solid rgba(0,0,0,.04)';
+  card.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+
+    '<span style="font-size:13px;font-weight:700;color:var(--dark)">⏱️ Jornada en curso</span>'+
+    '<span style="font-size:14px;font-weight:800;color:'+col+'">'+horas.toFixed(1)+'h <span style="font-size:11px;font-weight:400;color:var(--gray)">/ '+meta+'h meta</span></span></div>'+
+    '<div class="jornada-bar-wrap"><div class="jornada-bar-fill" style="width:'+pct+'%;background:'+col+'"></div></div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--gray);margin-top:5px">'+
+    '<span>Entrada: '+mf.entrada+'</span>'+
+    '<span>'+(mf.salida?'Salida: '+mf.salida:pct>=100?'✅ Jornada completa':'En curso...')+'</span></div>';
+  panelContent.insertBefore(card,panelContent.firstChild);
+}
+
+// ── showPage hooks ────────────────────────────────────────────────
+var _spLive=showPage;
+showPage=function(id){
+  window._currentActivePage=id;
+  _spLive(id);
+  _updateUserPill();
+  if(id==='fichajes')setTimeout(_renderPresencia,400);
+  if(id==='ceo')setTimeout(window.renderCeoActivityFeed,700);
+  if(id==='mi-panel')setTimeout(_injectJornadaBar,400);
+};
+
+// ── Bootstrap ─────────────────────────────────────────────────────
+setTimeout(function(){
+  _injectLiveBadge();
+  _updateUserPill();
+  _injectCeoFeed();
+  window._currentActivePage='dashboard';
+  // Announce presence to other tabs
+  if(_ch){
+    var user=window.getCurrentUser?window.getCurrentUser():null;
+    if(user){
+      var rc=(window.ROLES&&window.ROLES[user.role])?window.ROLES[user.role].color:'#4C956C';
+      try{_ch.postMessage({key:'_presence',actor:user.fullName,role:user.role,roleColor:rc,
+        label:'se conectó',icon:'👋',ts:Date.now()});}catch(e){}
+      _updateLiveBadge(true);
+    }
+  }
+},3000);
+
+// Re-run user pill update on any login
+var _origInitAuth=window.initAuth;
+if(typeof _origInitAuth==='function'){
+  window.initAuth=function(){_origInitAuth();setTimeout(_updateUserPill,3800);}
+}
+
+})();
+
+// ================================================================
+// ██  MODULE ENHANCEMENTS — Formularios mejorados por módulo  ██
+// ================================================================
+(function(){
+'use strict';
+
+// ── Helpers compartidos ──────────────────────────────────────────
+var _PARCELAS=['El Rincón','La Dehesa','Los Llanos','La Cañada','Eco Granados','Eco Higueras'];
+var _EMPLEADOS_DEMO=[
+  {id:'emp1',nombre:'Ahmed Benali',rol:'Recolector',color:'#D97706'},
+  {id:'emp2',nombre:'Pedro Navarro',rol:'Conductor',color:'#7C3AED'},
+  {id:'emp3',nombre:'Laura Sánchez',rol:'Almacén',color:'#EA580C'},
+  {id:'emp4',nombre:'Miguel Torres',rol:'Técnico Campo',color:'#059669'},
+  {id:'emp5',nombre:'Rosa Méndez',rol:'Recolectora',color:'#D97706'},
+  {id:'emp6',nombre:'Antonio García',rol:'Encargado',color:'#2563EB'}
+];
+function _fmtHora(){var n=new Date();return n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0')}
+function _today(){return new Date().toISOString().slice(0,10)}
+function _uuid(){return 'ID-'+Date.now().toString(36).toUpperCase()}
+
+// ── COSECHA — Modal extendido ─────────────────────────────────────
+window.nuevaCosechaExtendida=function(){
+  var user=window.getCurrentUser?window.getCurrentUser():{fullName:'Usuario',role:''};
+  var md=document.getElementById('modal-pedido-content');
+  if(!md)return;
+  var empsOpts=_EMPLEADOS_DEMO.map(function(e){return '<option value="'+e.nombre+'">'+e.nombre+' ('+e.rol+')</option>'}).join('');
+  var parcOpts=_PARCELAS.map(function(p){return '<option>'+p+'</option>'}).join('');
+  md.innerHTML=
+    '<h2 style="margin-bottom:4px">🍇 Nueva Cosecha / Registro</h2>'+
+    '<div style="font-size:12px;color:var(--gray);margin-bottom:16px">Rellena todos los campos para un registro completo</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+      '<div class="form-group"><label>Fecha *</label><input type="date" id="nc-fecha" class="form-control" value="'+_today()+'"></div>'+
+      '<div class="form-group"><label>Hora inicio</label><input type="time" id="nc-hora" class="form-control" value="'+_fmtHora()+'"></div>'+
+      '<div class="form-group"><label>Parcela / Finca *</label><select id="nc-parcela" class="form-control">'+parcOpts+'</select></div>'+
+      '<div class="form-group"><label>Variedad</label><select id="nc-variedad" class="form-control"><option>Mollar de Elche</option><option>Wonderful</option><option>Guapo Brillante</option><option>Brevas</option><option>Higo Negro</option><option>Higo Blanco</option></select></div>'+
+      '<div class="form-group"><label>Kg Recolectados *</label><input type="number" id="nc-kg" class="form-control" placeholder="0" min="0" step="0.5"></div>'+
+      '<div class="form-group"><label>Nº Cajas</label><input type="number" id="nc-cajas" class="form-control" placeholder="0" min="0"></div>'+
+      '<div class="form-group"><label>Calidad</label><select id="nc-calidad" class="form-control"><option value="A">⭐⭐⭐ Categoría Extra</option><option value="A" selected>⭐⭐ Categoría A</option><option value="B">⭐ Categoría B</option><option value="destrío">🔴 Destrío</option></select></div>'+
+      '<div class="form-group"><label>Lote destino</label><input type="text" id="nc-lote" class="form-control" placeholder="Ej: LOT-20260314-01" value="'+_uuid()+'"></div>'+
+      '<div class="form-group"><label>Operario responsable *</label><select id="nc-operario" class="form-control">'+empsOpts+'</select></div>'+
+      '<div class="form-group"><label>Cuadrilla / Equipo</label><input type="text" id="nc-cuadrilla" class="form-control" placeholder="Ej: Equipo A"></div>'+
+    '</div>'+
+    '<div class="form-group"><label>Observaciones</label><textarea id="nc-obs" class="form-control" rows="2" placeholder="Estado de la fruta, condiciones del campo, incidencias..."></textarea></div>'+
+    '<div style="display:flex;gap:8px;margin-top:4px">'+
+      '<button class="btn btn-primary" onclick="guardarCosechaExtendida()" style="flex:1">💾 Registrar Cosecha</button>'+
+      '<button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button>'+
+    '</div>';
+  openModal('modal-pedido');
+};
+
+window.guardarCosechaExtendida=function(){
+  var kg=parseFloat(document.getElementById('nc-kg').value);
+  if(!kg||kg<=0){alert('Introduce los kg recolectados');return}
+  var cosechas=AgroStore.load('agri_cosechas',[]);
+  var reg={
+    id:cosechas.length?Math.max.apply(null,cosechas.map(function(c){return c.id||0}))+1:1,
+    fecha:document.getElementById('nc-fecha').value,
+    hora:document.getElementById('nc-hora').value,
+    parcela:document.getElementById('nc-parcela').value,
+    variedad:document.getElementById('nc-variedad').value,
+    kg:kg,
+    cajas:parseInt(document.getElementById('nc-cajas').value)||0,
+    calidad:document.getElementById('nc-calidad').value,
+    lote:document.getElementById('nc-lote').value,
+    operario:document.getElementById('nc-operario').value,
+    cuadrilla:document.getElementById('nc-cuadrilla').value,
+    observ:document.getElementById('nc-obs').value,
+    timestamp:Date.now()
+  };
+  cosechas.unshift(reg);
+  AgroStore.save('agri_cosechas',cosechas);
+  closeModal('modal-pedido');
+  notifySaved('✅ Cosecha registrada: '+kg.toLocaleString('es')+' kg de '+reg.parcela);
+  // Refresh if on recoleccion page
+  if(window._currentActivePage==='recoleccion')showPage('recoleccion');
+};
+
+// ── PARTES DE TRABAJO — Flujo completo ────────────────────────────
+window.nuevoParteModal=function(){
+  var user=window.getCurrentUser?window.getCurrentUser():{fullName:'Empleado',role:''};
+  var md=document.getElementById('modal-pedido-content');
+  if(!md)return;
+  var parcOpts=_PARCELAS.map(function(p){return '<option>'+p+'</option>'}).join('');
+  md.innerHTML=
+    '<h2 style="margin-bottom:4px">📋 Nuevo Parte de Trabajo</h2>'+
+    '<div style="font-size:12px;color:var(--gray);margin-bottom:16px">Descripción de la jornada de trabajo</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+      '<div class="form-group"><label>Fecha *</label><input type="date" id="pt-fecha" class="form-control" value="'+_today()+'"></div>'+
+      '<div class="form-group"><label>Empleado</label><input type="text" id="pt-emp" class="form-control" value="'+user.fullName+'" readonly style="background:var(--light)"></div>'+
+      '<div class="form-group"><label>Parcela/Ubicación *</label><select id="pt-parc" class="form-control">'+parcOpts+'</select></div>'+
+      '<div class="form-group"><label>Tipo tarea *</label><select id="pt-tipo" class="form-control"><option>Recolección</option><option>Poda</option><option>Tratamiento fitosanitario</option><option>Riego</option><option>Fertirrigación</option><option>Limpieza acequia</option><option>Tarea general</option></select></div>'+
+      '<div class="form-group"><label>Hora inicio</label><input type="time" id="pt-tinicio" class="form-control" value="'+_fmtHora()+'"></div>'+
+      '<div class="form-group"><label>Horas trabajadas</label><input type="number" id="pt-horas" class="form-control" placeholder="8" min="0" max="12" step="0.5"></div>'+
+      '<div class="form-group"><label>Maquinaria utilizada</label><input type="text" id="pt-maq" class="form-control" placeholder="Tractor JD 5075E, Soplador..."></div>'+
+      '<div class="form-group"><label>Rendimiento (kg/h ó ha)</label><input type="text" id="pt-rend" class="form-control" placeholder="Ej: 120 kg/h"></div>'+
+    '</div>'+
+    '<div class="form-group"><label>Descripción detallada *</label><textarea id="pt-desc" class="form-control" rows="3" placeholder="Describe las tareas realizadas, incidencias, condiciones del campo..."></textarea></div>'+
+    '<div style="display:flex;gap:8px;margin-top:4px">'+
+      '<button class="btn btn-primary" onclick="guardarParte()" style="flex:1">📤 Enviar Parte</button>'+
+      '<button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button>'+
+    '</div>';
+  openModal('modal-pedido');
+};
+
+window.guardarParte=function(){
+  var desc=document.getElementById('pt-desc').value.trim();
+  if(!desc){alert('Añade una descripción del trabajo');return}
+  var partes=AgroStore.load('agri_partes',[]);
+  var nuevoParte={
+    id:partes.length?Math.max.apply(null,partes.map(function(p){return p.id||0}))+1:1,
+    fecha:document.getElementById('pt-fecha').value,
+    empleado:document.getElementById('pt-emp').value,
+    parcela:document.getElementById('pt-parc').value,
+    tipo:document.getElementById('pt-tipo').value,
+    horaInicio:document.getElementById('pt-tinicio').value,
+    horas:parseFloat(document.getElementById('pt-horas').value)||0,
+    maquinaria:document.getElementById('pt-maq').value,
+    rendimiento:document.getElementById('pt-rend').value,
+    descripcion:desc,
+    estado:'pendiente',
+    timestamp:Date.now()
+  };
+  partes.unshift(nuevoParte);
+  AgroStore.save('agri_partes',partes);
+  closeModal('modal-pedido');
+  notifySaved('📋 Parte de trabajo enviado para validación');
+  // Also save to partes for broadcast
+  AgroStore.save('agri_form_submissions',partes);
+};
+
+// ── INCIDENCIAS — Con asignación y estado mejorado ────────────────
+window.nuevaIncidenciaExtendida=function(){
+  var empsOpts=_EMPLEADOS_DEMO.map(function(e){return '<option value="'+e.nombre+'">'+e.nombre+' ('+e.rol+')</option>'}).join('');
+  var parcOpts=_PARCELAS.map(function(p){return '<option>'+p+'</option>'}).join('');
+  var md=document.getElementById('modal-pedido-content');
+  if(!md)return;
+  md.innerHTML=
+    '<h2 style="margin-bottom:4px">⚠️ Nueva Incidencia</h2>'+
+    '<div style="font-size:12px;color:var(--gray);margin-bottom:16px">Reporta y asigna una incidencia para resolución</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+      '<div class="form-group"><label>Tipo *</label><select id="ni-tipo" class="form-control"><option>🐛 Plaga</option><option>💧 Riego</option><option>🔴 Daño fruto</option><option>⚡ Maquinaria</option><option>🌡️ Meteorológica</option><option>👷 RRHH</option><option>📦 Calidad</option><option>🔒 Seguridad</option></select></div>'+
+      '<div class="form-group"><label>Prioridad *</label><select id="ni-prioridad" class="form-control"><option value="alta">🔴 Alta</option><option value="media" selected>🟡 Media</option><option value="baja">🟢 Baja</option></select></div>'+
+      '<div class="form-group"><label>Parcela / Zona</label><select id="ni-parcela" class="form-control">'+parcOpts+'</select></div>'+
+      '<div class="form-group"><label>Asignar a *</label><select id="ni-asignado" class="form-control">'+empsOpts+'</select></div>'+
+    '</div>'+
+    '<div class="form-group"><label>Descripción detallada *</label><textarea id="ni-desc" class="form-control" rows="3" placeholder="Describe la incidencia, dónde se detectó, cuándo, qué afecta..."></textarea></div>'+
+    '<div class="form-group"><label>Acción inmediata solicitada</label><input type="text" id="ni-accion" class="form-control" placeholder="Ej: Aplicar tratamiento urgente antes del viernes"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:4px">'+
+      '<button class="btn btn-coral" onclick="guardarIncidenciaExt()" style="flex:1">⚠️ Crear y Asignar</button>'+
+      '<button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button>'+
+    '</div>';
+  openModal('modal-pedido');
+};
+
+window.guardarIncidenciaExt=function(){
+  var desc=document.getElementById('ni-desc').value.trim();
+  if(!desc){alert('Añade una descripción');return}
+  var incidencias=AgroStore.load('agri_incidencias',[]);
+  var nuevaInc={
+    id:incidencias.length?Math.max.apply(null,incidencias.map(function(i){return i.id||0}))+1:1,
+    tipo:document.getElementById('ni-tipo').value,
+    prioridad:document.getElementById('ni-prioridad').value,
+    parcela:document.getElementById('ni-parcela').value,
+    asignadoA:document.getElementById('ni-asignado').value,
+    descripcion:desc,
+    accionSolicitada:document.getElementById('ni-accion').value,
+    estado:'abierta',
+    fecha:_today(),
+    historial:[{estado:'abierta',fecha:_today(),hora:_fmtHora(),nota:'Incidencia creada'}],
+    timestamp:Date.now()
+  };
+  incidencias.unshift(nuevaInc);
+  AgroStore.save('agri_incidencias',incidencias);
+  closeModal('modal-pedido');
+  notifySaved('⚠️ Incidencia asignada a '+nuevaInc.asignadoA);
+};
+
+// ── MI PANEL — Feed de actividad personal ────────────────────────
+function _injectMiPanelFeed(){
+  var panelEmp=document.getElementById('mi-panel-content');if(!panelEmp)return;
+  if(document.getElementById('mi-panel-actividad'))return;
+  var user=window.getCurrentUser?window.getCurrentUser():null;
+  if(!user)return;
+
+  // Quick action buttons enhanced
+  var qaWrap=document.getElementById('emp-quick-actions');
+  if(qaWrap&&!qaWrap.dataset.enhanced){
+    qaWrap.dataset.enhanced='1';
+    // Add "+ Cosecha" and "+ Parte" quick buttons
+    var btnCos=document.createElement('button');
+    btnCos.className='emp-action-btn';
+    btnCos.onclick=function(){nuevaCosechaExtendida()};
+    btnCos.innerHTML='<div class="ea-icon">🍇</div><div class="ea-label">Reg. Cosecha</div><div class="ea-count">Nuevo</div>';
+    var btnParte=document.createElement('button');
+    btnParte.className='emp-action-btn';
+    btnParte.onclick=function(){nuevoParteModal()};
+    btnParte.innerHTML='<div class="ea-icon">📋</div><div class="ea-label">Parte Trabajo</div><div class="ea-count">Nuevo</div>';
+    var btnInc=document.createElement('button');
+    btnInc.className='emp-action-btn';
+    btnInc.onclick=function(){nuevaIncidenciaExtendida()};
+    btnInc.innerHTML='<div class="ea-icon">⚠️</div><div class="ea-label">Incidencia</div><div class="ea-count">Reportar</div>';
+    qaWrap.appendChild(btnCos);
+    qaWrap.appendChild(btnParte);
+    qaWrap.appendChild(btnInc);
+  }
+
+  // Activity feed for this employee
+  var actDiv=document.createElement('div');
+  actDiv.id='mi-panel-actividad';
+  actDiv.className='emp-section';
+  actDiv.style.cssText='border-left:3px solid var(--accent)';
+
+  var cosechas=AgroStore.load('agri_cosechas',[]);
+  var misCosechas=cosechas.filter(function(c){return c.operario===user.fullName||c.empleado===user.fullName}).slice(0,3);
+  var partes=AgroStore.load('agri_partes',[]);
+  var misPartes=partes.filter(function(p){return p.empleado===user.fullName}).slice(0,3);
+  var incs=AgroStore.load('agri_incidencias',[]);
+  var misIncs=incs.filter(function(i){return i.asignadoA===user.fullName&&i.estado==='abierta'}).slice(0,3);
+
+  var h='<h3 style="font-size:14px;font-weight:700;color:var(--dark);margin-bottom:12px;display:flex;align-items:center;gap:8px">📊 Mi Actividad Reciente</h3>';
+
+  if(misIncs.length>0){
+    h+='<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--coral);margin-bottom:6px">⚠️ Incidencias asignadas a mí ('+misIncs.length+')</div>';
+    misIncs.forEach(function(i){
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:8px;background:rgba(224,122,95,.06);border-radius:8px;margin-bottom:6px;border-left:3px solid var(--coral)">'+
+        '<span style="font-size:14px">'+i.tipo.split(' ')[0]+'</span>'+
+        '<div style="flex:1"><div style="font-size:12px;font-weight:600">'+i.tipo.replace(/^[^ ]+ /,'')+'</div>'+
+        '<div style="font-size:11px;color:var(--gray)">'+i.parcela+' · '+i.fecha+'</div></div>'+
+        '<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(224,122,95,.15);color:var(--coral);font-weight:700">'+i.prioridad.toUpperCase()+'</span></div>';
+    });
+    h+='</div>';
+  }
+
+  if(misCosechas.length>0){
+    h+='<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:6px">🍇 Mis últimas cosechas</div>';
+    misCosechas.forEach(function(c){
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(76,149,108,.06);border-radius:8px;margin-bottom:4px">'+
+        '<div style="flex:1"><div style="font-size:12px;font-weight:600">'+c.parcela+' — '+(c.variedad||'')+'</div>'+
+        '<div style="font-size:11px;color:var(--gray)">'+c.fecha+' · Calidad '+c.calidad+'</div></div>'+
+        '<div style="font-size:14px;font-weight:800;color:var(--accent)">'+((c.kg||0).toLocaleString('es'))+'<span style="font-size:10px;font-weight:400"> kg</span></div></div>';
+    });
+    h+='</div>';
+  }
+
+  if(misPartes.length>0){
+    h+='<div><div style="font-size:12px;font-weight:700;color:var(--blue,#3B82F6);margin-bottom:6px">📋 Mis partes enviados</div>';
+    misPartes.forEach(function(p){
+      var estBg=p.estado==='validado'?'rgba(76,149,108,.15)':p.estado==='rechazado'?'rgba(224,122,95,.15)':'rgba(212,168,67,.15)';
+      var estCol=p.estado==='validado'?'var(--accent)':p.estado==='rechazado'?'var(--coral)':'var(--gold)';
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(59,130,246,.05);border-radius:8px;margin-bottom:4px">'+
+        '<div style="flex:1"><div style="font-size:12px;font-weight:600">'+p.tipo+' — '+p.parcela+'</div>'+
+        '<div style="font-size:11px;color:var(--gray)">'+p.fecha+(p.horas?' · '+p.horas+'h':'')+' </div></div>'+
+        '<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:'+estBg+';color:'+estCol+';font-weight:700">'+p.estado.toUpperCase()+'</span></div>';
+    });
+    h+='</div>';
+  }
+
+  if(!misCosechas.length&&!misPartes.length&&!misIncs.length){
+    h+='<div style="text-align:center;padding:20px;color:var(--gray);font-size:13px">Sin actividad registrada aún.<br>¡Registra tu primera cosecha o parte de trabajo!</div>';
+  }
+
+  actDiv.innerHTML=h;
+  panelEmp.appendChild(actDiv);
+}
+
+// ── Hook Mi Panel render — sin añadir wrapper adicional de showPage ──
+// El wrapper _sp6 ya gestiona mi-panel. Usamos un click listener en el nav item.
+(function(){
+  function _hookNavItem(){
+    var navItems=document.querySelectorAll('.nav-item[data-page="mi-panel"]');
+    navItems.forEach(function(el){
+      if(!el.dataset.feedHooked){
+        el.dataset.feedHooked='1';
+        el.addEventListener('click',function(){setTimeout(_injectMiPanelFeed,700)});
+      }
+    });
+  }
+  setTimeout(_hookNavItem,3000);
+})();
+
+// ── Partes pendientes para validar en Formularios ─────────────────
+window.verPartesValidar=function(){
+  var partes=AgroStore.load('agri_partes',[]);
+  var pendientes=partes.filter(function(p){return p.estado==='pendiente'});
+  var md=document.getElementById('modal-pedido-content');
+  if(!md)return;
+  var h='<h2 style="margin-bottom:14px">📋 Partes Pendientes de Validación <span style="font-size:14px;font-weight:400;color:var(--gray)">('+pendientes.length+')</span></h2>';
+  if(!pendientes.length){
+    h+='<div style="text-align:center;padding:24px;color:var(--gray)">No hay partes pendientes de validar.</div>';
+  } else {
+    pendientes.forEach(function(p){
+      h+='<div style="border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;border-left:4px solid var(--gold)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">'+
+          '<div><div style="font-weight:700;font-size:14px">'+p.tipo+' — '+p.parcela+'</div>'+
+          '<div style="font-size:12px;color:var(--gray)">'+p.empleado+' · '+p.fecha+(p.horas?' · '+p.horas+'h':'')+' · Inicio: '+p.horaInicio+'</div></div>'+
+          '<span style="font-size:10px;padding:3px 10px;background:rgba(212,168,67,.15);color:var(--gold);border-radius:10px;font-weight:700">PENDIENTE</span>'+
+        '</div>'+
+        '<div style="font-size:13px;padding:8px;background:var(--light);border-radius:8px;margin-bottom:8px">'+p.descripcion+'</div>'+
+        (p.rendimiento?'<div style="font-size:11px;color:var(--gray);margin-bottom:8px">Rendimiento: '+p.rendimiento+(p.maquinaria?' · '+p.maquinaria:'')+'</div>':'')+
+        '<div style="display:flex;gap:8px">'+
+          '<button class="btn btn-primary btn-sm" onclick="validarParte('+p.id+',\'validado\')" style="flex:1">✅ Validar</button>'+
+          '<button class="btn btn-coral btn-sm" onclick="validarParte('+p.id+',\'rechazado\')" style="flex:1">❌ Rechazar</button>'+
+        '</div></div>';
+    });
+  }
+  h+='<button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')" style="width:100%;margin-top:8px">Cerrar</button>';
+  md.innerHTML=h;
+  openModal('modal-pedido');
+};
+
+window.validarParte=function(id,estado){
+  var partes=AgroStore.load('agri_partes',[]);
+  var idx=partes.findIndex(function(p){return p.id===id});
+  if(idx<0)return;
+  partes[idx].estado=estado;
+  partes[idx].validadoEn=new Date().toISOString();
+  AgroStore.save('agri_partes',partes);
+  AgroStore.save('agri_form_submissions',partes);
+  notifySaved(estado==='validado'?'✅ Parte validado':'❌ Parte rechazado');
+  verPartesValidar();
+};
+
+// ── Exponer funciones globalmente ─────────────────────────────────
+window.nuevaCosechaExtendida=window.nuevaCosechaExtendida;
+window.nuevoParteModal=window.nuevoParteModal;
+window.nuevaIncidenciaExtendida=window.nuevaIncidenciaExtendida;
+
+// ── Bootstrap ─────────────────────────────────────────────────────
+setTimeout(function(){
+  // If already on mi-panel, inject feed
+  if(window._currentActivePage==='mi-panel')_injectMiPanelFeed();
+},4000);
+
+})();
+
+// ================================================================
+// ██████╗  IMAGE ATTACHMENTS ENGINE — Fotos en Formularios ████████
+// ================================================================
+(function(){
+'use strict';
+
+// ── CSS ──────────────────────────────────────────────────────────
+var _css=document.createElement('style');
+_css.textContent=`
+.img-upload-zone{border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--light);position:relative}
+.img-upload-zone:hover,.img-upload-zone.drag-over{border-color:var(--accent);background:rgba(76,149,108,.06)}
+.img-upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-upload-zone .uz-icon{font-size:28px;margin-bottom:6px}
+.img-upload-zone .uz-text{font-size:12px;color:var(--gray);font-weight:500}
+.img-upload-zone .uz-hint{font-size:10px;color:var(--border);margin-top:2px}
+.img-preview-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.img-thumb-wrap{position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:2px solid var(--border);flex-shrink:0;cursor:pointer;transition:transform .2s}
+.img-thumb-wrap:hover{transform:scale(1.06);border-color:var(--accent)}
+.img-thumb-wrap img{width:100%;height:100%;object-fit:cover}
+.img-thumb-del{position:absolute;top:2px;right:2px;background:rgba(224,122,95,.9);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-family:sans-serif}
+.img-thumb-del:hover{background:var(--coral)}
+.img-counter{font-size:11px;color:var(--accent);font-weight:600;margin-top:4px}
+/* Lightbox */
+.img-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99999;display:none;align-items:center;justify-content:center;animation:fadeIn .2s ease}
+.img-lightbox.show{display:flex}
+.img-lightbox-inner{position:relative;max-width:90vw;max-height:90vh}
+.img-lightbox-inner img{max-width:90vw;max-height:90vh;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6);object-fit:contain}
+.img-lb-close{position:absolute;top:-14px;right:-14px;background:var(--coral);color:#fff;border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.img-lb-prev,.img-lb-next{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.img-lb-prev{left:-52px}.img-lb-next{right:-52px}
+.img-lb-prev:hover,.img-lb-next:hover{background:rgba(255,255,255,.3)}
+.img-lb-caption{position:absolute;bottom:-36px;left:0;right:0;text-align:center;color:rgba(255,255,255,.7);font-size:12px}
+/* Review gallery for supervisors */
+.review-gallery{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.review-img-thumb{width:60px;height:60px;border-radius:6px;object-fit:cover;cursor:pointer;border:2px solid var(--border);transition:border-color .2s}
+.review-img-thumb:hover{border-color:var(--accent)}
+.review-no-imgs{font-size:11px;color:var(--gray);font-style:italic}
+/* Photo badge */
+.photo-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(76,149,108,.1);color:var(--accent);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;cursor:pointer}
+.photo-badge:hover{background:rgba(76,149,108,.2)}
+`;
+document.head.appendChild(_css);
+
+// ── Lightbox ──────────────────────────────────────────────────────
+var _lb=null,_lbImgs=[],_lbIdx=0;
+function _createLightbox(){
+  if(_lb)return;
+  _lb=document.createElement('div');_lb.className='img-lightbox';
+  _lb.innerHTML='<div class="img-lightbox-inner">'+
+    '<button class="img-lb-close">×</button>'+
+    '<button class="img-lb-prev">‹</button>'+
+    '<img src="" alt="">'+
+    '<button class="img-lb-next">›</button>'+
+    '<div class="img-lb-caption"></div>'+
+  '</div>';
+  document.body.appendChild(_lb);
+  _lb.querySelector('.img-lb-close').onclick=function(){_lb.classList.remove('show')};
+  _lb.querySelector('.img-lb-prev').onclick=function(){_lbIdx=(_lbIdx-1+_lbImgs.length)%_lbImgs.length;_lbShow()};
+  _lb.querySelector('.img-lb-next').onclick=function(){_lbIdx=(_lbIdx+1)%_lbImgs.length;_lbShow()};
+  _lb.addEventListener('click',function(e){if(e.target===_lb)_lb.classList.remove('show')});
+  document.addEventListener('keydown',function(e){
+    if(!_lb.classList.contains('show'))return;
+    if(e.key==='Escape')_lb.classList.remove('show');
+    if(e.key==='ArrowLeft'){_lbIdx=(_lbIdx-1+_lbImgs.length)%_lbImgs.length;_lbShow()}
+    if(e.key==='ArrowRight'){_lbIdx=(_lbIdx+1)%_lbImgs.length;_lbShow()}
+  });
+}
+function _lbShow(){
+  if(!_lb)return;
+  _lb.querySelector('img').src=_lbImgs[_lbIdx];
+  _lb.querySelector('.img-lb-caption').textContent=(_lbIdx+1)+' / '+_lbImgs.length;
+  _lb.querySelector('.img-lb-prev').style.display=_lbImgs.length>1?'':'none';
+  _lb.querySelector('.img-lb-next').style.display=_lbImgs.length>1?'':'none';
+}
+window.openImgLightbox=function(imgs,idx){
+  _createLightbox();
+  _lbImgs=Array.isArray(imgs)?imgs:[imgs];
+  _lbIdx=idx||0;
+  _lbShow();
+  _lb.classList.add('show');
+};
+
+// ── Temp image storage per modal session ─────────────────────────
+window._formImages={};
+function _clearFormImgs(key){window._formImages[key]=[];}
+function _addFormImg(key,b64){if(!window._formImages[key])window._formImages[key]=[];window._formImages[key].push(b64);}
+function _delFormImg(key,idx){if(window._formImages[key])window._formImages[key].splice(idx,1);}
+function _getFormImgs(key){return window._formImages[key]||[];}
+
+// ── File reader helper ────────────────────────────────────────────
+function _readFiles(files,key,onUpdate){
+  Array.from(files).forEach(function(file){
+    if(!file.type.startsWith('image/'))return;
+    if(file.size>4*1024*1024){notifySaved('⚠️ Imagen demasiado grande (máx 4MB)');return;}
+    var reader=new FileReader();
+    reader.onload=function(e){
+      _addFormImg(key,e.target.result);
+      if(onUpdate)onUpdate();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── Build upload zone HTML block ──────────────────────────────────
+window.buildImgUploadZone=function(formKey,label){
+  label=label||'Adjuntar fotos';
+  return '<div class="form-group" id="img-zone-wrap-'+formKey+'">'+
+    '<label style="font-size:12px;font-weight:600">📷 '+label+'</label>'+
+    '<div class="img-upload-zone" id="img-zone-'+formKey+'" '+
+      'ondrop="window._imgDrop(event,\''+formKey+'\')" '+
+      'ondragover="event.preventDefault();this.classList.add(\'drag-over\')" '+
+      'ondragleave="this.classList.remove(\'drag-over\')">' +
+      '<input type="file" accept="image/*" multiple '+
+        'onchange="window._imgFileChange(event,\''+formKey+'\')">' +
+      '<div class="uz-icon">📸</div>'+
+      '<div class="uz-text">Toca o arrastra para añadir fotos</div>'+
+      '<div class="uz-hint">JPG, PNG, WEBP · máx 4MB por imagen</div>'+
+    '</div>'+
+    '<div class="img-preview-grid" id="img-prev-'+formKey+'"></div>'+
+    '<div class="img-counter" id="img-count-'+formKey+'"></div>'+
+  '</div>';
+};
+
+window._imgFileChange=function(e,key){
+  _readFiles(e.target.files,key,function(){_refreshPreviews(key)});
+  e.target.value='';
+};
+window._imgDrop=function(e,key){
+  e.preventDefault();
+  var zone=document.getElementById('img-zone-'+key);
+  if(zone)zone.classList.remove('drag-over');
+  _readFiles(e.dataTransfer.files,key,function(){_refreshPreviews(key)});
+};
+window._imgThumbClick=function(key,idx){
+  openImgLightbox(_getFormImgs(key),idx);
+};
+window._imgThumbDel=function(key,idx){
+  _delFormImg(key,idx);_refreshPreviews(key);
+};
+
+function _refreshPreviews(key){
+  var imgs=_getFormImgs(key);
+  var grid=document.getElementById('img-prev-'+key);
+  var cnt=document.getElementById('img-count-'+key);
+  if(!grid)return;
+  var h='';
+  imgs.forEach(function(src,i){
+    h+='<div class="img-thumb-wrap" onclick="window._imgThumbClick(\''+key+'\','+i+')">'+
+      '<img src="'+src+'" alt="foto '+(i+1)+'">'+
+      '<button class="img-thumb-del" onclick="event.stopPropagation();window._imgThumbDel(\''+key+'\','+i+')" title="Eliminar">×</button>'+
+    '</div>';
+  });
+  grid.innerHTML=h;
+  if(cnt)cnt.textContent=imgs.length>0?imgs.length+' foto'+(imgs.length>1?'s':'')+' adjunta'+(imgs.length>1?'s':''):'';
+}
+
+// ── Patch existing modal functions to include image zone ──────────
+// Patch nuevaCosechaExtendida
+var _origCosechaMod=window.nuevaCosechaExtendida;
+window.nuevaCosechaExtendida=function(){
+  _clearFormImgs('cosecha');
+  if(_origCosechaMod)_origCosechaMod();
+  setTimeout(function(){
+    var md=document.getElementById('modal-pedido-content');
+    if(!md)return;
+    var btnRow=md.querySelector('.btn-group');
+    if(!btnRow||document.getElementById('img-zone-cosecha'))return;
+    var zone=document.createElement('div');
+    zone.innerHTML=window.buildImgUploadZone('cosecha','Fotos de la cosecha (opcional)');
+    btnRow.parentNode.insertBefore(zone.firstChild,btnRow);
+  },100);
+};
+
+// Patch guardarCosechaExtendida
+var _origGuardarCosecha=window.guardarCosechaExtendida;
+window.guardarCosechaExtendida=function(){
+  var imgs=_getFormImgs('cosecha');
+  // Temporarily store images so the original save can include them
+  window._pendingImgs=imgs;
+  if(_origGuardarCosecha)_origGuardarCosecha();
+  // Attach images to last saved cosecha
+  setTimeout(function(){
+    var cosechas=AgroStore.load('agri_cosechas',[]);
+    if(cosechas.length>0&&imgs.length>0){
+      cosechas[0].fotos=imgs;
+      AgroStore.save('agri_cosechas',cosechas);
+    }
+    window._pendingImgs=null;
+  },200);
+};
+
+// Patch nuevaIncidenciaExtendida
+var _origIncMod=window.nuevaIncidenciaExtendida;
+window.nuevaIncidenciaExtendida=function(){
+  _clearFormImgs('incidencia');
+  if(_origIncMod)_origIncMod();
+  setTimeout(function(){
+    var md=document.getElementById('modal-pedido-content');
+    if(!md)return;
+    var btnRow=md.querySelector('.btn-group')||md.lastElementChild;
+    if(!btnRow||document.getElementById('img-zone-incidencia'))return;
+    var zone=document.createElement('div');
+    zone.innerHTML=window.buildImgUploadZone('incidencia','Fotos de la incidencia (opcional)');
+    btnRow.parentNode.insertBefore(zone.firstChild,btnRow);
+  },100);
+};
+
+// Patch guardarIncidenciaExt
+var _origGuardarInc=window.guardarIncidenciaExt;
+window.guardarIncidenciaExt=function(){
+  var imgs=_getFormImgs('incidencia');
+  if(_origGuardarInc)_origGuardarInc();
+  setTimeout(function(){
+    var incs=AgroStore.load('agri_incidencias',[]);
+    if(incs.length>0&&imgs.length>0){
+      incs[0].fotos=imgs;
+      AgroStore.save('agri_incidencias',incs);
+    }
+  },200);
+};
+
+// Patch nuevoParteModal
+var _origParteMod=window.nuevoParteModal;
+window.nuevoParteModal=function(){
+  _clearFormImgs('parte');
+  if(_origParteMod)_origParteMod();
+  setTimeout(function(){
+    var md=document.getElementById('modal-pedido-content');
+    if(!md)return;
+    var btnRow=md.querySelector('.btn-group');
+    if(!btnRow||document.getElementById('img-zone-parte'))return;
+    var zone=document.createElement('div');
+    zone.innerHTML=window.buildImgUploadZone('parte','Fotos del trabajo realizado (opcional)');
+    btnRow.parentNode.insertBefore(zone.firstChild,btnRow);
+  },100);
+};
+
+// Patch guardarParte
+var _origGuardarParte=window.guardarParte;
+window.guardarParte=function(){
+  var imgs=_getFormImgs('parte');
+  if(_origGuardarParte)_origGuardarParte();
+  setTimeout(function(){
+    var partes=AgroStore.load('agri_partes',[]);
+    if(partes.length>0&&imgs.length>0){
+      partes[0].fotos=imgs;
+      AgroStore.save('agri_partes',partes);
+    }
+  },200);
+};
+
+// ── Gallery renderer (for supervisor/CEO review) ──────────────────
+window.renderFotoGallery=function(fotos,containerId){
+  if(!fotos||!fotos.length)return '<span class="review-no-imgs">Sin fotos adjuntas</span>';
+  var h='<div class="review-gallery">';
+  fotos.forEach(function(src,i){
+    h+='<img class="review-img-thumb" src="'+src+'" alt="foto '+(i+1)+'" '+
+      'onclick=\'openImgLightbox('+JSON.stringify(fotos).replace(/'/g,"&#39;")+','+i+')\' '+
+      'title="Ver foto '+(i+1)+'">';
+  });
+  h+='</div>';
+  return h;
+};
+
+// ── Photo badge helper (inline use) ──────────────────────────────
+window.fotosBadge=function(fotos,label){
+  if(!fotos||!fotos.length)return '';
+  return '<span class="photo-badge" onclick=\'openImgLightbox('+JSON.stringify(fotos).replace(/'/g,"&#39;")+')\'>'+
+    '📷 '+(fotos.length)+' foto'+(fotos.length>1?'s':'')+(label?' — '+label:'')+
+  '</span>';
+};
+
+// ── Patch verPartesValidar to show photos ─────────────────────────
+var _origVerPartes=window.verPartesValidar;
+window.verPartesValidar=function(){
+  if(_origVerPartes)_origVerPartes();
+  // After render, enhance cards with photo galleries
+  setTimeout(function(){
+    var md=document.getElementById('modal-pedido-content');
+    if(!md)return;
+    var partes=AgroStore.load('agri_partes',[]);
+    var pendientes=partes.filter(function(p){return p.estado==='pendiente'});
+    // Find cards and enhance with photos if available
+    var cards=md.querySelectorAll('[data-parte-id]');
+    cards.forEach(function(card){
+      var pid=card.getAttribute('data-parte-id');
+      var parte=pendientes.find(function(p){return String(p.id)===String(pid)});
+      if(parte&&parte.fotos&&parte.fotos.length){
+        var fotoDiv=document.createElement('div');
+        fotoDiv.style.marginTop='8px';
+        fotoDiv.innerHTML=window.renderFotoGallery(parte.fotos);
+        card.appendChild(fotoDiv);
+      }
+    });
+  },100);
+};
+
+// ── Enhance Formularios "Validar" tab to show photos ─────────────
+var _origSPimg=showPage;
+showPage=function(id){
+  _origSPimg(id);
+  if(id==='formularios'){
+    setTimeout(function(){
+      _enhanceFormValidarWithPhotos();
+    },400);
+  }
+};
+
+function _enhanceFormValidarWithPhotos(){
+  var el=document.getElementById('forms-validar');
+  if(!el)return;
+  var subs=AgroStore.load('agri_form_submissions',[]);
+  var partes=AgroStore.load('agri_partes',[]);
+  var incs=AgroStore.load('agri_incidencias',[]);
+  var cosechas=AgroStore.load('agri_cosechas',[]);
+  // Find all form cards in the validar tab and check if data has fotos
+  var cards=el.querySelectorAll('.form-card');
+  cards.forEach(function(card,i){
+    if(card.querySelector('.review-gallery'))return; // already enhanced
+    // Try to find photos from partes/incs/cosechas
+    var allWithPhotos=partes.concat(incs).concat(cosechas).filter(function(x){return x.fotos&&x.fotos.length});
+    if(allWithPhotos.length>0&&!card.querySelector('.photo-badge')){
+      // Only add to first few for demo
+      if(i<allWithPhotos.length){
+        var item=allWithPhotos[i];
+        var badge=document.createElement('span');
+        badge.innerHTML=window.fotosBadge(item.fotos);
+        card.appendChild(badge);
+      }
+    }
+  });
+}
+
+// ── CEO Dashboard: show photo count in activity feed ─────────────
+var _origCeoFeed=window.renderCeoActivityFeed;
+window.renderCeoActivityFeed=function(){
+  if(_origCeoFeed)_origCeoFeed();
+  // Enhance activity feed items with photo badges
+  setTimeout(function(){
+    var feed=document.getElementById('ceo-activity-feed');
+    if(!feed)return;
+    var allData=AgroStore.load('agri_cosechas',[]).concat(AgroStore.load('agri_incidencias',[])).concat(AgroStore.load('agri_partes',[]));
+    var withPhotos=allData.filter(function(x){return x.fotos&&x.fotos.length});
+    if(!withPhotos.length)return;
+    var items=feed.querySelectorAll('.activity-feed-item');
+    items.forEach(function(item,i){
+      if(i<withPhotos.length&&!item.querySelector('.photo-badge')){
+        var badge=document.createElement('span');
+        badge.style.marginTop='4px';badge.style.display='block';
+        badge.innerHTML=window.fotosBadge(withPhotos[i].fotos);
+        item.appendChild(badge);
+      }
+    });
+  },200);
+};
+
+// ── Mi Panel: show photo thumbnails in incidencias asignadas ─────
+// Extend _injectMiPanelFeed to show photos
+var _origMiPanel=window._injectMiPanelFeed;
+if(typeof _origMiPanel==='function'){
+  window._injectMiPanelFeed=function(){
+    if(_origMiPanel)_origMiPanel();
+    setTimeout(function(){
+      var actDiv=document.getElementById('mi-panel-actividad');
+      if(!actDiv)return;
+      var incs=AgroStore.load('agri_incidencias',[]);
+      var withPhotos=incs.filter(function(i){return i.fotos&&i.fotos.length});
+      if(!withPhotos.length)return;
+      var existing=actDiv.querySelectorAll('.photo-badge');
+      if(existing.length)return;
+      var badge=document.createElement('div');
+      badge.style.marginTop='8px';
+      badge.innerHTML='<div style="font-size:11px;color:var(--gray);margin-bottom:4px">📷 Fotos adjuntas en incidencias:</div>'+
+        window.renderFotoGallery(withPhotos[0].fotos);
+      actDiv.appendChild(badge);
+    },800);
+  };
+}
+
+console.log('📷 Image Attachments Engine v1.0 loaded');
+})();
+
+// ================================================================
+// 🌤️  OPEN-METEO API ENGINE — Meteorología en Tiempo Real
+// ================================================================
+(function(){
+'use strict';
+
+// ── Config: coordenadas de las fincas (Albatera, Alicante) ───────
+var LAT=38.18, LON=-0.87;
+var LOCATION_NAME='Albatera, Alicante';
+
+// ── API endpoints (Open-Meteo — gratis, sin API key) ─────────────
+var BASE='https://api.open-meteo.com/v1/forecast';
+var PARAMS=[
+  'latitude='+LAT,'longitude='+LON,
+  'current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,wind_speed_10m,wind_direction_10m,weather_code,is_day',
+  'hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,wind_speed_10m',
+  'daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,wind_speed_10m_max,precipitation_probability_max,uv_index_max',
+  'timezone=Europe%2FMadrid',
+  'forecast_days=7'
+].join('&');
+var URL=BASE+'?'+PARAMS;
+
+// ── Cache (5 min) ─────────────────────────────────────────────────
+var _cache=null,_cacheTs=0,CACHE_TTL=5*60*1000;
+
+// ── WMO code → descripción e icono ───────────────────────────────
+var WMO={
+  0:{d:'Despejado',i:'☀️'},1:{d:'Poco nublado',i:'🌤️'},2:{d:'Parcialmente nublado',i:'⛅'},3:{d:'Nublado',i:'☁️'},
+  45:{d:'Niebla',i:'🌫️'},48:{d:'Niebla con escarcha',i:'🌫️'},
+  51:{d:'Llovizna ligera',i:'🌦️'},53:{d:'Llovizna moderada',i:'🌦️'},55:{d:'Llovizna densa',i:'🌧️'},
+  61:{d:'Lluvia ligera',i:'🌧️'},63:{d:'Lluvia moderada',i:'🌧️'},65:{d:'Lluvia fuerte',i:'🌧️'},
+  71:{d:'Nieve ligera',i:'❄️'},73:{d:'Nieve moderada',i:'❄️'},75:{d:'Nieve fuerte',i:'❄️'},
+  80:{d:'Chubascos ligeros',i:'🌦️'},81:{d:'Chubascos',i:'🌦️'},82:{d:'Chubascos intensos',i:'⛈️'},
+  95:{d:'Tormenta',i:'⛈️'},96:{d:'Tormenta con granizo',i:'⛈️'},99:{d:'Tormenta con granizo fuerte',i:'⛈️'}
+};
+function wmoInfo(code){return WMO[code]||{d:'Variable',i:'🌡️'}}
+
+// ── Compass direction ─────────────────────────────────────────────
+function windDir(deg){var dirs=['N','NE','E','SE','S','SO','O','NO'];return dirs[Math.round(deg/45)%8]}
+
+// ── Agricultural alerts based on weather ─────────────────────────
+function buildAgroAlerts(data){
+  var alerts=[];
+  var cur=data.current;
+  var daily=data.daily;
+  if(!cur||!daily)return alerts;
+
+  // High temp alert
+  if(cur.temperature_2m>35) alerts.push({type:'heat',sev:'alta',icon:'🌡️',msg:'Temperatura extrema '+cur.temperature_2m+'°C — Riesgo de quemaduras en fruto. Riego urgente.'});
+  else if(cur.temperature_2m>30) alerts.push({type:'heat',sev:'media',icon:'🌡️',msg:'Temperatura alta '+cur.temperature_2m+'°C — Revisar riego y sombreado.'});
+
+  // Frost alert
+  if(cur.temperature_2m<2) alerts.push({type:'frost',sev:'alta',icon:'❄️',msg:'Riesgo de helada '+cur.temperature_2m+'°C — Activar sistema anti-heladas urgente.'});
+
+  // High wind
+  if(cur.wind_speed_10m>40) alerts.push({type:'wind',sev:'alta',icon:'💨',msg:'Viento fuerte '+cur.wind_speed_10m+' km/h — No aplicar tratamientos fitosanitarios.'});
+  else if(cur.wind_speed_10m>25) alerts.push({type:'wind',sev:'media',icon:'💨',msg:'Viento moderado '+cur.wind_speed_10m+' km/h — Cautela en aplicaciones.'});
+
+  // Rain forecast
+  var maxRain=Math.max.apply(null,daily.precipitation_sum.slice(0,3)||[0]);
+  if(maxRain>20) alerts.push({type:'rain',sev:'alta',icon:'🌧️',msg:'Lluvia intensa prevista ('+maxRain.toFixed(0)+'mm) — Suspender tratamientos y revisar desagüe.'});
+  else if(maxRain>5) alerts.push({type:'rain',sev:'media',icon:'🌧️',msg:'Lluvia prevista '+maxRain.toFixed(0)+'mm en 3 días — Revisar plan de riego.'});
+
+  // UV index
+  var maxUV=Math.max.apply(null,daily.uv_index_max||[0]);
+  if(maxUV>8) alerts.push({type:'uv',sev:'media',icon:'☀️',msg:'Índice UV muy alto ('+maxUV+') — Protección solar obligatoria para trabajadores.'});
+
+  // Humidity
+  if(cur.relative_humidity_2m>85 && cur.temperature_2m>20) alerts.push({type:'humidity',sev:'media',icon:'💧',msg:'Humedad alta '+cur.relative_humidity_2m+'% con calor — Riesgo de hongos y Botrytis.'});
+
+  if(!alerts.length) alerts.push({type:'ok',sev:'baja',icon:'✅',msg:'Condiciones favorables para actividad agrícola normal.'});
+  return alerts;
+}
+
+// ── Fetch data ────────────────────────────────────────────────────
+function fetchMeteo(cb){
+  var now=Date.now();
+  if(_cache&&(now-_cacheTs)<CACHE_TTL){cb(null,_cache);return}
+  fetch(URL)
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
+    .then(function(data){_cache=data;_cacheTs=now;cb(null,data)})
+    .catch(function(err){cb(err,null)});
+}
+
+// ── Render the full Meteo page ────────────────────────────────────
+function renderMeteoPage(data){
+  var page=document.getElementById('page-meteo');
+  if(!page)return;
+  var cur=data.current;
+  var daily=data.daily;
+  var hourly=data.hourly;
+  var wmo=wmoInfo(cur.weather_code);
+  var alerts=buildAgroAlerts(data);
+  var now=new Date();
+
+  var sevColor={alta:'var(--coral)',media:'var(--gold)',baja:'var(--accent)'};
+  var sevBg={alta:'rgba(224,122,95,.08)',media:'rgba(212,168,67,.08)',baja:'rgba(76,149,108,.08)'};
+
+  // ── Current conditions card ──────────────────────────
+  var h='<div class="header"><h1>⛅ Meteorología</h1>'+
+    '<div style="font-size:12px;color:var(--gray);margin-top:4px">Datos reales vía Open-Meteo · '+LOCATION_NAME+' · Actualizado '+now.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})+'</div></div>';
+
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">';
+
+  // Main card
+  h+='<div class="card" style="background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;padding:24px;display:flex;align-items:center;gap:20px">'+
+    '<div style="font-size:72px;line-height:1">'+wmo.i+'</div>'+
+    '<div>'+
+      '<div style="font-size:48px;font-weight:800;line-height:1">'+Math.round(cur.temperature_2m)+'°</div>'+
+      '<div style="font-size:16px;opacity:.85;margin-top:4px">'+wmo.d+'</div>'+
+      '<div style="font-size:13px;opacity:.65;margin-top:6px">Sensación '+Math.round(cur.apparent_temperature)+'°C</div>'+
+      '<div style="font-size:11px;opacity:.5;margin-top:2px">'+LOCATION_NAME+'</div>'+
+    '</div>'+
+  '</div>';
+
+  // Stats card
+  h+='<div class="card" style="padding:20px">';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
+  [
+    {icon:'💧',label:'Humedad',val:cur.relative_humidity_2m+'%'},
+    {icon:'💨',label:'Viento',val:cur.wind_speed_10m+' km/h '+windDir(cur.wind_direction_10m)},
+    {icon:'🌧️',label:'Precipitación',val:cur.precipitation+' mm'},
+    {icon:'☀️',label:'UV hoy',val:daily.uv_index_max?daily.uv_index_max[0]:'—'},
+    {icon:'🌅',label:'Amanecer',val:daily.sunrise?daily.sunrise[0].slice(11,16):'—'},
+    {icon:'🌇',label:'Anochecer',val:daily.sunset?daily.sunset[0].slice(11,16):'—'}
+  ].forEach(function(s){
+    h+='<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--light);border-radius:8px">'+
+      '<span style="font-size:20px">'+s.icon+'</span>'+
+      '<div><div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">'+s.label+'</div>'+
+      '<div style="font-size:14px;font-weight:700">'+s.val+'</div></div>'+
+    '</div>';
+  });
+  h+='</div></div>';
+  h+='</div>';
+
+  // ── Agricultural Alerts ──────────────────────────────
+  h+='<div class="card" style="margin-bottom:16px;padding:16px">';
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><h3 style="margin:0;font-size:14px">🚜 Alertas Agrícolas</h3><span style="font-size:11px;color:var(--gray)">(basadas en datos meteorológicos actuales)</span></div>';
+  alerts.forEach(function(a){
+    h+='<div style="display:flex;align-items:flex-start;gap:10px;padding:10px;margin-bottom:6px;background:'+sevBg[a.sev]+';border-radius:8px;border-left:3px solid '+sevColor[a.sev]+'">'+
+      '<span style="font-size:20px;flex-shrink:0">'+a.icon+'</span>'+
+      '<div><div style="font-size:12px;font-weight:700;color:'+sevColor[a.sev]+'">'+a.sev.toUpperCase()+'</div>'+
+      '<div style="font-size:13px">'+a.msg+'</div></div>'+
+    '</div>';
+  });
+  h+='</div>';
+
+  // ── 7-Day Forecast ────────────────────────────────────
+  h+='<div class="card" style="margin-bottom:16px;padding:16px">';
+  h+='<h3 style="margin:0 0 12px;font-size:14px">📅 Pronóstico 7 días</h3>';
+  h+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">';
+  var dayNames=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  daily.time.forEach(function(dateStr,i){
+    if(i>6)return;
+    var d=new Date(dateStr+'T12:00:00');
+    var dWmo=wmoInfo(daily.weather_code[i]);
+    var isToday=i===0;
+    var rainPct=daily.precipitation_probability_max[i]||0;
+    h+='<div style="text-align:center;padding:10px 6px;border-radius:10px;background:'+(isToday?'var(--accent-bg, rgba(76,149,108,.1))':'var(--light)')+';border:'+(isToday?'2px solid var(--accent)':'2px solid transparent')+'">';
+    h+='<div style="font-size:10px;font-weight:700;color:'+(isToday?'var(--accent)':'var(--gray)')+'">'+( isToday?'HOY':dayNames[d.getDay()])+'</div>';
+    h+='<div style="font-size:26px;margin:6px 0">'+dWmo.i+'</div>';
+    h+='<div style="font-size:13px;font-weight:700">'+Math.round(daily.temperature_2m_max[i])+'°</div>';
+    h+='<div style="font-size:11px;color:var(--gray)">'+Math.round(daily.temperature_2m_min[i])+'°</div>';
+    if(rainPct>20) h+='<div style="font-size:10px;color:#3B82F6;margin-top:4px">💧'+rainPct+'%</div>';
+    if(daily.precipitation_sum[i]>0) h+='<div style="font-size:10px;color:#3B82F6">'+daily.precipitation_sum[i].toFixed(1)+'mm</div>';
+    h+='</div>';
+  });
+  h+='</div></div>';
+
+  // ── Hourly forecast (next 12h) ────────────────────────
+  var nowH=new Date().getHours();
+  h+='<div class="card" style="padding:16px">';
+  h+='<h3 style="margin:0 0 12px;font-size:14px">🕐 Próximas 12 horas</h3>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px">';
+  var shown=0;
+  hourly.time.forEach(function(timeStr,i){
+    if(shown>=12)return;
+    var hDate=new Date(timeStr);
+    if(hDate<now)return;
+    shown++;
+    var hWmo=wmoInfo(hourly.weather_code?hourly.weather_code[i]:0);
+    var rainPr=hourly.precipitation_probability?hourly.precipitation_probability[i]:0;
+    h+='<div style="text-align:center;padding:8px;border-radius:8px;background:var(--light)">'+
+      '<div style="font-size:10px;font-weight:700;color:var(--gray)">'+hDate.getHours().toString().padStart(2,'0')+':00</div>'+
+      '<div style="font-size:20px;margin:4px 0">'+wmoInfo(hourly.weather_code?hourly.weather_code[i]:1).i+'</div>'+
+      '<div style="font-size:12px;font-weight:700">'+Math.round(hourly.temperature_2m[i])+'°</div>'+
+      (rainPr>20?'<div style="font-size:9px;color:#3B82F6">💧'+rainPr+'%</div>':'')+
+    '</div>';
+  });
+  h+='</div></div>';
+
+  page.innerHTML=h;
+}
+
+// ── Loading placeholder ──────────────────────────────────────────
+function renderMeteoLoading(page){
+  page.innerHTML='<div class="header"><h1>⛅ Meteorología</h1></div>'+
+    '<div class="card" style="padding:40px;text-align:center">'+
+      '<div style="font-size:48px;margin-bottom:16px">🌤️</div>'+
+      '<div style="font-size:14px;font-weight:600;color:var(--dark)">Obteniendo datos meteorológicos...</div>'+
+      '<div style="font-size:12px;color:var(--gray);margin-top:4px">Open-Meteo API · '+LOCATION_NAME+'</div>'+
+      '<div style="margin-top:16px;width:40px;height:4px;background:var(--accent);border-radius:2px;margin:16px auto;animation:widthPulse 1.5s ease infinite"></div>'+
+    '</div>';
+}
+
+function renderMeteoError(page, err){
+  page.innerHTML='<div class="header"><h1>⛅ Meteorología</h1></div>'+
+    '<div class="card" style="padding:40px;text-align:center;border-left:4px solid var(--coral)">'+
+      '<div style="font-size:48px;margin-bottom:16px">⚠️</div>'+
+      '<div style="font-size:14px;font-weight:600">No se pudo conectar con Open-Meteo</div>'+
+      '<div style="font-size:12px;color:var(--gray);margin-top:4px">'+err.message+'</div>'+
+      '<button class="btn btn-primary" style="margin-top:16px" onclick="window._meteoReload()">🔄 Reintentar</button>'+
+    '</div>';
+}
+
+window._meteoReload=function(){
+  _cache=null;_cacheTs=0;
+  var page=document.getElementById('page-meteo');
+  if(page&&page.classList.contains('active')){
+    renderMeteoLoading(page);
+    fetchMeteo(function(err,data){
+      if(err)renderMeteoError(page,err);
+      else renderMeteoPage(data);
+    });
+  }
+};
+
+// ── Hook into showPage ───────────────────────────────────────────
+var _origSPMeteo=showPage;
+showPage=function(id){
+  _origSPMeteo(id);
+  if(id==='meteo'){
+    var page=document.getElementById('page-meteo');
+    if(!page)return;
+    renderMeteoLoading(page);
+    fetchMeteo(function(err,data){
+      if(err)renderMeteoError(page,err);
+      else renderMeteoPage(data);
+    });
+  }
+};
+
+// ── CEO Dashboard weather widget ─────────────────────────────────
+window.renderMeteoWidget=function(containerId){
+  var el=document.getElementById(containerId);
+  if(!el)return;
+  el.innerHTML='<div style="color:var(--gray);font-size:12px">⟳ Cargando tiempo...</div>';
+  fetchMeteo(function(err,data){
+    if(err){el.innerHTML='<div style="color:var(--gray);font-size:12px">⚠️ Sin datos</div>';return}
+    var cur=data.current;
+    var daily=data.daily;
+    var wmo=wmoInfo(cur.weather_code);
+    var maxT=daily?Math.round(daily.temperature_2m_max[0]):'—';
+    var minT=daily?Math.round(daily.temperature_2m_min[0]):'—';
+    el.innerHTML=
+      '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:linear-gradient(135deg,rgba(44,110,73,.1),rgba(76,149,108,.05));border-radius:10px;border:1px solid rgba(76,149,108,.15)">'+
+        '<div style="font-size:36px">'+wmo.i+'</div>'+
+        '<div>'+
+          '<div style="font-size:22px;font-weight:800;color:var(--dark)">'+Math.round(cur.temperature_2m)+'°C <span style="font-size:13px;color:var(--gray);font-weight:400">'+wmo.d+'</span></div>'+
+          '<div style="font-size:11px;color:var(--gray)">'+LOCATION_NAME+' · '+maxT+'°/'+minT+'° · 💧'+cur.relative_humidity_2m+'% · 💨'+cur.wind_speed_10m+'km/h</div>'+
+          '<div style="font-size:11px;margin-top:3px;color:var(--gray)">'+buildAgroAlerts(data).slice(0,1).map(function(a){return a.icon+' '+a.msg}).join('')+'</div>'+
+        '</div>'+
+        '<a onclick="showPage(\'meteo\')" style="margin-left:auto;color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">Ver más →</a>'+
+      '</div>';
+  });
+};
+
+// ── Inject weather widget into CEO Dashboard on render ───────────
+var _origInitCEO=window.initCEO;
+if(typeof _origInitCEO==='function'){
+  window.initCEO=function(){
+    _origInitCEO();
+    setTimeout(function(){
+      var ceo=document.getElementById('ceo-content');
+      if(!ceo||document.getElementById('meteo-widget-ceo'))return;
+      var widgetWrap=document.createElement('div');
+      widgetWrap.id='meteo-widget-ceo';
+      widgetWrap.style.cssText='margin-bottom:16px';
+      widgetWrap.innerHTML='<div id="meteo-widget-inner" style="margin-bottom:16px"></div>';
+      ceo.insertBefore(widgetWrap,ceo.firstChild);
+      window.renderMeteoWidget('meteo-widget-inner');
+    },800);
+  };
+}
+
+// ── Auto-load if meteo page already active ───────────────────────
+setTimeout(function(){
+  var page=document.getElementById('page-meteo');
+  if(page&&page.classList.contains('active')){
+    renderMeteoLoading(page);
+    fetchMeteo(function(err,data){
+      if(err)renderMeteoError(page,err);
+      else renderMeteoPage(data);
+    });
+  }
+},3500);
+
+console.log('🌤️ Open-Meteo Engine loaded — lat:'+LAT+' lon:'+LON);
+})();
+</script>
+<script>
+// ================================================================
+// 🤖  GROQ AI ENGINE — Asistente Agrícola Inteligente (Llama 3.1)
+// ================================================================
+(function(){
+'use strict';
+
+var AI_MODEL='llama-3.1-8b-instant';
+var AI_URL='https://api.groq.com/openai/v1/chat/completions';
+var STORAGE_KEY='agro_groq_key';
+
+// ── Get/set API key ───────────────────────────────────────────────
+function getKey(){return localStorage.getItem(STORAGE_KEY)||''}
+function setKey(k){localStorage.setItem(STORAGE_KEY,k.trim())}
+
+// ── Role helpers ──────────────────────────────────────────────────
+function _getUser(){try{return window.getCurrentUser&&window.getCurrentUser()}catch(e){return null}}
+function _getRole(){var u=_getUser();return u?u.role:'RECOLECTOR'}
+function _isCEO(){var r=_getRole();return r==='CEO'||r==='SUPER_ADMIN'}
+function _isAdminOp(){return _getRole()==='ADMIN_OPERACIONES'}
+function _isEncargado(){var r=_getRole();return r==='ENCARGADO_GENERAL'||r==='ENCARGADO_PARCELA'}
+function _isTecnico(){return _getRole()==='TECNICO_CAMPO'}
+function _isRecolector(){return _getRole()==='RECOLECTOR'}
+function _isConductor(){return _getRole()==='CONDUCTOR'}
+function _isAlmacen(){return _getRole()==='ALMACEN'}
+function _isCalidad(){return _getRole()==='CALIDAD'}
+function _isRRHH(){return _getRole()==='RRHH_ADMIN'}
+function _isComercial(){return _getRole()==='COMERCIAL'}
+function _isManager(){return _isCEO()||_isAdminOp()||_isEncargado();}
+
+// ── Tools per role ────────────────────────────────────────────────
+function _getToolsForRole(){
+  function n(names){return AI_TOOLS.filter(function(t){return names.indexOf(t.function.name)>-1});}
+  if(_isCEO()||_isAdminOp()) return AI_TOOLS;
+  if(_isEncargado())  return n(['crear_tarea','crear_incidencia','enviar_aviso','registrar_cosecha']);
+  if(_isTecnico())    return n(['crear_incidencia','registrar_cosecha']);
+  if(_isRecolector()) return n(['crear_incidencia','registrar_cosecha']);
+  if(_isRRHH())       return n(['crear_incidencia','enviar_aviso']);
+  return n(['crear_incidencia']);
+}
+
+// ── Build farm context per role ───────────────────────────────────
+function buildFarmContext(){
+  try{
+    var u=_getUser();
+    var nombre=u?(u.firstName+' '+u.lastName):'Usuario';
+    var rol=_getRole();
+    var hoy=new Date().toISOString().slice(0,10);
+    var hora=new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+    var fn=u?u.firstName.toLowerCase():'';
+
+    var cosechas=AgroStore.load('agri_cosechas',[]);
+    var incidencias=AgroStore.load('agri_incidencias',[]);
+    var partes=AgroStore.load('agri_partes',[]);
+    var fichajes=AgroStore.load('agri_fichajes',[]);
+    var riegos=AgroStore.load('agri_riegos',[]);
+    var tratamientos=AgroStore.load('agri_tratamientos',[]);
+    var lotes=AgroStore.load('agri_lotes',[]);
+    var empleados=AgroStore.load('agri_employees',[]);
+
+    var L=['🌿 AGROSINERGIA — '+hoy+' '+hora,'👤 '+nombre+' | Rol: '+rol,''];
+    var instrucciones='';
+
+    if(_isCEO()||_isAdminOp()){
+      var kg7=cosechas.filter(function(c){return c.fecha>=new Date(Date.now()-7*864e5).toISOString().slice(0,10)}).reduce(function(s,c){return s+(c.kg||0)},0);
+      var incAb=incidencias.filter(function(i){return i.estado==='abierta'});
+      var partPend=partes.filter(function(p){return p.estado==='pendiente'});
+      var fich=fichajes.filter(function(f){return f.fecha===hoy&&f.entrada&&!f.salida});
+      L.push('📊 KPIs GLOBALES:');
+      L.push('- Cosecha 7 días: '+kg7.toFixed(0)+' kg');
+      L.push('- Incidencias abiertas: '+incAb.length+(incAb.length>0?' → '+incAb.slice(0,3).map(function(i){return i.tipo+' en '+i.parcela}).join(', '):''));
+      L.push('- Partes pendientes: '+partPend.length);
+      L.push('- Empleados activos ahora: '+fich.length);
+      L.push('- Lotes en almacén: '+lotes.filter(function(l){return l.estado==='almacenado'}).length);
+      instrucciones=_isCEO()
+        ?'Tienes acceso TOTAL. Puedes crear tareas, enviar avisos, gestionar incidencias, generar informes ejecutivos y ver rentabilidad.'
+        :'Tienes acceso OPERATIVO completo. Puedes crear y asignar tareas, enviar avisos, gestionar incidencias, ver cosecha y stock.';
+
+    } else if(_isEncargado()){
+      var fincas=u&&u.assignedFarms?u.assignedFarms:[];
+      var cosMisFincas=cosechas.filter(function(c){return !fincas.length||fincas.indexOf(c.parcela)>-1});
+      var kg7f=cosMisFincas.filter(function(c){return c.fecha>=new Date(Date.now()-7*864e5).toISOString().slice(0,10)}).reduce(function(s,c){return s+(c.kg||0)},0);
+      var incF=incidencias.filter(function(i){return i.estado==='abierta'&&(!fincas.length||fincas.indexOf(i.parcela)>-1)});
+      L.push('🏡 TUS FINCAS: '+(fincas.length?fincas.join(', '):'todas'));
+      L.push('- Cosecha 7 días: '+kg7f.toFixed(0)+' kg');
+      L.push('- Incidencias abiertas: '+incF.length);
+      instrucciones='Puedes crear tareas para tu equipo, enviar avisos, gestionar incidencias de tus fincas y registrar cosechas.';
+
+    } else if(_isTecnico()){
+      var tratPend=tratamientos.filter(function(t){return t.estado==='pendiente'||t.estado==='programado'});
+      var incPlagas=incidencias.filter(function(i){return i.estado==='abierta'&&(i.tipo==='plaga'||i.tipo==='enfermedad')});
+      var ultRiego=riegos.sort(function(a,b){return b.fecha.localeCompare(a.fecha)}).slice(0,3);
+      L.push('🔬 ÁREA TÉCNICA:');
+      L.push('- Tratamientos pendientes: '+tratPend.length);
+      L.push('- Incidencias plaga/enfermedad: '+incPlagas.length);
+      L.push('- Últimos riegos: '+(ultRiego.length?ultRiego.map(function(r){return r.parcela+' ('+r.fecha+')'}).join(', '):'ninguno'));
+      instrucciones='Eres Técnico Campo. Puedes reportar incidencias de plaga/enfermedad, asesorar sobre tratamientos fitosanitarios, consultar protocolos de riego y fertirrigación. Usa fotos para diagnóstico de plagas.';
+
+    } else if(_isRecolector()){
+      var misCos=cosechas.filter(function(c){return c.operario&&c.operario.toLowerCase().indexOf(fn)>=0});
+      var cosHoy=misCos.filter(function(c){return c.fecha===hoy});
+      var parcelas=u&&u.assignedFarms?u.assignedFarms:[];
+      L.push('🌾 TU COSECHA:');
+      L.push('- Tu zona: '+(parcelas.length?parcelas.join(', '):'asignada por encargado'));
+      L.push('- Kg hoy: '+cosHoy.reduce(function(s,c){return s+(c.kg||0)},0));
+      L.push('- Total cosechas registradas: '+misCos.length);
+      instrucciones='Eres Recolector. Puedes: registrar tu cosecha del día, reportar incidencias de tu parcela (plagas, daños) y consultar técnica de recolección. Para cambios de zona habla con tu encargado.';
+
+    } else if(_isConductor()){
+      var vehiculo=u&&u.assignedVehicles&&u.assignedVehicles.length?u.assignedVehicles.join(', '):'sin vehículo asignado';
+      L.push('🚛 TRANSPORTE:');
+      L.push('- Tu vehículo: '+vehiculo);
+      L.push('- Incidencias transporte abiertas: '+incidencias.filter(function(i){return i.estado==='abierta'&&(i.tipo==='averia'||i.tipo==='accidente')}).length);
+      instrucciones='Eres Conductor. Puedes reportar incidencias de transporte (averías, accidentes), consultar normativa de transporte agroalimentario, gestión de albaranes y temperaturas de carga.';
+
+    } else if(_isAlmacen()){
+      var lotesAlm=lotes.filter(function(l){return l.estado==='almacenado'}).length;
+      L.push('📦 ALMACÉN:');
+      L.push('- Lotes en almacén: '+lotesAlm);
+      L.push('- Lotes expedidos: '+lotes.filter(function(l){return l.estado==='expedido'}).length);
+      instrucciones='Eres personal de Almacén. Puedes reportar incidencias (temperatura, roturas, falta stock), consultar gestión de lotes, trazabilidad y normativa de almacenamiento frigorífico.';
+
+    } else if(_isCalidad()){
+      var cos7q=cosechas.filter(function(c){return c.fecha>=new Date(Date.now()-7*864e5).toISOString().slice(0,10)});
+      var merma=cos7q.length?cos7q.reduce(function(s,c){return s+(c.destrio||0)},0)/cos7q.length:0;
+      L.push('🎯 CONTROL CALIDAD:');
+      L.push('- Merma media 7 días: '+merma.toFixed(1)+'%');
+      L.push('- Lotes pendientes análisis: '+lotes.filter(function(l){return l.estado==='procesando'}).length);
+      instrucciones='Eres Control de Calidad. Puedes reportar no conformidades, consultar estándares GlobalGAP/BRC, analizar mermas y gestionar rechazos de lotes.';
+
+    } else if(_isRRHH()){
+      var ficH=fichajes.filter(function(f){return f.fecha===hoy&&f.entrada}).length;
+      var empAct=empleados.filter(function(e){return e.active}).length;
+      L.push('👥 RRHH:');
+      L.push('- Empleados activos: '+empAct);
+      L.push('- Fichajes hoy: '+ficH);
+      L.push('- Sin fichar: '+Math.max(empAct-ficH,0));
+      instrucciones='Eres RRHH. Puedes gestionar consultas sobre fichajes, asistencia, contratos (Convenio del Campo), bajas, vacaciones y cumplimiento laboral. Puedes enviar avisos al equipo.';
+
+    } else if(_isComercial()){
+      L.push('🛒 COMERCIAL:');
+      L.push('- Lotes disponibles: '+lotes.filter(function(l){return l.estado==='almacenado'}).length);
+      instrucciones='Eres Comercial. Puedes consultar disponibilidad de stock, estado de pedidos, trazabilidad de lotes y normativa de exportación.';
+    }
+
+    L.push('');
+    L.push('🏡 Fincas: El Rincón, La Dehesa, Los Llanos, La Cañada, Eco Granados, Eco Higueras');
+    L.push('🌿 Cultivos: higos, brevas, granados, melocotoneros · Albatera, Alicante');
+    L.push('');
+    L.push('INSTRUCCIONES IA: '+instrucciones);
+    L.push('Responde SIEMPRE en español. Sé conciso y práctico. Usa emojis. Si el usuario pide algo fuera de su área, redirigele amablemente a quien corresponde.');
+    return L.join('\n');
+  }catch(e){return 'Contexto: Agrosinergia, finca agrícola en Alicante.';}
+}
+
+
+// ── Tool Definitions (Function Calling) ──────────────────────────
+var AI_TOOLS=[
+  {
+    type:'function',
+    function:{
+      name:'crear_tarea',
+      description:'Crea una nueva tarea o parte de trabajo para un empleado',
+      parameters:{
+        type:'object',
+        properties:{
+          titulo:{type:'string',description:'Título breve de la tarea'},
+          empleado:{type:'string',description:'Nombre del empleado asignado'},
+          parcela:{type:'string',description:'Parcela o zona donde realizar la tarea'},
+          tipo:{type:'string',enum:['riego','poda','tratamiento','cosecha','laboreo','mantenimiento','transporte','otro'],description:'Tipo de tarea'},
+          prioridad:{type:'string',enum:['alta','normal','baja'],description:'Prioridad de la tarea'},
+          notas:{type:'string',description:'Instrucciones adicionales o notas'}
+        },
+        required:['titulo','empleado','tipo']
+      }
+    }
+  },
+  {
+    type:'function',
+    function:{
+      name:'crear_incidencia',
+      description:'Abre una nueva incidencia o alerta en la finca',
+      parameters:{
+        type:'object',
+        properties:{
+          tipo:{type:'string',enum:['plaga','enfermedad','averia','robo','accidente','riego','otro'],description:'Tipo de incidencia'},
+          parcela:{type:'string',description:'Parcela o zona afectada'},
+          descripcion:{type:'string',description:'Descripción detallada del problema'},
+          prioridad:{type:'string',enum:['critica','alta','media','baja'],description:'Gravedad de la incidencia'}
+        },
+        required:['tipo','parcela','descripcion']
+      }
+    }
+  },
+  {
+    type:'function',
+    function:{
+      name:'enviar_aviso',
+      description:'Envía un aviso o mensaje interno a un empleado o al equipo',
+      parameters:{
+        type:'object',
+        properties:{
+          destinatario:{type:'string',description:'Nombre del empleado o "todos" para todo el equipo'},
+          mensaje:{type:'string',description:'Texto del aviso'},
+          urgente:{type:'boolean',description:'Si el aviso es urgente'}
+        },
+        required:['destinatario','mensaje']
+      }
+    }
+  },
+  {
+    type:'function',
+    function:{
+      name:'registrar_cosecha',
+      description:'Registra una entrada de cosecha con kg y parcela',
+      parameters:{
+        type:'object',
+        properties:{
+          parcela:{type:'string',description:'Nombre de la parcela'},
+          cultivo:{type:'string',description:'Tipo de cultivo cosechado'},
+          kg:{type:'number',description:'Kilogramos cosechados'},
+          calidad:{type:'string',enum:['extra','primera','segunda'],description:'Calidad de la cosecha'},
+          operario:{type:'string',description:'Operario responsable'}
+        },
+        required:['parcela','cultivo','kg']
+      }
+    }
+  }
+];
+
+// ── Tool Executors ────────────────────────────────────────────────
+var _toolExecutors={
+  crear_tarea:function(args){
+    try{
+      var partes=AgroStore.load('agri_partes',[]);
+      var hoy=new Date().toISOString().slice(0,10);
+      var prioColors={'alta':'#E07A5F','normal':'#4C956C','baja':'#94A3B8'};
+      var tipoIcons={'riego':'💧','poda':'✂️','tratamiento':'🧪','cosecha':'🌾','laboreo':'🚜','mantenimiento':'🔧','transporte':'🚛','otro':'📋'};
+      var nuevoParte={
+        id:Date.now(),
+        fecha:hoy,
+        titulo:args.titulo,
+        empleado:args.empleado||'Sin asignar',
+        parcela:args.parcela||'General',
+        tipo:args.tipo||'otro',
+        prioridad:args.prioridad||'normal',
+        notas:args.notas||'',
+        estado:'pendiente',
+        creadoPor:'IA Asistente',
+        icon:tipoIcons[args.tipo]||'📋'
+      };
+      partes.unshift(nuevoParte);
+      AgroStore.save('agri_partes',partes);
+      // Broadcast to other tabs
+      if(window.AgroBroadcast)AgroBroadcast.emit('nuevo_parte',{parte:nuevoParte});
+      return {ok:true,msg:'✅ Tarea creada: **'+args.titulo+'** asignada a '+args.empleado+' en '+( args.parcela||'General')+'.'};
+    }catch(e){return {ok:false,msg:'❌ Error al crear tarea: '+e.message}}
+  },
+  crear_incidencia:function(args){
+    try{
+      var incs=AgroStore.load('agri_incidencias',[]);
+      var hoy=new Date().toISOString().slice(0,10);
+      var nuevaInc={
+        id:Date.now(),
+        fecha:hoy,
+        tipo:args.tipo,
+        parcela:args.parcela,
+        descripcion:args.descripcion,
+        prioridad:args.prioridad||'media',
+        estado:'abierta',
+        reportadoPor:'IA Asistente'
+      };
+      incs.unshift(nuevaInc);
+      AgroStore.save('agri_incidencias',incs);
+      if(window.AgroBroadcast)AgroBroadcast.emit('nueva_incidencia',{inc:nuevaInc});
+      return {ok:true,msg:'🚨 Incidencia abierta: **'+args.tipo+'** en '+args.parcela+' (prioridad '+( args.prioridad||'media')+'). '+args.descripcion};
+    }catch(e){return {ok:false,msg:'❌ Error: '+e.message}}
+  },
+  enviar_aviso:function(args){
+    try{
+      var avisos=AgroStore.load('agri_avisos_ia',[]);
+      var ahora=new Date();
+      var nuevoAviso={
+        id:Date.now(),
+        hora:ahora.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'}),
+        fecha:ahora.toISOString().slice(0,10),
+        destinatario:args.destinatario,
+        mensaje:args.mensaje,
+        urgente:!!args.urgente,
+        leido:false,
+        de:'IA Asistente'
+      };
+      avisos.unshift(nuevoAviso);
+      if(avisos.length>50)avisos=avisos.slice(0,50);
+      AgroStore.save('agri_avisos_ia',avisos);
+      if(window.AgroBroadcast)AgroBroadcast.emit('aviso_ia',{aviso:nuevoAviso});
+      // Toast notification
+      if(window.notifySaved)notifySaved((args.urgente?'🚨 ':'📨 ')+'Aviso enviado a '+args.destinatario);
+      return {ok:true,msg:(args.urgente?'🚨 ':'📨 ')+'Aviso '+(args.urgente?'urgente ':'')+'enviado a **'+args.destinatario+'**: '+args.mensaje};
+    }catch(e){return {ok:false,msg:'❌ Error: '+e.message}}
+  },
+  registrar_cosecha:function(args){
+    try{
+      var cosechas=AgroStore.load('agri_cosechas',[]);
+      var hoy=new Date().toISOString().slice(0,10);
+      var nuevaC={
+        id:Date.now(),
+        fecha:hoy,
+        parcela:args.parcela,
+        cultivo:args.cultivo,
+        kg:args.kg,
+        calidad:args.calidad||'primera',
+        operario:args.operario||'Sin especificar',
+        creadoPor:'IA Asistente'
+      };
+      cosechas.unshift(nuevaC);
+      AgroStore.save('agri_cosechas',cosechas);
+      if(window.AgroBroadcast)AgroBroadcast.emit('nueva_cosecha',{cosecha:nuevaC});
+      return {ok:true,msg:'🌾 Cosecha registrada: **'+args.kg+' kg** de '+args.cultivo+' en '+args.parcela+'.'};
+    }catch(e){return {ok:false,msg:'❌ Error: '+e.message}}
+  }
+};
+
+// ── Action result card renderer ───────────────────────────────────
+function _renderActionCard(result){
+  var msgs=document.getElementById('ai-messages');
+  if(!msgs)return;
+  var div=document.createElement('div');
+  div.style.cssText='background:'+(result.ok?'rgba(76,149,108,.08)':'rgba(224,122,95,.08)')+';border:1px solid '+(result.ok?'rgba(76,149,108,.2)':'rgba(224,122,95,.2)')+';border-radius:10px;padding:10px 12px;font-size:12px;margin:4px 0;line-height:1.5';
+  div.innerHTML='<div style="font-size:10px;font-weight:700;color:'+(result.ok?'var(--accent)':'var(--coral)')+';margin-bottom:4px">⚡ ACCIÓN EJECUTADA</div>'+
+    result.msg.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+// ── Call Groq API with Function Calling ──────────────────────────
+function askGemini(messages, onChunk, onDone, onError){
+  var key=getKey();
+  if(!key){onError('Sin API key. Introduce tu clave Groq en el panel de IA.');return}
+
+  var context=buildFarmContext();
+  var isMgr=_isManager();
+  var systemExtra=isMgr
+    ?'\n\nPuedes ejecutar acciones reales: crear tareas, enviar avisos, gestionar incidencias, registrar cosechas. USA las herramientas disponibles cuando el usuario lo solicite. Confirma siempre lo que hiciste.'
+    :'\n\nSolo puedes ayudar al usuario con: reportar incidencias de su parcela, registrar su propia cosecha y responder preguntas agrícolas. Para cualquier otra acción indícale que lo comunique a su encargado.';
+  var oaiMessages=[{role:'system',content:context+systemExtra}];
+  messages.forEach(function(m){
+    oaiMessages.push({role:m.role==='assistant'?'assistant':'user',content:m.content});
+  });
+  var roleTools=_getToolsForRole();
+
+  fetch(AI_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({
+      model:AI_MODEL,
+      messages:oaiMessages,
+      tools:roleTools.length>0?roleTools:undefined,
+      tool_choice:roleTools.length>0?'auto':undefined,
+      temperature:0.5,
+      max_tokens:1024
+    })
+  })
+  .then(function(r){
+    if(!r.ok)return r.json().then(function(e){throw new Error((e.error&&e.error.message)||'Error '+r.status)});
+    return r.json();
+  })
+  .then(function(data){
+    var choice=data.choices&&data.choices[0];
+    if(!choice)throw new Error('Sin respuesta');
+    var msg=choice.message;
+
+    // Handle tool calls
+    if(msg.tool_calls&&msg.tool_calls.length>0){
+      var resultMsgs=[];
+      msg.tool_calls.forEach(function(tc){
+        var fname=tc.function&&tc.function.name;
+        var fargs={};
+        try{fargs=JSON.parse(tc.function.arguments||'{}')}catch(e){}
+        var executor=_toolExecutors[fname];
+        if(executor){
+          var result=executor(fargs);
+          _renderActionCard(result);
+          resultMsgs.push(result.msg);
+        }
+      });
+      // Second call to get natural language summary
+      var toolResults=oaiMessages.concat([
+        {role:'assistant',content:null,tool_calls:msg.tool_calls},
+        {role:'tool',tool_call_id:msg.tool_calls[0].id,content:JSON.stringify({resultados:resultMsgs})}
+      ]);
+      fetch(AI_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+        body:JSON.stringify({model:AI_MODEL,messages:toolResults,temperature:0.5,max_tokens:256})
+      })
+      .then(function(r2){return r2.json()})
+      .then(function(d2){
+        var summary=(d2.choices&&d2.choices[0]&&d2.choices[0].message&&d2.choices[0].message.content)||'Acción completada.';
+        onDone(summary);
+      })
+      .catch(function(){onDone('✅ Acciones ejecutadas correctamente.')});
+    } else {
+      // Normal text response
+      var text=(msg&&msg.content)||'Sin respuesta';
+      onDone(text);
+    }
+  })
+  .catch(function(err){onError(err.message||'Error de conexión')});
+}
+
+
+// ── Chat history ──────────────────────────────────────────────────
+var _chatHistory=[];
+
+// ── CSS ──────────────────────────────────────────────────────────
+var css=document.createElement('style');
+css.textContent=`
+/* Floating AI button */
+#ai-fab{position:fixed;bottom:92px;right:28px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#4F46E5);color:#fff;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.4);font-size:22px;display:flex;align-items:center;justify-content:center;z-index:9000;transition:transform .2s,box-shadow .2s}
+#ai-fab:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(124,58,237,.5)}
+#ai-fab .ai-pulse{position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(124,58,237,.4);animation:aiPulse 2s ease-out infinite}
+@keyframes aiPulse{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.5);opacity:0}}
+
+/* AI Panel */
+#ai-panel{position:fixed;bottom:86px;right:24px;width:380px;max-height:600px;background:var(--white,#fff);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.18);z-index:9001;display:none;flex-direction:column;border:1px solid rgba(0,0,0,.08);overflow:hidden;animation:slideUpFade .2s ease}
+#ai-panel.open{display:flex}
+@keyframes slideUpFade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* Panel header */
+#ai-panel-header{background:linear-gradient(135deg,#7C3AED,#4F46E5);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+#ai-panel-header .ai-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+#ai-panel-header h3{margin:0;font-size:14px;font-weight:700}
+#ai-panel-header p{margin:0;font-size:10px;opacity:.7}
+#ai-panel-close{margin-left:auto;background:none;border:none;color:#fff;font-size:18px;cursor:pointer;opacity:.7;line-height:1;padding:4px}
+#ai-panel-close:hover{opacity:1}
+
+/* Key setup */
+#ai-key-setup{padding:16px;display:flex;flex-direction:column;gap:10px}
+#ai-key-setup p{font-size:12px;color:var(--gray,#888);margin:0}
+#ai-key-setup a{color:#7C3AED;font-weight:600}
+#ai-key-input{width:100%;padding:8px 12px;border:1.5px solid #7C3AED;border-radius:8px;font-size:12px;outline:none;box-sizing:border-box}
+#ai-key-save{background:#7C3AED;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;cursor:pointer;font-weight:600;transition:background .2s}
+#ai-key-save:hover{background:#6D28D9}
+
+/* Quick actions */
+#ai-quick{padding:10px 12px;border-bottom:1px solid var(--border,#e5e7eb);display:flex;flex-wrap:wrap;gap:6px}
+.ai-quick-btn{background:rgba(124,58,237,.08);color:#7C3AED;border:1px solid rgba(124,58,237,.15);border-radius:20px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600;transition:all .15s;white-space:nowrap}
+.ai-quick-btn:hover{background:rgba(124,58,237,.15)}
+
+/* Chat messages */
+#ai-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:150px;max-height:320px}
+.ai-msg{display:flex;gap:8px;align-items:flex-start}
+.ai-msg.user{flex-direction:row-reverse}
+.ai-msg-bubble{max-width:85%;padding:10px 12px;border-radius:12px;font-size:12px;line-height:1.5;word-break:break-word}
+.ai-msg.user .ai-msg-bubble{background:linear-gradient(135deg,#7C3AED,#4F46E5);color:#fff;border-bottom-right-radius:4px}
+.ai-msg.assistant .ai-msg-bubble{background:var(--light,#f5f5f5);color:var(--dark,#1a1a1a);border-bottom-left-radius:4px}
+.ai-msg-avatar{width:26px;height:26px;border-radius:50%;background:#7C3AED;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px}
+.ai-msg.user .ai-msg-avatar{background:var(--accent,#4c956c)}
+.ai-typing{display:flex;gap:4px;padding:8px 12px;align-items:center}
+.ai-dot{width:8px;height:8px;border-radius:50%;background:#7C3AED;opacity:.4;animation:aiDot 1.2s ease infinite}
+.ai-dot:nth-child(2){animation-delay:.2s}.ai-dot:nth-child(3){animation-delay:.4s}
+@keyframes aiDot{0%,60%,100%{transform:scale(1)}30%{transform:scale(1.4);opacity:1}}
+
+/* Input area */
+#ai-input-wrap{padding:10px 12px;border-top:1px solid var(--border,#e5e7eb);display:flex;gap:8px}
+#ai-input{flex:1;border:1.5px solid var(--border,#e5e7eb);border-radius:20px;padding:8px 14px;font-size:12px;outline:none;resize:none;max-height:80px;transition:border-color .2s}
+#ai-input:focus{border-color:#7C3AED}
+#ai-send{background:#7C3AED;color:#fff;border:none;border-radius:50%;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s}
+#ai-send:hover{background:#6D28D9}
+#ai-send:disabled{background:#ccc;cursor:not-allowed}
+.ai-key-change{font-size:10px;color:var(--gray);cursor:pointer;text-decoration:underline;display:block;text-align:center;margin-top:4px}
+.ai-key-change:hover{color:#7C3AED}
+
+/* Report block */
+.ai-report-block{background:rgba(124,58,237,.04);border:1px solid rgba(124,58,237,.12);border-radius:12px;padding:16px;margin-top:14px}
+.ai-report-block h4{color:#7C3AED;font-size:13px;margin:0 0 10px;display:flex;align-items:center;gap:6px}
+.ai-report-content{font-size:12px;line-height:1.7;color:var(--dark,#1a1a1a);white-space:pre-wrap}
+.ai-report-loading{text-align:center;padding:20px;color:var(--gray)}
+`;
+document.head.appendChild(css);
+
+// ── Build floating button ─────────────────────────────────────────
+var fab=document.createElement('button');
+fab.id='ai-fab';fab.title='Asistente IA Agrícola';
+fab.innerHTML='🤖<div class="ai-pulse"></div>';
+document.body.appendChild(fab);
+
+// ── Build panel ───────────────────────────────────────────────────
+var panel=document.createElement('div');
+panel.id='ai-panel';
+panel.innerHTML=
+  '<div id="ai-panel-header">'+
+    '<div class="ai-avatar">🤖</div>'+
+    '<div><h3>AgroSinergia IA</h3><p>Asistente agrícola · Groq · Llama 3.1</p></div>'+
+    '<button id="ai-panel-close">×</button>'+
+  '</div>'+
+  '<div id="ai-panel-body">'+
+    // Key setup
+    '<div id="ai-key-setup" style="display:none">'+
+      '<div style="text-align:center;padding:8px 0"><span style="font-size:36px">🔑</span></div>'+
+      '<p>Introduce tu API Key de <strong>Groq</strong> (gratis, sin tarjeta).<br><a href="https://console.groq.com/keys" target="_blank">→ Obtener clave gratis en console.groq.com</a></p>'+
+      '<input id="ai-key-input" type="password" placeholder="gsk_..." autocomplete="off">'+
+      '<button id="ai-key-save">Activar IA →</button>'+
+    '</div>'+
+    // Chat UI
+    '<div id="ai-chat-ui" style="display:none;flex-direction:column;flex:1">'+
+      '<div id="ai-quick">'+
+        '<button class="ai-quick-btn" onclick="window._aiQuick(\'informe\')">📊 Informe finca</button>'+
+        '<button class="ai-quick-btn" onclick="window._aiQuick(\'alertas\')">🚨 Alertas</button>'+
+        '<button class="ai-quick-btn" onclick="window._aiQuick(\'riego\')">💧 Riego</button>'+
+        '<button class="ai-quick-btn" onclick="window._aiQuick(\'cosecha\')">🍇 Cosecha</button>'+
+        '<button class="ai-quick-btn" onclick="window._aiQuick(\'parte\')">📋 Parte trabajo</button>'+
+      '</div>'+
+      '<div id="ai-messages"></div>'+
+      '<div id="ai-input-wrap">'+
+        '<textarea id="ai-input" rows="1" placeholder="Pregunta sobre la finca..." onkeydown="window._aiKeydown(event)"></textarea>'+
+        '<button id="ai-send" onclick="window._aiSend()">➤</button>'+
+      '</div>'+
+      '<span class="ai-key-change" onclick="window._aiShowKeySetup()">🔑 Cambiar API key</span>'+
+    '</div>'+
+  '</div>';
+document.body.appendChild(panel);
+
+// ── Toggle panel ──────────────────────────────────────────────────
+fab.onclick=function(){
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open'))_aiInit();
+};
+document.getElementById('ai-panel-close').onclick=function(){panel.classList.remove('open')};
+
+function _aiInit(){
+  var chatUI=document.getElementById('ai-chat-ui');
+  var keySetup=document.getElementById('ai-key-setup');
+  if(getKey()){
+    keySetup.style.display='none';
+    chatUI.style.display='flex';
+    if(_chatHistory.length===0){
+      var wUser=_getUser();
+      var wName=wUser?wUser.firstName:'!';
+      var rol=_getRole();
+      var wMsg;
+      if(_isCEO())          wMsg='¡Hola '+wName+'! 👋 Soy tu asistente estratégico. Tengo acceso completo a la finca: KPIs, cosechas, costes, incidencias, equipo. ¿En qué empezamos?';
+      else if(_isAdminOp()) wMsg='¡Hola '+wName+'! 👋 Soy tu asistente operativo. Puedo crear tareas, gestionar incidencias, revisar cosecha y stock. ¿Qué necesitas?';
+      else if(_isEncargado())wMsg='¡Hola '+wName+'! 👋 Asistente de encargado activo. Gestiono tus fincas asignadas: tareas, cuadrillas, incidencias y cosecha. ¿Empezamos?';
+      else if(_isTecnico())  wMsg='¡Hola '+wName+'! 👋 Asistente técnico agrícola. Te ayudo con tratamientos fitosanitarios, diagnóstico de plagas (foto), riego y fertirrigación. ¿Qué analizo?';
+      else if(_isRecolector())wMsg='¡Hola '+wName+'! 👋 Asistente de campo. Puedo ayudarte a:\n🌾 Registrar tu cosecha del día\n🚨 Reportar incidencias en tu parcela\n📷 Analizar fotos de plantas\n🤔 Consultar dudas de recolección\n¿En qué te ayudo?';
+      else if(_isConductor()) wMsg='¡Hola '+wName+'! 🚛 Asistente de transporte. Puedo ayudarte con incidencias de ruta, normativa de transporte agroalimentario y albaranes. ¿Qué necesitas?';
+      else if(_isAlmacen())  wMsg='¡Hola '+wName+'! 📦 Asistente de almacén. Consultas sobre lotes, trazabilidad, control de stock y normativa frigorífica. ¿En qué te ayudo?';
+      else if(_isCalidad())  wMsg='¡Hola '+wName+'! 🎯 Asistente de calidad. Puedo analizar mermas, consultar estándares GlobalGAP/BRC, gestionar no conformidades y aprobar lotes. ¿Qué revisamos?';
+      else if(_isRRHH())     wMsg='¡Hola '+wName+'! 👥 Asistente de RRHH. Consultas sobre fichajes, asistencia, Convenio del Campo, bajas, contratos y avisos al equipo. ¿En qué te ayudo?';
+      else if(_isComercial())wMsg='¡Hola '+wName+'! 🛒 Asistente comercial. Consulta disponibilidad de stock, trazabilidad de lotes, normativa de exportación y estado de pedidos. ¿Qué buscas?';
+      else wMsg='¡Hola '+wName+'! 👋 Soy el asistente agrícola de AgroSinergia. ¿En qué te ayudo?';
+      _addMsg('assistant',wMsg);
+      _updateQuickBtns();
+    }
+  } else {
+    keySetup.style.display='flex';
+    chatUI.style.display='none';
+  }
+}
+
+window._aiShowKeySetup=function(){
+  document.getElementById('ai-key-setup').style.display='flex';
+  document.getElementById('ai-chat-ui').style.display='none';
+};
+
+document.getElementById('ai-key-save').onclick=function(){
+  var val=document.getElementById('ai-key-input').value.trim();
+  if(!val||!val.startsWith('gsk_')){alert('Introduce una clave válida de Groq (empieza por "gsk_")');return}
+  setKey(val);
+  _aiInit();
+  _addMsg('assistant','✅ Groq activado con Llama 3.1. ¡Listo para ayudarte con la gestión de tus fincas!');
+};
+
+// ── Message rendering ─────────────────────────────────────────────
+function _addMsg(role, text){
+  _chatHistory.push({role:role,content:text});
+  var msgs=document.getElementById('ai-messages');
+  if(!msgs)return;
+  var div=document.createElement('div');
+  div.className='ai-msg '+(role==='user'?'user':'assistant');
+  var avatar=role==='user'?'👤':'🤖';
+  div.innerHTML='<div class="ai-msg-avatar">'+avatar+'</div>'+
+    '<div class="ai-msg-bubble">'+text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')+'</div>';
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+  return div;
+}
+
+function _addTyping(){
+  var msgs=document.getElementById('ai-messages');
+  if(!msgs)return null;
+  var div=document.createElement('div');
+  div.className='ai-msg assistant';div.id='ai-typing';
+  div.innerHTML='<div class="ai-msg-avatar">🤖</div><div class="ai-typing"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+  return div;
+}
+
+// ── Send message ──────────────────────────────────────────────────
+window._aiSend=function(){
+  var input=document.getElementById('ai-input');
+  var text=(input.value||'').trim();
+  if(!text)return;
+  input.value='';input.style.height='';
+  _addMsg('user',text);
+  var typing=_addTyping();
+  document.getElementById('ai-send').disabled=true;
+  var msgs=_chatHistory.map(function(m){return {role:m.role==='assistant'?'model':'user',content:m.content}});
+  askGemini(msgs,null,function(resp){
+    if(typing)typing.remove();
+    document.getElementById('ai-send').disabled=false;
+    _addMsg('assistant',resp);
+  },function(err){
+    if(typing)typing.remove();
+    document.getElementById('ai-send').disabled=false;
+    _addMsg('assistant','❌ Error: '+err);
+  });
+};
+
+window._aiKeydown=function(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();window._aiSend();}
+};
+
+// ── Quick prompts by role ──────────────────────────────────────────────
+var _QP={
+  CEO:{
+    informe:'Genera un informe ejecutivo del estado actual de la finca AgroSinergia: cosechas, costes, incidencias y personal. Incluye 3 recomendaciones de acción inmediata.',
+    alertas:'Analiza el estado de la finca y dime qué alertas o riesgos debo atender HOY. Ordénalos por urgencia.',
+    costes:'Dame un resumen de los costes operativos actuales y dónde podemos optimizar rentabilidad.',
+    cosecha:'¿En qué estado está la cosecha actual? Dame un resumen de producción acumulada, merma media y siguiente lote a cosechar.',
+    equipo:'Dame un resumen del estado del equipo: empleados activos, partes pendientes y eficiencia esta semana.'
+  },
+  ADMIN_OPERACIONES:{
+    estado:'Dame el estado operativo completo de las fincas hoy: partes, incidencias, cosecha y stock.',
+    incidencias:'Lista las incidencias abiertas por prioridad y propone plan de acción.',
+    inventario:'Resume el estado del inventario y los lotes en almacén. ¿Hay algo crítico?',
+    partes:'Ayúdame a crear un parte de trabajo para riego/tratamiento de hoy.',
+    cosecha:'Quiero registrar una cosecha. Guíame por los campos necesarios.'
+  },
+  ENCARGADO:{
+    fincas:'Dame el estado de mis fincas asignadas: cosecha, incidencias abiertas y cuadrillas activas.',
+    incidencias:'Quiero reportar una incidencia en mis parcelas. Guíame.',
+    riego:'¿Qué parcelas necesitan riego esta semana según el estado actual?',
+    cosecha:'Voy a registrar la cosecha de hoy. ¿Qué necesitas saber?',
+    cuadrilla:'Ayúdame a organizar las tareas de mi cuadrilla para esta semana.'
+  },
+  TECNICO_CAMPO:{
+    tratamiento:'Tengo una plaga/enfermedad que tratar. Guíame por el protocolo fitosanitario correcto.',
+    plaga:'Tengo síntomas en plantas. Descríbeme o sube una foto para que diagnostique.',
+    riego:'¿Cuáles son las recomendaciones de riego y fertirrigación para esta semana en Albatera?',
+    analisis:'Análisis de suelo: ¿qué parámetros debo medir y cómo interpretarlos?',
+    foto:'Sube una foto de la planta y te diagnostico la plaga o enfermedad.'
+  },
+  RECOLECTOR:{
+    cosecha:'Quiero registrar mi cosecha de hoy. ¿Qué información necesitas?',
+    incidencia:'Quiero reportar una incidencia en mi parcela (plaga, daño, problema). Guíame.',
+    queRecoger:'¿Qué criterios debo seguir para saber si los higos/granadas están listos para cosechar?',
+    foto:'Sube una foto del fruto y te digo si está en punto de recolección.',
+    tecnica:'¿Cómo se realiza correctamente la recolección de higos y brevas para minimizar merma?'
+  },
+  CONDUCTOR:{
+    ruta:'Dame orientación sobre mi ruta de reparto de hoy: puntos de carga y descarga.',
+    incidencia:'Quiero reportar una incidencia de transporte (avería, accidente, problema de carga).',
+    albaran:'¿Cómo relleno correctamente el albarán de transporte agroalimentario?',
+    combustible:'Registra el consumo de combustible de hoy para mi vehículo.',
+    carga:'¿Cuáles son las temperaturas correctas de transporte para higos y granadas?'
+  },
+  ALMACEN:{
+    stock:'Dame el estado actual del stock y lotes en almacén. ¿Algo crítico?',
+    lote:'Quiero registrar la entrada de un nuevo lote al almacén.',
+    movimiento:'Registra un movimiento de stock (salida de lote).',
+    incidencia:'Reportar incidencia de almacén (temperatura, rotura, falta de stock).',
+    trazabilidad:'¿Cómo consulto la trazabilidad de un lote concreto?'
+  },
+  CALIDAD:{
+    analisis:'Análisis de calidad: ¿qué parámetros medir en este lote de higos/granadas?',
+    merma:'Dame el resumen de merma media de los últimos 7 días y qué lo puede estar causando.',
+    nc:'Quiero registrar una no conformidad en un lote. Guíame.',
+    aprobar:'¿Qué criterios aplica GlobalGAP para aprobar o rechazar un lote?',
+    normativa:'¿Cuáles son los requisitos de etiquetado y trazabilidad para exportación a Europa?'
+  },
+  RRHH_ADMIN:{
+    fichajes:'Dame un resumen de fichajes de hoy: quién ha fichado y quién falta.',
+    asistencia:'Análisis de asistencia esta semana: ausencias, retrasos y horas extras.',
+    contrato:'¿Qué dice el Convenio del Campo sobre contratos temporales y fijos discontinuos?',
+    empleado:'Necesito orientación sobre un proceso de alta/baja de empleado.',
+    aviso:'Redacta un aviso interno para el equipo sobre [tema].'
+  },
+  COMERCIAL:{
+    inventario:'Dame el inventario disponible para venta: lotes, kg y calidad.',
+    pedido:'Tengo un pedido nuevo. ¿Cuéntame qué disponibilidad tenemos?',
+    trazabilidad:'¿Cómo consulto la trazabilidad de un lote para un cliente?',
+    incidencia:'Reportar incidencia relacionada con un pedido o cliente.',
+    exportacion:'¿Cuáles son los requisitos fitosanitarios para exportar higos a Europa?'
+  }
+};
+window._aiQuick=function(key){
+  var rol=_getRole();
+  var set=_QP[rol]||_QP['RECOLECTOR'];
+  var prompt=set[key];
+  if(!prompt){// buscar en cualquier set
+    Object.keys(_QP).forEach(function(r){if(!prompt&&_QP[r][key])prompt=_QP[r][key];});}
+  if(!prompt)return;
+  document.getElementById('ai-input').value=prompt;
+  window._aiSend();
+};
+function _updateQuickBtns(){
+  var qbar=document.getElementById('ai-quick');
+  if(!qbar)return;
+  var btns;
+  function b(label,key){return '<button class="ai-quick-btn" onclick="_aiQuick(\''+key+'\')">'+ label+'</button>';}
+  if(_isCEO())          btns=b('📊 Informe','informe')+b('🚨 Alertas','alertas')+b('💰 Costes','costes')+b('🌾 Cosecha','cosecha')+b('👥 Equipo','equipo');
+  else if(_isAdminOp()) btns=b('📊 Estado finca','estado')+b('🚨 Incidencias','incidencias')+b('📦 Inventario','inventario')+b('📋 Partes','partes')+b('🌾 Cosecha','cosecha');
+  else if(_isEncargado())btns=b('🏡 Mis fincas','fincas')+b('🚨 Incidencia','incidencias')+b('💧 Riego','riego')+b('🌾 Cosecha','cosecha')+b('👷 Cuadrilla','cuadrilla');
+  else if(_isTecnico())  btns=b('🌿 Tratamiento','tratamiento')+b('🐛 Plaga','plaga')+b('💧 Riego','riego')+b('🔬 Análisis','analisis')+b('📷 Foto planta','foto');
+  else if(_isRecolector())btns=b('🌾 Cosecha hoy','cosecha')+b('🚨 Incidencia','incidencia')+b('🤔 ¿Qué recoger?','queRecoger')+b('📷 Foto fruto','foto')+b('👊 Técnica','tecnica');
+  else if(_isConductor()) btns=b('🚛 Mi ruta','ruta')+b('🚨 Incidencia','incidencia')+b('📋 Albarán','albaran')+b('⛽ Combustible','combustible')+b('🌡️ Temperaturas','carga');
+  else if(_isAlmacen())  btns=b('📦 Stock','stock')+b('🏷️ Nuevo lote','lote')+b('🔄 Movimiento','movimiento')+b('🚨 Incidencia','incidencia')+b('🔍 Trazabilidad','trazabilidad');
+  else if(_isCalidad())  btns=b('🎯 Análisis','analisis')+b('📉 Merma','merma')+b('❗ No conf.','nc')+b('✅ Criterios','aprobar')+b('📜 Normativa','normativa');
+  else if(_isRRHH())     btns=b('📊 Fichajes','fichajes')+b('🗓️ Asistencia','asistencia')+b('📝 Convenio','contrato')+b('👤 Empleado','empleado')+b('📢 Aviso','aviso');
+  else if(_isComercial())btns=b('📦 Inventario','inventario')+b('🛒 Pedido','pedido')+b('🔍 Trazabilidad','trazabilidad')+b('🚨 Incidencia','incidencia')+b('🌍 Exportación','exportacion');
+  else btns=b('🚨 Incidencia','incidencia')+b('🌾 Cosecha','cosecha')+b('🐛 Plaga','plaga')+b('💧 Riego','riego');
+  qbar.innerHTML=btns;
+}
+
+
+// ── CEO Dashboard: AI Report button ──────────────────────────────
+window.generateCeoReport=function(){
+  var el=document.getElementById('ai-ceo-report');
+  if(!el)return;
+  if(!getKey()){
+    el.innerHTML='<div class="ai-report-loading">🔑 Configura tu API key de Gemini en el botón 🤖 de la esquina.</div>';
+    return;
+  }
+  el.innerHTML='<div class="ai-report-loading">🤖 Generando informe con Gemini AI...</div>';
+  var prompt='Genera un informe ejecutivo COMPLETO del estado de la finca AgroSinergia. Incluye: 1) Resumen ejecutivo (2 líneas), 2) Estado operacional, 3) Alertas prioritarias, 4) Recomendaciones top 5 para esta semana. Formato estructurado con emojis.';
+  askGemini([{role:'user',content:prompt}],null,function(resp){
+    el.innerHTML='<div class="ai-report-content">'+resp.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')+'</div>'+
+      '<div style="margin-top:10px;font-size:10px;color:var(--gray)">Generado por Gemini AI · '+new Date().toLocaleString('es')+'</div>';
+  },function(err){
+    el.innerHTML='<div class="ai-report-loading" style="color:var(--coral)">❌ '+err+'</div>';
+  });
+};
+
+// ── Inject AI Report block into CEO Dashboard ─────────────────────
+function _injectCeoAI(){
+  var ceo=document.getElementById('ceo-content');
+  if(!ceo||document.getElementById('ai-ceo-report-wrap'))return;
+  var wrap=document.createElement('div');
+  wrap.id='ai-ceo-report-wrap';
+  wrap.className='ai-report-block';
+  wrap.innerHTML=
+    '<h4>🤖 Informe Inteligente <span style="font-weight:400;font-size:11px;color:var(--gray)">Groq · Llama 3.1</span>'+
+    '<button onclick="generateCeoReport()" style="margin-left:auto;background:#7C3AED;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer;font-weight:600">✨ Generar ahora</button></h4>'+
+    '<div id="ai-ceo-report" style="color:var(--gray);font-size:12px;font-style:italic">Haz clic en "Generar ahora" para obtener un análisis IA de tu finca.</div>';
+  // Insert before the first chart
+  var firstCard=ceo.querySelector('.chart-container,.card');
+  if(firstCard)ceo.insertBefore(wrap,firstCard);
+  else ceo.appendChild(wrap);
+}
+
+// ── Incident AI Analysis button ───────────────────────────────────
+window.analizarIncidenciaIA=function(tipo, parcela, desc){
+  panel.classList.add('open');
+  _aiInit();
+  setTimeout(function(){
+    var prompt='Tengo una incidencia agrícola:\n- Tipo: '+tipo+'\n- Parcela: '+parcela+'\n- Descripción: '+desc+'\n\nDame: 1) Diagnóstico probable, 2) Causa más común en cultivos mediterráneos, 3) Acción inmediata recomendada, 4) Tratamiento si aplica.';
+    document.getElementById('ai-input').value=prompt;
+    window._aiSend();
+  },300);
+};
+
+// ── Hook showPage for CEO ─────────────────────────────────────────
+var _origSPAI=showPage;
+showPage=function(id){
+  _origSPAI(id);
+  if(id==='ceo')setTimeout(_injectCeoAI,900);
+  if(id==='incidencias')setTimeout(_enhanceIncidenciasWithAI,600);
+};
+
+// ── Enhance incident cards with AI Analysis button ────────────────
+function _enhanceIncidenciasWithAI(){
+  // Add AI button to open incidencias
+  var page=document.getElementById('page-incidencias');
+  if(!page)return;
+  var rows=page.querySelectorAll('tr');
+  rows.forEach(function(row){
+    var cells=row.querySelectorAll('td');
+    if(cells.length<4||row.querySelector('.ai-inc-btn'))return;
+    var tipo=(cells[0]&&cells[0].textContent)||'Incidencia';
+    var parcela=(cells[1]&&cells[1].textContent)||'Parcela';
+    var desc=(cells[2]&&cells[2].textContent)||'';
+    var td=document.createElement('td');
+    td.innerHTML='<button class="ai-inc-btn" onclick=\'analizarIncidenciaIA("'+tipo.trim().replace(/'/g,"")+'","'+parcela.trim().replace(/'/g,"")+'","'+desc.trim().replace(/'/g,"").slice(0,100)+'")\' style="background:rgba(124,58,237,.1);color:#7C3AED;border:1px solid rgba(124,58,237,.2);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-weight:600">🤖 Analizar</button>';
+    row.appendChild(td);
+  });
+}
+
+// ── Auto-init if panel already open ──────────────────────────────
+setTimeout(function(){
+  if(document.getElementById('page-ceo')&&document.getElementById('page-ceo').classList.contains('active')){
+    _injectCeoAI();
+  }
+},4000);
+
+console.log('🤖 Groq AI Engine loaded — model:llama-3.1-8b-instant');
+})();
+</script>
+
+<script>
+// ================================================================
+// 👁️🎤  VISIÓN + AUDIO ENGINE — Groq Whisper + Llama 3.2 Vision
+// ================================================================
+(function(){
+'use strict';
+
+var VISION_MODEL='llama-3.2-11b-vision-preview';
+var WHISPER_MODEL='whisper-large-v3';
+var WHISPER_URL='https://api.groq.com/openai/v1/audio/transcriptions';
+var CHAT_URL='https://api.groq.com/openai/v1/chat/completions';
+
+function getKey(){return localStorage.getItem('agro_groq_key')||''}
+
+// ── Extra CSS ─────────────────────────────────────────────────────
+var css=document.createElement('style');
+css.textContent=`
+#ai-media-bar{display:flex;gap:4px;padding:4px 12px;border-top:1px solid var(--border,#e5e7eb);align-items:center}
+.ai-media-btn{background:none;border:1.5px solid var(--border,#e5e7eb);border-radius:8px;padding:5px 10px;font-size:16px;cursor:pointer;transition:all .15s;color:var(--gray)}
+.ai-media-btn:hover{background:rgba(124,58,237,.08);border-color:#7C3AED;color:#7C3AED}
+.ai-media-btn.recording{background:rgba(224,122,95,.1);border-color:var(--coral);color:var(--coral);animation:aiRecPulse .8s ease infinite}
+@keyframes aiRecPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.ai-img-preview{width:48px;height:48px;border-radius:6px;object-fit:cover;border:2px solid #7C3AED;cursor:pointer}
+.ai-img-preview:hover{opacity:.8}
+#ai-img-pending-wrap{display:flex;align-items:center;gap:6px;padding:4px 12px;flex-wrap:wrap}
+.ai-media-label{font-size:10px;color:var(--gray)}
+.ai-vision-bubble img{max-width:100%;border-radius:8px;margin-top:6px;display:block}
+`;
+document.head.appendChild(css);
+
+// ── Pending images queue ──────────────────────────────────────────
+var _pendingImgs=[];
+var _mediaRecorder=null;
+var _audioChunks=[];
+var _isRecording=false;
+
+// ── Wait for panel to be created, then inject buttons ─────────────
+function _injectMediaBar(){
+  var panel=document.getElementById('ai-panel');
+  if(!panel||document.getElementById('ai-media-bar'))return;
+
+  // Find the chat-ui div and inject bar before input-wrap
+  var chatUI=document.getElementById('ai-chat-ui');
+  if(!chatUI)return;
+
+  // Pending images bar
+  var imgPendingWrap=document.createElement('div');
+  imgPendingWrap.id='ai-img-pending-wrap';
+  imgPendingWrap.style.display='none';
+  chatUI.appendChild(imgPendingWrap);
+
+  // Media buttons bar
+  var bar=document.createElement('div');
+  bar.id='ai-media-bar';
+  bar.innerHTML=
+    '<button class="ai-media-btn" id="ai-img-btn" title="Enviar imagen (foto de plaga, daño...)" onclick="window._aiPickImage()">📷</button>'+
+    '<button class="ai-media-btn" id="ai-mic-btn" title="Hablar (Groq Whisper)" onclick="window._aiToggleMic()">🎤</button>'+
+    '<span class="ai-media-label" id="ai-media-status"></span>'+
+    '<input type="file" id="ai-img-file" accept="image/*" style="display:none" multiple onchange="window._aiImgFileChosen(event)">';
+  chatUI.appendChild(bar);
+}
+
+window._aiPickImage=function(){
+  var f=document.getElementById('ai-img-file');
+  if(f)f.click();
+};
+
+window._aiImgFileChosen=function(e){
+  var files=Array.from(e.target.files||[]);
+  files.forEach(function(file){
+    if(!file.type.startsWith('image/'))return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      _pendingImgs.push({dataUrl:ev.target.result,name:file.name});
+      _renderPending();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value='';
+};
+
+function _renderPending(){
+  var wrap=document.getElementById('ai-img-pending-wrap');
+  if(!wrap)return;
+  if(_pendingImgs.length===0){wrap.style.display='none';wrap.innerHTML='';return}
+  wrap.style.display='flex';
+  wrap.innerHTML='<span class="ai-media-label">Adjuntos:</span>';
+  _pendingImgs.forEach(function(img,i){
+    var el=document.createElement('img');
+    el.className='ai-img-preview';
+    el.src=img.dataUrl;
+    el.title='Clic para quitar';
+    el.onclick=function(){_pendingImgs.splice(i,1);_renderPending()};
+    wrap.appendChild(el);
+  });
+}
+
+// ── Override _aiSend to support image ────────────────────────────
+var _origAiSend=window._aiSend;
+window._aiSend=function(){
+  if(_pendingImgs.length>0){
+    _sendWithVision();
+    return;
+  }
+  if(_origAiSend)_origAiSend();
+};
+
+function _sendWithVision(){
+  var key=getKey();
+  if(!key){alert('Configura tu API key de Groq primero.');return}
+  var inputEl=document.getElementById('ai-input');
+  var textMsg=(inputEl&&inputEl.value||'').trim()||'Analiza esta imagen de mi finca. ¿Qué observas? ¿Hay alguna plaga, enfermedad, daño o algo relevante para la gestión agrícola?';
+  if(inputEl)inputEl.value='';
+
+  // Add user message with image thumbnail
+  var msgs=document.getElementById('ai-messages');
+  if(msgs){
+    var div=document.createElement('div');
+    div.className='ai-msg user';
+    var thumbs=_pendingImgs.map(function(img){return '<img src="'+img.dataUrl+'" style="height:60px;border-radius:6px;border:2px solid rgba(255,255,255,.3)">'}).join('');
+    div.innerHTML='<div class="ai-msg-avatar">👤</div><div class="ai-msg-bubble ai-vision-bubble">'+textMsg+'<br>'+thumbs+'</div>';
+    msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+  }
+
+  // Typing indicator
+  var typing=document.createElement('div');
+  typing.id='ai-vision-typing';typing.className='ai-msg assistant';
+  typing.innerHTML='<div class="ai-msg-avatar">🤖</div><div class="ai-typing"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+  if(msgs){msgs.appendChild(typing);msgs.scrollTop=msgs.scrollHeight}
+
+  document.getElementById('ai-send').disabled=true;
+
+  // Build vision content
+  var content=[{type:'text',text:'Eres un experto agrónomo. '+textMsg}];
+  _pendingImgs.forEach(function(img){
+    content.push({type:'image_url',image_url:{url:img.dataUrl}});
+  });
+
+  var imgs=_pendingImgs.slice();
+  _pendingImgs=[];_renderPending();
+
+  fetch(CHAT_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({
+      model:VISION_MODEL,
+      messages:[
+        {role:'system',content:'Eres un experto agrónomo analizando imágenes de fincas agrícolas en Alicante (higos, brevas, granados, almendros). Responde en español, sé preciso y práctico.'},
+        {role:'user',content:content}
+      ],
+      max_tokens:1024,
+      temperature:0.4
+    })
+  })
+  .then(function(r){if(!r.ok)return r.json().then(function(e){throw new Error(e.error&&e.error.message||'Error '+r.status)});return r.json()})
+  .then(function(data){
+    if(typing)typing.remove();
+    document.getElementById('ai-send').disabled=false;
+    var text=(data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'No pude analizar la imagen.';
+    if(msgs){
+      var resp=document.createElement('div');
+      resp.className='ai-msg assistant';
+      resp.innerHTML='<div class="ai-msg-avatar">🤖</div><div class="ai-msg-bubble">'+text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')+'</div>';
+      msgs.appendChild(resp);msgs.scrollTop=msgs.scrollHeight;
+    }
+  })
+  .catch(function(err){
+    if(typing)typing.remove();
+    document.getElementById('ai-send').disabled=false;
+    if(msgs){
+      var err2=document.createElement('div');
+      err2.className='ai-msg assistant';
+      err2.innerHTML='<div class="ai-msg-avatar">🤖</div><div class="ai-msg-bubble"><span style="color:var(--coral)">❌ Error imagen: '+err.message+'</span></div>';
+      msgs.appendChild(err2);msgs.scrollTop=msgs.scrollHeight;
+    }
+  });
+}
+
+// ── Audio recording (Groq Whisper) ───────────────────────────────
+window._aiToggleMic=function(){
+  if(_isRecording){_stopRecording();return}
+  _startRecording();
+};
+
+function _startRecording(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    alert('Tu navegador no soporta grabación de audio. Usa Chrome o Edge.');return;
+  }
+  var key=getKey();
+  if(!key){alert('Configura tu API key de Groq primero.');return}
+
+  navigator.mediaDevices.getUserMedia({audio:true})
+  .then(function(stream){
+    _audioChunks=[];
+    var mimeType='audio/webm';
+    if(!MediaRecorder.isTypeSupported(mimeType))mimeType='audio/ogg';
+    _mediaRecorder=new MediaRecorder(stream,{mimeType:mimeType});
+    _mediaRecorder.ondataavailable=function(e){if(e.data.size>0)_audioChunks.push(e.data)};
+    _mediaRecorder.onstop=function(){_processAudio(new Blob(_audioChunks,{type:mimeType}));stream.getTracks().forEach(function(t){t.stop()})};
+    _mediaRecorder.start(200);
+    _isRecording=true;
+    var btn=document.getElementById('ai-mic-btn');
+    if(btn){btn.classList.add('recording');btn.title='Clic para parar grabación'}
+    var status=document.getElementById('ai-media-status');
+    if(status)status.textContent='🔴 Grabando... (clic 🎤 para parar)';
+  })
+  .catch(function(err){alert('No se pudo acceder al micrófono: '+err.message)});
+}
+
+function _stopRecording(){
+  if(_mediaRecorder&&_isRecording){
+    _mediaRecorder.stop();
+    _isRecording=false;
+    var btn=document.getElementById('ai-mic-btn');
+    if(btn){btn.classList.remove('recording');btn.title='Hablar (Groq Whisper)'}
+    var status=document.getElementById('ai-media-status');
+    if(status)status.textContent='⟳ Transcribiendo...';
+  }
+}
+
+function _processAudio(blob){
+  var key=getKey();
+  if(!key)return;
+  var status=document.getElementById('ai-media-status');
+
+  var formData=new FormData();
+  formData.append('file',blob,'audio.webm');
+  formData.append('model',WHISPER_MODEL);
+  formData.append('language','es');
+  formData.append('response_format','json');
+
+  fetch(WHISPER_URL,{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+key},
+    body:formData
+  })
+  .then(function(r){if(!r.ok)return r.json().then(function(e){throw new Error(e.error&&e.error.message||'Error '+r.status)});return r.json()})
+  .then(function(data){
+    if(status)status.textContent='';
+    var transcript=data.text&&data.text.trim();
+    if(!transcript){if(status)status.textContent='⚠️ No se detectó audio';return}
+    // Show transcript in input and auto-send
+    var inputEl=document.getElementById('ai-input');
+    if(inputEl){
+      inputEl.value=transcript;
+      // Add visual flash
+      inputEl.style.background='rgba(124,58,237,.06)';
+      setTimeout(function(){inputEl.style.background='';},800);
+    }
+    if(status)status.textContent='✅ "'+transcript.slice(0,40)+(transcript.length>40?'...':'')+'"';
+    setTimeout(function(){if(status)status.textContent='';},3000);
+    // Auto-send
+    if(window._origAiSend)window._origAiSend();
+    else if(window._aiSend)window._aiSend();
+  })
+  .catch(function(err){
+    if(status)status.textContent='❌ '+err.message;
+    setTimeout(function(){if(status)status.textContent='';},4000);
+  });
+}
+
+// ── Inject media bar after panel is built ─────────────────────────
+setTimeout(function(){
+  _injectMediaBar();
+  // Also hook into panel open
+  var fab=document.getElementById('ai-fab');
+  if(fab){
+    var _origFabClick=fab.onclick;
+    fab.onclick=function(){
+      if(_origFabClick)_origFabClick.call(this);
+      setTimeout(_injectMediaBar,300);
+    };
+  }
+},2000);
+
+console.log('👁️🎤 Vision+Audio Engine loaded');
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════
+     QR TRAZABILIDAD ENGINE — api.qrserver.com (free, no key)
+     Roles: ALMACEN, CALIDAD, CEO, ADMIN_OPERACIONES, ENCARGADO
+     ═══════════════════════════════════════════════ -->
+<script>
+(function(){
+'use strict';
+
+// ── CSS Modal QR ────────────────────────────────────────────────
+var css=document.createElement('style');
+css.textContent=`
+#qr-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99900;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+#qr-modal-overlay.open{display:flex}
+#qr-modal-box{background:#fff;border-radius:20px;padding:28px 32px;max-width:340px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:slideUpFade .2s ease}
+#qr-modal-box h3{margin:0 0 4px;font-size:17px;font-weight:800;color:#1B3A2D}
+#qr-modal-box .qr-sub{font-size:12px;color:#64748B;margin-bottom:16px}
+#qr-modal-box img{border-radius:12px;border:1px solid #E2E8F0;width:200px;height:200px}
+#qr-modal-box .qr-info{margin-top:12px;font-size:11px;color:#64748B;background:#F4F7F5;border-radius:8px;padding:8px 12px;text-align:left;line-height:1.6}
+#qr-modal-box .qr-btns{display:flex;gap:8px;margin-top:16px;justify-content:center}
+#qr-modal-box .qr-btn{padding:8px 18px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:600}
+#qr-modal-box .qr-btn-primary{background:linear-gradient(135deg,#2C6E49,#4C956C);color:#fff}
+#qr-modal-box .qr-btn-outline{background:#fff;color:#2C6E49;border:1.5px solid #2C6E49}
+.qr-cell-btn{background:linear-gradient(135deg,#7C3AED,#4F46E5);color:#fff;border:none;border-radius:7px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+.qr-cell-btn:hover{opacity:.85}
+`;
+document.head.appendChild(css);
+
+// ── Modal HTML ───────────────────────────────────────────────────
+var overlay=document.createElement('div');
+overlay.id='qr-modal-overlay';
+overlay.innerHTML=`
+<div id="qr-modal-box">
+  <h3 id="qr-modal-title">🏷️ QR de Trazabilidad</h3>
+  <div class="qr-sub" id="qr-modal-sub">Escanea para ver el historial completo del lote</div>
+  <img id="qr-modal-img" src="" alt="QR Code"/>
+  <div class="qr-info" id="qr-modal-info"></div>
+  <div class="qr-btns">
+    <button class="qr-btn qr-btn-primary" onclick="window._qrPrint()">🖨️ Imprimir</button>
+    <button class="qr-btn qr-btn-outline" onclick="window._qrClose()">Cerrar</button>
+  </div>
+</div>`;
+document.body.appendChild(overlay);
+overlay.addEventListener('click',function(e){if(e.target===overlay)window._qrClose();});
+
+window._qrClose=function(){overlay.classList.remove('open');};
+window._qrPrint=function(){
+  var img=document.getElementById('qr-modal-img');
+  var win=window.open('','_blank','width=400,height=500');
+  win.document.write('<html><body style="text-align:center;font-family:Inter,sans-serif;padding:20px">'+
+    '<h3>'+document.getElementById('qr-modal-title').textContent+'</h3>'+
+    '<img src="'+img.src+'" style="width:220px;height:220px"><br>'+
+    '<div style="font-size:11px;color:#666;margin-top:10px">'+document.getElementById('qr-modal-info').innerHTML+'</div>'+
+    '<script>window.onload=function(){window.print();}<\/script></body></html>');
+  win.document.close();
+};
+
+// ── Función principal: mostrarQR ────────────────────────────────
+window.mostrarQR=function(loteId, extra){
+  var u=window.getCurrentUser&&window.getCurrentUser();
+  var rol=u?u.role:'RECOLECTOR';
+  // Solo roles con permiso de trazabilidad ven QR
+  var rolesPermitidos=['CEO','SUPER_ADMIN','ADMIN_OPERACIONES','ENCARGADO_GENERAL',
+    'ENCARGADO_PARCELA','ALMACEN','CALIDAD','COMERCIAL'];
+  if(rolesPermitidos.indexOf(rol)===-1){
+    if(window.notifySaved)notifySaved('No tienes permiso para ver QR de trazabilidad');
+    return;
+  }
+  var lotes=window.AgroStore?AgroStore.load('agri_lotes',[]):[];
+  var lote=lotes.find(function(l){return l.id===loteId||l.loteId===loteId||l.codigo===loteId});
+  var titulo='Lote '+loteId;
+  var info='';
+  if(lote){
+    titulo='🏷️ '+loteId;
+    info='<strong>Parcela:</strong> '+(lote.parcela||'-')+'<br>'+
+      '<strong>Cultivo:</strong> '+(lote.tipo||lote.cultivo||'-')+'<br>'+
+      '<strong>Fecha:</strong> '+(lote.fecha||'-')+'<br>'+
+      '<strong>Kg:</strong> '+(lote.kg||'-')+' kg<br>'+
+      '<strong>Destino:</strong> '+(lote.destino||'-')+'<br>'+
+      '<strong>Estado:</strong> '+(lote.estado||'-');
+  } else if(extra){
+    info='<strong>ID Lote:</strong> '+loteId+'<br>'+extra;
+  } else {
+    info='<strong>ID Lote:</strong> '+loteId+'<br><strong>Sistema:</strong> AgroSinergia Trazabilidad';
+  }
+  // Build QR data
+  var qrData=encodeURIComponent('AGROSINERGIA|LOTE:'+loteId+'|'+new Date().toISOString().slice(0,10));
+  var qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data='+qrData;
+  document.getElementById('qr-modal-title').textContent=titulo;
+  document.getElementById('qr-modal-sub').textContent='Escanea para trazabilidad completa · AgroSinergia';
+  document.getElementById('qr-modal-img').src=qrUrl;
+  document.getElementById('qr-modal-info').innerHTML=info;
+  overlay.classList.add('open');
+};
+
+// ── Inyectar botón QR en tablas de lotes ────────────────────────
+function injectQRButtons(){
+  // Buscar todas las celdas que contengan texto "LOT-"
+  var rol=window.getCurrentUser&&window.getCurrentUser()?window.getCurrentUser().role:'';
+  var rolesPermitidos=['CEO','SUPER_ADMIN','ADMIN_OPERACIONES','ENCARGADO_GENERAL',
+    'ENCARGADO_PARCELA','ALMACEN','CALIDAD','COMERCIAL'];
+  if(rolesPermitidos.indexOf(rol)===-1)return;
+
+  document.querySelectorAll('td,th').forEach(function(td){
+    if(td.dataset.qrDone)return;
+    var txt=td.textContent&&td.textContent.trim();
+    if(txt&&txt.match(/^LOT-\d{4}-\d{3}/)){
+      td.dataset.qrDone='1';
+      var loteId=txt.match(/LOT-\d{4}-\d{3}/)[0];
+      var btn=document.createElement('button');
+      btn.className='qr-cell-btn';
+      btn.innerHTML='QR 📱';
+      btn.title='Ver QR de trazabilidad del lote '+loteId;
+      btn.onclick=function(e){e.stopPropagation();window.mostrarQR(loteId);};
+      td.appendChild(document.createTextNode(' '));
+      td.appendChild(btn);
+    }
+  });
+}
+
+// Observar cambios en el DOM para inyectar QR cuando aparezcan tablas
+var _obs=new MutationObserver(function(){injectQRButtons();});
+_obs.observe(document.body,{childList:true,subtree:true});
+
+// Inyección inicial con retraso para esperar a que rendericen las tablas
+setTimeout(injectQRButtons,1500);
+setTimeout(injectQRButtons,3000);
+
+// ── Hook showPage para re-inyectar en navegación ─────────────────
+var _origShowPageQR=window.showPage;
+window.showPage=function(page){
+  if(_origShowPageQR)_origShowPageQR(page);
+  setTimeout(injectQRButtons,600);
+};
+
+// ── Quick action IA: abrir modal QR directo ───────────────────────
+window._openQRDirect=function(){
+  var lotes=window.AgroStore?AgroStore.load('agri_lotes',[]):[];
+  if(lotes.length>0){
+    window.mostrarQR(lotes[0].codigo||lotes[0].id||'LOT-2026-001');
+  }else{
+    window.mostrarQR('LOT-2026-001');
+  }
+};
+
+console.log('🏷️ QR Trazabilidad Engine loaded — api.qrserver.com');
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════
+     AEMET OpenData ENGINE — opendata.aemet.es (free, key required)
+     + NOMINATIM Geocoding ENGINE — OSM (free, no key)
+     AEMET Roles: ALL (alertas visibles para todos)
+     Nominatim Roles: CEO, ADMIN, ENCARGADO, CONDUCTOR, TECNICO
+     ═══════════════════════════════════════════════ -->
+<script>
+(function(){
+'use strict';
+
+// ═══════════════════════════════════════════════════════════
+// AEMET ENGINE
+// ═══════════════════════════════════════════════════════════
+var AEMET_MUN='03005'; // Albatera, Alicante (código INE/AEMET)
+var AEMET_BASE='https://opendata.aemet.es/opendata/api';
+var AEMET_KEY_LS='agro_aemet_key';
+
+function getAemetKey(){return localStorage.getItem(AEMET_KEY_LS)||'';}
+function setAemetKey(k){localStorage.setItem(AEMET_KEY_LS,k);}
+
+// ── Datos simulados AEMET (fallback si no hay key) ──────────────
+var _aemetFallback={
+  municipio:'Albatera',provincia:'Alicante',
+  prediccion:{
+    dias:[
+      {fecha:_hoy(0),estadoCielo:'Despejado',tMax:22,tMin:9,probPrecip:5,viento:'NE 15 km/h',humedad:45,icono:'☀️'},
+      {fecha:_hoy(1),estadoCielo:'Poco nuboso',tMax:20,tMin:8,probPrecip:10,viento:'E 10 km/h',humedad:50,icono:'🌤️'},
+      {fecha:_hoy(2),estadoCielo:'Nuboso',tMax:17,tMin:10,probPrecip:30,viento:'SE 20 km/h',humedad:65,icono:'⛅'},
+      {fecha:_hoy(3),estadoCielo:'Lluvias débiles',tMax:15,tMin:9,probPrecip:70,viento:'S 25 km/h',humedad:80,icono:'🌦️'},
+      {fecha:_hoy(4),estadoCielo:'Despejado',tMax:19,tMin:7,probPrecip:5,viento:'W 12 km/h',humedad:42,icono:'☀️'},
+      {fecha:_hoy(5),estadoCielo:'Poco nuboso',tMax:21,tMin:8,probPrecip:10,viento:'NW 10 km/h',humedad:48,icono:'🌤️'},
+      {fecha:_hoy(6),estadoCielo:'Despejado',tMax:23,tMin:9,probPrecip:0,viento:'NE 8 km/h',humedad:40,icono:'☀️'}
+    ]
+  },
+  alertas:[
+    {nivel:'amarillo',fenomeno:'Viento',descripcion:'Rachas de 50-65 km/h en zonas elevadas. Precaución con tratamientos fitosanitarios.',activo:false},
+    {nivel:'amarillo',fenomeno:'Lluvia',descripcion:'Precipitaciones acumuladas 20-40 mm en 24h. Riesgo de encharcamiento en parcelas.',activo:false}
+  ],
+  agro:{
+    evapotranspiracion:'3.2 mm/día',
+    helada:false,
+    tRocio:6,
+    riesgoFitosanitario:'Bajo',
+    consejo:'Condiciones favorables para tratamientos fitosanitarios (viento < 3 m/s, sin lluvia prevista 48h)'
+  }
+};
+
+function _hoy(d){
+  var dt=new Date();dt.setDate(dt.getDate()+d);
+  var dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  var meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return dias[dt.getDay()]+' '+dt.getDate()+' '+meses[dt.getMonth()];
+}
+
+// ── CSS AEMET ────────────────────────────────────────────────────
+var cssAemet=document.createElement('style');
+cssAemet.textContent=`
+.aemet-widget{background:#fff;border-radius:14px;padding:16px;box-shadow:0 4px 12px rgba(0,0,0,.08);margin-bottom:16px;border:1px solid #E2E8F0}
+.aemet-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.aemet-badge{font-size:9px;background:#003DA5;color:#fff;padding:2px 7px;border-radius:4px;font-weight:800;letter-spacing:.5px}
+.aemet-dias{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px}
+.aemet-dia{background:#F4F7F5;border-radius:9px;padding:8px 4px;text-align:center;transition:all .15s}
+.aemet-dia:hover{background:#E8F0EC;transform:translateY(-1px)}
+.aemet-dia .ad-fecha{font-size:9px;color:#64748B;font-weight:600;margin-bottom:4px}
+.aemet-dia .ad-icon{font-size:20px;margin:4px 0}
+.aemet-dia .ad-max{font-size:13px;font-weight:800;color:#E07A5F}
+.aemet-dia .ad-min{font-size:11px;color:#3B82F6;font-weight:600}
+.aemet-dia .ad-precip{font-size:9px;color:#64748B;margin-top:2px}
+.aemet-alerta{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:8px;font-size:11px;margin-bottom:6px}
+.aemet-alerta.amarillo{background:#FEF3C7;border-left:3px solid #F59E0B}
+.aemet-alerta.naranja{background:#FED7AA;border-left:3px solid #EA580C}
+.aemet-alerta.rojo{background:#FEE2E2;border-left:3px solid #EF4444}
+.aemet-alerta.verde{background:#D1FAE5;border-left:3px solid #10B981}
+.aemet-agro{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.aemet-agro-item{background:#F4F7F5;border-radius:8px;padding:8px 10px;font-size:11px}
+.aemet-agro-item strong{display:block;color:#1B3A2D;font-size:12px;margin-bottom:2px}
+.aemet-key-bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:#EFF6FF;border-radius:8px;margin-bottom:10px;font-size:11px}
+.aemet-key-input{flex:1;padding:5px 8px;border-radius:6px;border:1px solid #BFDBFE;font-size:11px;font-family:monospace}
+.aemet-key-save{background:#003DA5;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:600}
+.aemet-live-badge{font-size:9px;background:#22C55E;color:#fff;padding:2px 6px;border-radius:4px;font-weight:700;margin-left:auto}
+.aemet-sim-badge{font-size:9px;background:#F59E0B;color:#fff;padding:2px 6px;border-radius:4px;font-weight:700;margin-left:auto}
+`;
+document.head.appendChild(cssAemet);
+
+// ── Render AEMET Widget ──────────────────────────────────────────
+function renderAemetWidget(containerId, data, isLive){
+  var el=document.getElementById(containerId);
+  if(!el)return;
+  var key=getAemetKey();
+  var h='';
+  // Key setup bar
+  h+='<div class="aemet-key-bar">'+
+    '🔑 <span>AEMET Key:</span>'+
+    '<input class="aemet-key-input" id="aemet-key-field-'+containerId+'" type="password" placeholder="Obtén tu key gratis en opendata.aemet.es" value="'+(key?'••••••••••':'')+'" autocomplete="off">'+
+    '<button class="aemet-key-save" onclick="window._saveAemetKey(\''+containerId+'\')">Guardar</button>'+
+  '</div>';
+  // Header
+  h+='<div class="aemet-header">'+
+    '<span style="font-size:22px">🌡️</span>'+
+    '<div><div style="font-weight:800;font-size:14px;color:#1B3A2D">AEMET — '+data.municipio+', '+data.provincia+'</div>'+
+    '<div style="font-size:11px;color:#64748B">Predicción agroclimática oficial</div></div>'+
+    '<span class="aemet-badge">AEMET</span>'+
+    (isLive?'<span class="aemet-live-badge">🟢 LIVE</span>':'<span class="aemet-sim-badge">⚡ SIM</span>')+
+  '</div>';
+  // Días
+  h+='<div class="aemet-dias">';
+  data.prediccion.dias.forEach(function(d){
+    h+='<div class="aemet-dia">'+
+      '<div class="ad-fecha">'+d.fecha+'</div>'+
+      '<div class="ad-icon">'+d.icono+'</div>'+
+      '<div class="ad-max">'+d.tMax+'°</div>'+
+      '<div class="ad-min">'+d.tMin+'°</div>'+
+      '<div class="ad-precip">'+d.probPrecip+'%💧</div>'+
+    '</div>';
+  });
+  h+='</div>';
+  // Agroclimático box
+  h+='<div style="border-top:1px solid #E2E8F0;padding-top:10px;margin-top:4px">'+
+    '<div style="font-size:11px;font-weight:700;color:#1B3A2D;margin-bottom:6px">🌱 Datos Agroclimáticos</div>'+
+    '<div class="aemet-agro">'+
+    '<div class="aemet-agro-item"><strong>🌊 Evapotranspiración</strong>'+data.agro.evapotranspiracion+'</div>'+
+    '<div class="aemet-agro-item"><strong>🌡️ T° Rocío</strong>'+data.agro.tRocio+'°C</div>'+
+    '<div class="aemet-agro-item"><strong>❄️ Riesgo Helada</strong>'+(data.agro.helada?'⚠️ Sí':'✅ No')+'</div>'+
+    '<div class="aemet-agro-item"><strong>🐛 Riesgo Fitosanitario</strong>'+data.agro.riesgoFitosanitario+'</div>'+
+    '</div>'+
+    '<div class="aemet-alerta verde" style="margin-top:8px">'+
+      '<span>💡</span><span>'+data.agro.consejo+'</span>'+
+    '</div>'+
+  '</div>';
+  // Alertas
+  if(data.alertas&&data.alertas.length>0){
+    h+='<div style="margin-top:10px"><div style="font-size:11px;font-weight:700;color:#1B3A2D;margin-bottom:6px">⚠️ Alertas Meteorológicas</div>';
+    data.alertas.forEach(function(a){
+      h+='<div class="aemet-alerta '+a.nivel+'">'+
+        '<span style="font-size:16px">'+(a.nivel==='rojo'?'🔴':a.nivel==='naranja'?'🟠':'🟡')+'</span>'+
+        '<div><strong>'+a.fenomeno+'</strong> — '+a.descripcion+'</div></div>';
+    });
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+
+// ── Guardar key y recargar datos ─────────────────────────────────
+window._saveAemetKey=function(containerId){
+  var field=document.getElementById('aemet-key-field-'+containerId);
+  if(!field||!field.value||field.value.startsWith('•'))return;
+  setAemetKey(field.value.trim());
+  window._loadAemet(containerId);
+};
+
+// ── Obtener datos reales de AEMET ────────────────────────────────
+window._loadAemet=function(containerId){
+  var key=getAemetKey();
+  if(!key){renderAemetWidget(containerId,_aemetFallback,false);return;}
+  // AEMET devuelve una URL intermedia primero
+  fetch(AEMET_BASE+'/prediccion/especifica/municipio/diaria/'+AEMET_MUN+'?api_key='+key)
+    .then(function(r){return r.json()})
+    .then(function(resp){
+      if(!resp.datos)throw new Error('Sin datos');
+      return fetch(resp.datos);
+    })
+    .then(function(r){return r.json()})
+    .then(function(json){
+      var prd=json[0];
+      var dias=prd.prediccion.dia.slice(0,7).map(function(d,i){
+        var cielo=(d.estadoCielo&&d.estadoCielo[0])?d.estadoCielo[0].descripcion||'Despejado':'Despejado';
+        var tMax=d.temperatura?d.temperatura.maxima:_aemetFallback.prediccion.dias[i].tMax;
+        var tMin=d.temperatura?d.temperatura.minima:_aemetFallback.prediccion.dias[i].tMin;
+        var precip=(d.probPrecipitacion&&d.probPrecipitacion[0])?d.probPrecipitacion[0].value||0:0;
+        var icon=precip>60?'🌧️':precip>30?'🌦️':cielo.toLowerCase().includes('nub')?'⛅':'☀️';
+        return {fecha:_hoy(i),estadoCielo:cielo,tMax:tMax,tMin:tMin,probPrecip:precip,icono:icon,
+          viento:'',humedad:0};
+      });
+      var live={municipio:prd.nombre,provincia:prd.provincia,
+        prediccion:{dias:dias},
+        alertas:[],
+        agro:_aemetFallback.agro
+      };
+      renderAemetWidget(containerId,live,true);
+    })
+    .catch(function(){renderAemetWidget(containerId,_aemetFallback,false);});
+};
+
+// ── Inyectar widget en página de Meteorología ────────────────────
+function injectAemetInMeteo(){
+  var meteo=document.getElementById('page-meteo');
+  if(!meteo||document.getElementById('aemet-widget-container'))return;
+  var wrap=document.createElement('div');
+  wrap.id='aemet-widget-container';
+  wrap.className='aemet-widget';
+  wrap.style.cssText='margin:0 0 20px;';
+  // Insert after header in meteo page
+  var header=meteo.querySelector('.header');
+  if(header&&header.nextSibling){
+    meteo.insertBefore(wrap,header.nextSibling);
+  } else {
+    meteo.prepend(wrap);
+  }
+  window._loadAemet('aemet-widget-container');
+}
+
+// ── Inyectar mini-widget AEMET en CEO dashboard ──────────────────
+function injectAemetInCEO(){
+  var ceo=document.getElementById('ceo-content');
+  if(!ceo||document.getElementById('aemet-ceo-mini'))return;
+  var wrap=document.createElement('div');
+  wrap.id='aemet-ceo-mini';
+  wrap.className='aemet-widget';
+  wrap.innerHTML='<div style="font-size:11px;color:#64748B">⏳ Cargando predicción AEMET...</div>';
+  ceo.appendChild(wrap);
+  window._loadAemet('aemet-ceo-mini');
+}
+
+// ── Hook showPage ────────────────────────────────────────────────
+var _origShowPageAemet=window.showPage;
+window.showPage=function(page){
+  if(_origShowPageAemet)_origShowPageAemet(page);
+  setTimeout(function(){
+    // AEMET en página de meteorología (por id o nombre)
+    if(page==='meteo'||page==='meteorologia'||page==='page-meteo')injectAemetInMeteo();
+    if(page==='ceo'||page==='dashboard'||page==='page-ceo')injectAemetInCEO();
+  },400);
+};
+// Init con pequeño delay
+setTimeout(function(){
+  injectAemetInMeteo();
+  if(document.getElementById('ceo-content'))injectAemetInCEO();
+},2000);
+
+// ═══════════════════════════════════════════════════════════
+// NOMINATIM GEOCODING ENGINE — OSM (free, no key)
+// ═══════════════════════════════════════════════════════════
+var NOM_URL='https://nominatim.openstreetmap.org/search';
+var NOM_REV='https://nominatim.openstreetmap.org/reverse';
+
+// ── CSS Nominatim ────────────────────────────────────────────────
+var cssNom=document.createElement('style');
+cssNom.textContent=`
+#nom-search-bar{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1500;display:flex;gap:6px;width:min(400px,80%)}
+#nom-search-input{flex:1;padding:9px 14px;border-radius:10px;border:none;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.18);font-family:Inter,sans-serif;outline:none}
+#nom-search-btn{background:linear-gradient(135deg,#2C6E49,#4C956C);color:#fff;border:none;border-radius:10px;padding:0 16px;font-size:16px;cursor:pointer;box-shadow:0 4px 12px rgba(44,110,73,.4)}
+#nom-results{position:absolute;top:46px;left:0;right:0;background:#fff;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:200px;overflow-y:auto;display:none}
+#nom-results.open{display:block}
+.nom-result-item{padding:10px 14px;cursor:pointer;font-size:12px;border-bottom:1px solid #F1F5F9;transition:background .1s}
+.nom-result-item:hover{background:#F4F7F5}
+.nom-result-item strong{display:block;color:#1B3A2D;font-size:13px}
+#nom-coord-badge{position:absolute;bottom:8px;left:8px;z-index:1000;background:rgba(255,255,255,.92);padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;color:#1B3A2D;box-shadow:0 1px 6px rgba(0,0,0,.12);display:none}
+`;
+document.head.appendChild(cssNom);
+
+// ── Crear barra de búsqueda en el mapa ───────────────────────────
+function injectNominatimSearchBar(){
+  // Buscar el contenedor del mapa por diferentes IDs posibles
+  var mapContainer=document.getElementById('map-container')||
+    document.getElementById('main-map')||
+    document.querySelector('.leaflet-container')?.parentElement;
+  if(!mapContainer||document.getElementById('nom-search-bar'))return;
+  // Comprobar rol
+  var u=window.getCurrentUser&&window.getCurrentUser();
+  var rol=u?u.role:'';
+  var rolesConBusqueda=['CEO','SUPER_ADMIN','ADMIN_OPERACIONES','ENCARGADO_GENERAL',
+    'ENCARGADO_PARCELA','TECNICO_CAMPO','CONDUCTOR'];
+  if(rolesConBusqueda.indexOf(rol)===-1)return;
+
+  var bar=document.createElement('div');
+  bar.id='nom-search-bar';
+  bar.innerHTML=
+    '<input id="nom-search-input" type="text" placeholder="🔍 Buscar dirección, finca o municipio..." autocomplete="off">'+
+    '<button id="nom-search-btn" onclick="window._nomSearch()">🔍</button>'+
+    '<div id="nom-results"></div>';
+  mapContainer.style.position='relative';
+  mapContainer.appendChild(bar);
+
+  var coordBadge=document.createElement('div');
+  coordBadge.id='nom-coord-badge';
+  mapContainer.appendChild(coordBadge);
+
+  document.getElementById('nom-search-input').addEventListener('keydown',function(e){
+    if(e.key==='Enter')window._nomSearch();
+  });
+}
+
+// ── Buscar con Nominatim ─────────────────────────────────────────
+window._nomSearch=function(){
+  var q=(document.getElementById('nom-search-input')||{}).value;
+  if(!q||q.trim().length<2)return;
+  // Bias: Albatera/Alicante
+  var url=NOM_URL+'?q='+encodeURIComponent(q+' Alicante España')+'&format=json&limit=5&addressdetails=1&accept-language=es';
+  fetch(url,{headers:{'User-Agent':'AgroSinergia/2026 (agrosinergia.demo@gmail.com)'}})
+    .then(function(r){return r.json()})
+    .then(function(results){
+      var res=document.getElementById('nom-results');
+      if(!res)return;
+      if(!results||results.length===0){
+        res.innerHTML='<div class="nom-result-item" style="color:#64748B">Sin resultados para "'+q+'"</div>';
+        res.classList.add('open');return;
+      }
+      res.innerHTML=results.map(function(r){
+        var label=r.display_name.split(',').slice(0,3).join(', ');
+        return '<div class="nom-result-item" onclick="window._nomGoTo('+r.lat+','+r.lon+',\''+label.replace(/'/g,'')+'\')">'+
+          '<strong>📍 '+label+'</strong>'+
+          '<span style="color:#64748B">lat: '+parseFloat(r.lat).toFixed(5)+' · lon: '+parseFloat(r.lon).toFixed(5)+'</span>'+
+        '</div>';
+      }).join('');
+      res.classList.add('open');
+      // Close on outside click
+      var closer=function(){res.classList.remove('open');document.removeEventListener('click',closer);};
+      setTimeout(function(){document.addEventListener('click',closer);},200);
+    })
+    .catch(function(e){console.warn('Nominatim error:',e);});
+};
+
+// ── Ir a coordenadas en el mapa ──────────────────────────────────
+window._nomGoTo=function(lat,lon,label){
+  var res=document.getElementById('nom-results');
+  if(res)res.classList.remove('open');
+  var inp=document.getElementById('nom-search-input');
+  if(inp)inp.value=label;
+  if(window._map){
+    window._map.setView([lat,lon],16);
+    // Añadir marcador temporal
+    if(window._nomMarker)window._map.removeLayer(window._nomMarker);
+    window._nomMarker=L.marker([lat,lon]).addTo(window._map)
+      .bindPopup('<div style="font-size:12px;font-weight:600">📍 '+label+'<br><small>lat:'+parseFloat(lat).toFixed(5)+' lon:'+parseFloat(lon).toFixed(5)+'</small></div>')
+      .openPopup();
+    // Badge coordenadas
+    var badge=document.getElementById('nom-coord-badge');
+    if(badge){badge.textContent='📍 '+parseFloat(lat).toFixed(5)+', '+parseFloat(lon).toFixed(5);badge.style.display='block';}
+  }
+  // Notificar IA si está abierta
+  if(window._addMsg&&window._chatHistory&&window._chatHistory.length>0){
+    window._addMsg('assistant','📍 Ubicado: **'+label+'**\nlat: '+parseFloat(lat).toFixed(5)+' · lon: '+parseFloat(lon).toFixed(5));
+  }
+};
+
+// ── Reverse geocoding (click en mapa → dirección) ─────────────────
+function enableMapReverseGeocode(){
+  if(!window._map)return;
+  window._map.on('contextmenu',function(e){
+    var lat=e.latlng.lat,lon=e.latlng.lng;
+    fetch(NOM_REV+'?lat='+lat+'&lon='+lon+'&format=json&accept-language=es',
+      {headers:{'User-Agent':'AgroSinergia/2026'}})
+      .then(function(r){return r.json()})
+      .then(function(data){
+        var name=data.display_name?data.display_name.split(',').slice(0,3).join(', '):'Ubicación';
+        L.popup().setLatLng(e.latlng)
+          .setContent('<div style="font-size:11px"><strong>'+name+'</strong><br>'+
+            lat.toFixed(5)+', '+lon.toFixed(5)+'<br>'+
+            '<small style="color:#64748B">Botón derecho para geocodificar</small></div>')
+          .openOn(window._map);
+      });
+  });
+}
+
+// ── Función global: geocodificar desde IA ───────────────────────
+window.geocodificarDireccion=function(q,cb){
+  var url=NOM_URL+'?q='+encodeURIComponent(q)+'&format=json&limit=1&accept-language=es';
+  fetch(url,{headers:{'User-Agent':'AgroSinergia/2026'}})
+    .then(function(r){return r.json()})
+    .then(function(res){if(res&&res[0]){if(cb)cb(res[0]);else window._nomGoTo(res[0].lat,res[0].lon,res[0].display_name);}});
+};
+
+// ── Hook showPage para mapa ──────────────────────────────────────
+var _prevShowPage=window.showPage;
+window.showPage=function(page){
+  if(_prevShowPage)_prevShowPage(page);
+  if(page==='cartografia'||page==='mapa'){
+    setTimeout(function(){
+      injectNominatimSearchBar();
+      enableMapReverseGeocode();
+    },600);
+  }
+};
+setTimeout(function(){
+  injectNominatimSearchBar();
+  enableMapReverseGeocode();
+},2500);
+
+console.log('🌡️ AEMET Engine + 📍 Nominatim Geocoding Engine loaded');
 })();
 </script>
 </body>
