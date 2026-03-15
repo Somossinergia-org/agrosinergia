@@ -11524,7 +11524,12 @@ function applyRBAC(){
     if(footer){
       var lb=document.createElement('button');
       lb.id='sidebar-logout';lb.className='logout-btn';lb.style.marginTop='8px';lb.style.width='100%';
-      lb.textContent='Cerrar sesión';lb.onclick=doLogout;
+      lb.textContent='Cerrar sesión';
+      lb.onclick=function(){
+        localStorage.clear();
+        sessionStorage.clear();
+        location.reload();
+      };
       footer.appendChild(lb);
     }
   }
@@ -16476,45 +16481,6 @@ console.log('🌡️ AEMET Engine + 📍 Nominatim Geocoding Engine loaded');
   font-size:20px;cursor:pointer;padding:0 4px;flex-shrink:0;
 }
 
-/* ── Mobile Logout Button en sidebar ── */
-@media(max-width:768px){
-  /* Botón logout muy visible en móvil */
-  .mobile-logout-bar{
-    display:flex!important;
-    position:fixed;bottom:0;left:0;right:0;z-index:800;
-    background:linear-gradient(135deg,#1B3A2D,#0A1A10);
-    padding:0;height:56px;
-    border-top:2px solid rgba(255,255,255,.08);
-  }
-  .mobile-logout-btn{
-    flex:1;display:flex;align-items:center;justify-content:center;
-    gap:8px;color:#fff;font-size:14px;font-weight:700;
-    background:transparent;border:none;cursor:pointer;height:100%;
-    letter-spacing:.3px;
-  }
-  .mobile-logout-btn:active{background:rgba(255,255,255,.1)}
-  .mobile-user-pill{
-    display:flex!important;align-items:center;justify-content:center;
-    gap:8px;padding:0 16px;border-right:1px solid rgba(255,255,255,.1);
-  }
-  .mobile-user-pill span{font-size:11px;color:rgba(255,255,255,.7);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-}
-@media(min-width:769px){
-  .mobile-logout-bar{display:none!important}
-}
-</style>
-
-<!-- Barra de logout fija en la parte inferior del móvil -->
-<div class="mobile-logout-bar" id="mobile-logout-bar" style="display:none">
-  <div class="mobile-user-pill">
-    <span>👤</span>
-    <span id="mobile-user-name">Usuario</span>
-  </div>
-  <button class="mobile-logout-btn" onclick="if(window.logout)window.logout();else if(window.handleLogout)window.handleLogout();else{localStorage.clear();location.reload()}">
-    🚪 Cerrar sesión
-  </button>
-</div>
-
 <!-- Banner de instalación PWA -->
 <div id="pwa-install-banner">
   <div class="pwa-icon">🌱</div>
@@ -16560,28 +16526,6 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
   sessionStorage.setItem('pwa-dismissed','1');
 });
 
-// ── Mobile logout bar ──────────────────────────────────────────
-function _updateMobileBar(){
-  var bar=document.getElementById('mobile-logout-bar');
-  var nameEl=document.getElementById('mobile-user-name');
-  if(!bar)return;
-  // Mostrar solo cuando hay sesión activa
-  var u=window.getCurrentUser&&window.getCurrentUser();
-  if(u){
-    bar.style.display='flex';
-    if(nameEl)nameEl.textContent=u.name&&u.name.split(' ')[0]||'Usuario';
-  } else {
-    bar.style.display='none';
-  }
-}
-// Escuchar cambios de sesión
-setInterval(_updateMobileBar,1500);
-window.addEventListener('load',function(){setTimeout(_updateMobileBar,800)});
-
-// Añadir padding inferior al body en móvil para no tapar contenido con la barra
-if(window.innerWidth<=768){
-  document.body.style.paddingBottom='112px';
-}
 
 // ── PATCH: Badge OFFLINE → LIVE cuando hay conexión ───────────────
 (function(){
