@@ -15210,6 +15210,10 @@ css.textContent=`
 #ai-fab:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(124,58,237,.5)}
 #ai-fab .ai-pulse{position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(124,58,237,.4);animation:aiPulse 2s ease-out infinite}
 @keyframes aiPulse{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.5);opacity:0}}
+@media(max-width:640px){
+  #ai-fab{bottom:162px!important;right:16px!important;width:46px;height:46px;font-size:20px}
+  #ai-panel{right:8px!important;left:8px!important;width:auto!important;bottom:212px!important;max-height:70vh}
+}
 
 /* AI Panel */
 #ai-panel{position:fixed;bottom:86px;right:24px;width:380px;max-height:600px;background:var(--white,#fff);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.18);z-index:9001;display:none;flex-direction:column;border:1px solid rgba(0,0,0,.08);overflow:hidden;animation:slideUpFade .2s ease}
@@ -16106,6 +16110,15 @@ cssAemet.textContent=`
 .aemet-key-save{background:#003DA5;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:600}
 .aemet-live-badge{font-size:9px;background:#22C55E;color:#fff;padding:2px 6px;border-radius:4px;font-weight:700;margin-left:auto}
 .aemet-sim-badge{font-size:9px;background:#F59E0B;color:#fff;padding:2px 6px;border-radius:4px;font-weight:700;margin-left:auto}
+.aemet-key-toggle{display:none;font-size:10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;padding:4px 10px;cursor:pointer;color:#003DA5;font-weight:700;margin-bottom:8px;width:100%}
+@media(max-width:640px){
+  .aemet-key-bar{display:none}
+  .aemet-key-bar.open{display:flex;flex-direction:column;align-items:stretch;gap:6px}
+  .aemet-key-toggle{display:block}
+  .aemet-dias{grid-template-columns:repeat(4,1fr)!important}
+  .aemet-agro{grid-template-columns:1fr!important}
+  .aemet-widget{padding:12px}
+}
 `;
 document.head.appendChild(cssAemet);
 
@@ -16114,13 +16127,16 @@ function renderAemetWidget(containerId, data, isLive){
   var el=document.getElementById(containerId);
   if(!el)return;
   var key=getAemetKey();
+  // Key setup bar — colapsable en móvil
   var h='';
-  // Key setup bar
+  h+='<button class="aemet-key-toggle" onclick="var b=this.nextElementSibling;b.classList.toggle(\'open\');this.textContent=b.classList.contains(\'open\')?\'▲ Cerrar configuración\':\'🔑 Configurar API Key AEMET\'">🔑 Configurar API Key AEMET</button>';
+
   h+='<div class="aemet-key-bar">'+
     '🔑 <span>AEMET Key:</span>'+
-    '<input class="aemet-key-input" id="aemet-key-field-'+containerId+'" type="password" placeholder="Obtén tu key gratis en opendata.aemet.es" value="'+(key?'••••••••••':'')+'" autocomplete="off">'+
+    '<input class="aemet-key-input" id="aemet-key-field-'+containerId+'" type="password" placeholder="Obtén tu key en opendata.aemet.es" value="'+(key?'••••••••••':'')+'" autocomplete="off">'+
     '<button class="aemet-key-save" onclick="window._saveAemetKey(\''+containerId+'\')">Guardar</button>'+
   '</div>';
+
   // Header
   h+='<div class="aemet-header">'+
     '<span style="font-size:22px">🌡️</span>'+
