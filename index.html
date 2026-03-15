@@ -16580,8 +16580,81 @@ window.addEventListener('load',function(){setTimeout(_updateMobileBar,800)});
 
 // Añadir padding inferior al body en móvil para no tapar contenido con la barra
 if(window.innerWidth<=768){
-  document.body.style.paddingBottom='56px';
+  document.body.style.paddingBottom='112px';
 }
+
+// ── PATCH: Badge OFFLINE → LIVE cuando hay conexión ───────────────
+(function(){
+  var _badgePatched=false;
+  function _patchBadge(){
+    // Buscar el elemento badge por texto o id conocido
+    var badge=document.getElementById('live-badge-text');
+    if(!badge){
+      // Buscar por texto OFFLINE en spans pequeños
+      document.querySelectorAll('span,div').forEach(function(el){
+        if(el.children.length===0&&el.textContent.trim()==='OFFLINE')badge=el;
+      });
+    }
+    if(!badge)return;
+    _badgePatched=true;
+    function _setLive(){
+      badge.textContent='● EN VIVO';
+      badge.style.color='#16A34A';
+      if(badge.parentElement){
+        badge.parentElement.style.color='#16A34A';
+        badge.parentElement.style.background='rgba(22,163,74,.1)';
+      }
+    }
+    function _setOffline(){
+      badge.textContent='○ OFFLINE';
+      badge.style.color='#94A3B8';
+      if(badge.parentElement){
+        badge.parentElement.style.color='#94A3B8';
+        badge.parentElement.style.background='rgba(148,163,184,.1)';
+      }
+    }
+    // Comprobar conexión inmediatamente
+    if(navigator.onLine)_setLive();else _setOffline();
+    window.addEventListener('online',_setLive);
+    window.addEventListener('offline',_setOffline);
+    // Ping periódico para confirmar conectividad real
+    setInterval(function(){
+      if(!navigator.onLine){_setOffline();return;}
+      fetch('https://www.google.com/favicon.ico?_='+Date.now(),{mode:'no-cors',cache:'no-store'})
+        .then(function(){_setLive()}).catch(function(){_setOffline()});
+    },10000);
+  }
+  // Intentar parchear badge con retraso (esperar a que se renderice el DOM de sesión)
+  setTimeout(_patchBadge,2000);
+  setInterval(function(){if(!_badgePatched)_patchBadge()},3000);
+})();
+
+// ── PATCH: window.logout — cerrar sesión desde cualquier punto ────
+(function(){
+  function _doLogout(){
+    // Intentar la función de logout original del sistema de auth
+    if(typeof handleLogout==='function'){handleLogout();return;}
+    if(typeof window.authLogout==='function'){window.authLogout();return;}
+    // Buscar el botón de cerrar sesión en la sidebar y hacer clic
+    var btns=document.querySelectorAll('button,a');
+    for(var i=0;i<btns.length;i++){
+      var t=btns[i].textContent.trim().toLowerCase();
+      if(t==='cerrar sesión'||t==='cerrar sesion'||t==='logout'||t==='salir'){
+        btns[i].click();return;
+      }
+    }
+    // Fallback final: limpiar sesión de AgroStore y recargar
+    try{
+      localStorage.removeItem('agro_session');
+      localStorage.removeItem('agro_current_user');
+      Object.keys(localStorage).filter(function(k){return k.startsWith('agro_session')}).forEach(function(k){localStorage.removeItem(k)});
+    }catch(e){}
+    location.reload();
+  }
+  window.logout=_doLogout;
+  window.handleLogout=_doLogout;
+})();
+
 </script>
 </body>
 </html>
