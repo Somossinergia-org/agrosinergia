@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AgroSinergia — Gestión Agrícola Todo en Uno</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --green:#2C6E49;--green-dark:#1B3A2D;--green-light:#4C956C;
+  --gold:#D4A843;--coral:#E07A5F;--blue:#3B82F6;
+  --text:#1E293B;--gray:#64748B;--border:#E2E8F0;--bg:#F8FAFC;
+}
+body{font-family:'Inter',sans-serif;color:var(--text);background:#fff;line-height:1.6}
+a{text-decoration:none;color:inherit}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:999;background:rgba(27,58,45,.97);backdrop-filter:blur(12px);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08)}
+.nav-logo{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;font-size:18px}
+.nav-logo span{font-size:24px}
+.nav-links{display:flex;gap:32px}
+.nav-links a{color:rgba(255,255,255,.75);font-size:14px;font-weight:500;transition:.2s}
+.nav-links a:hover{color:#fff}
+.nav-cta{background:var(--gold);color:#1B3A2D;padding:10px 24px;border-radius:8px;font-weight:700;font-size:14px;transition:.2s;border:none;cursor:pointer}
+.nav-cta:hover{background:#E5B84E;transform:translateY(-1px)}
+
+/* HERO */
+.hero{min-height:100vh;background:linear-gradient(135deg,#0A1A10 0%,#1B3A2D 40%,#234A35 70%,#0F2418 100%);display:flex;align-items:center;justify-content:center;text-align:center;padding:80px 40px 60px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234C956C' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(76,149,108,.2);border:1px solid rgba(76,149,108,.4);color:#86EFAC;padding:6px 18px;border-radius:20px;font-size:13px;font-weight:600;margin-bottom:28px}
+.hero h1{font-size:clamp(36px,6vw,72px);font-weight:900;color:#fff;line-height:1.1;margin-bottom:24px;letter-spacing:-2px}
+.hero h1 span{color:var(--gold)}
+.hero p{font-size:clamp(16px,2vw,20px);color:rgba(255,255,255,.7);max-width:680px;margin:0 auto 40px}
+.hero-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.btn-primary{background:var(--gold);color:#1B3A2D;padding:16px 36px;border-radius:10px;font-weight:800;font-size:16px;cursor:pointer;border:none;transition:.2s;display:inline-block}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(212,168,67,.4)}
+.btn-outline{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.3);padding:14px 36px;border-radius:10px;font-weight:700;font-size:16px;cursor:pointer;transition:.2s;display:inline-block}
+.btn-outline:hover{border-color:#fff;background:rgba(255,255,255,.08)}
+.hero-stats{display:flex;gap:48px;justify-content:center;margin-top:64px;flex-wrap:wrap}
+.hero-stat{text-align:center}
+.hero-stat .num{font-size:42px;font-weight:900;color:var(--gold);letter-spacing:-1px}
+.hero-stat .lbl{font-size:13px;color:rgba(255,255,255,.6);margin-top:4px}
+
+/* SECTION */
+section{padding:80px 40px}
+.section-label{display:inline-block;background:rgba(44,110,73,.1);color:var(--green);padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px}
+h2{font-size:clamp(28px,4vw,44px);font-weight:800;color:var(--text);line-height:1.2;letter-spacing:-1px}
+h2 span{color:var(--green)}
+.section-sub{font-size:17px;color:var(--gray);margin-top:12px;max-width:580px}
+.container{max-width:1160px;margin:0 auto}
+
+/* PROBLEM */
+.problem{background:var(--bg)}
+.pain-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;margin-top:48px}
+.pain-card{background:#fff;border-radius:16px;padding:28px;border:1px solid var(--border);border-left:4px solid var(--coral);transition:.2s}
+.pain-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.06);transform:translateY(-2px)}
+.pain-icon{font-size:32px;margin-bottom:16px}
+.pain-card h3{font-size:16px;font-weight:700;margin-bottom:8px;color:var(--text)}
+.pain-card p{font-size:14px;color:var(--gray);line-height:1.6}
+.pain-cost{display:inline-block;background:rgba(224,122,95,.1);color:var(--coral);padding:4px 12px;border-radius:6px;font-size:12px;font-weight:700;margin-top:12px}
+
+/* VS SECTION */
+.vs-section{background:linear-gradient(135deg,#0A1A10,#1B3A2D)}
+.vs-section h2,.vs-section .section-sub{color:#fff}
+.vs-section .section-label{background:rgba(76,149,108,.2);color:#86EFAC}
+.vs-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:32px;margin-top:56px;align-items:start}
+@media(max-width:768px){.vs-wrap{grid-template-columns:1fr;gap:20px}}
+.vs-col-bad{background:rgba(224,122,95,.08);border:1px solid rgba(224,122,95,.25);border-radius:20px;padding:32px}
+.vs-col-good{background:rgba(76,149,108,.12);border:1px solid rgba(76,149,108,.35);border-radius:20px;padding:32px}
+.vs-header{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:24px;display:flex;align-items:center;gap:10px}
+.vs-col-bad .vs-header{color:#E07A5F}
+.vs-col-good .vs-header{color:#4C956C}
+.vs-item{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;font-size:14px;color:rgba(255,255,255,.8)}
+.vs-item .vi{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-top:1px}
+.vs-col-bad .vi{background:rgba(224,122,95,.2);color:#E07A5F}
+.vs-col-good .vi{background:rgba(76,149,108,.2);color:#4C956C}
+.vs-vs{display:flex;align-items:center;justify-content:center;padding-top:80px}
+@media(max-width:768px){.vs-vs{padding-top:0}}
+.vs-badge{width:60px;height:60px;border-radius:50%;background:var(--gold);color:#1B3A2D;font-weight:900;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(212,168,67,.5)}
+.cost-compare{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:40px}
+@media(max-width:640px){.cost-compare{grid-template-columns:1fr}}
+.cost-box{border-radius:16px;padding:28px;text-align:center}
+.cost-box.bad{background:rgba(224,122,95,.1);border:1px solid rgba(224,122,95,.25)}
+.cost-box.good{background:rgba(76,149,108,.12);border:1px solid rgba(76,149,108,.35)}
+.cost-box .price{font-size:48px;font-weight:900;letter-spacing:-2px;margin:12px 0}
+.cost-box.bad .price{color:#E07A5F}
+.cost-box.good .price{color:#4C956C}
+.cost-box .price-label{font-size:13px;color:rgba(255,255,255,.6)}
+.cost-box h4{font-size:16px;font-weight:700;color:#fff;margin-bottom:8px}
+.cost-box ul{list-style:none;font-size:13px;color:rgba(255,255,255,.7);text-align:left;margin-top:16px}
+.cost-box ul li{padding:4px 0;display:flex;justify-content:space-between}
+.cost-box ul li span{font-weight:700;color:rgba(255,255,255,.9)}
+.saving-banner{background:var(--gold);border-radius:16px;padding:24px 36px;text-align:center;margin-top:32px}
+.saving-banner h3{font-size:24px;font-weight:900;color:#1B3A2D}
+.saving-banner p{font-size:14px;color:rgba(27,58,45,.7);margin-top:4px}
+
+/* FEATURES */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-top:56px}
+.feat-card{background:#fff;border-radius:20px;padding:32px;border:1px solid var(--border);transition:.3s;position:relative;overflow:hidden}
+.feat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--green-light))}
+.feat-card:hover{box-shadow:0 12px 40px rgba(44,110,73,.12);transform:translateY(-4px)}
+.feat-icon{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#ECFDF5,#D1FAE5);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:20px}
+.feat-card h3{font-size:18px;font-weight:700;margin-bottom:10px}
+.feat-card p{font-size:14px;color:var(--gray);line-height:1.65}
+.feat-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.feat-tag{background:rgba(44,110,73,.08);color:var(--green);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600}
+
+/* ROI CALCULATOR */
+.calculator{background:var(--bg)}
+.calc-wrap{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:56px;align-items:start}
+@media(max-width:900px){.calc-wrap{grid-template-columns:1fr}}
+.calc-form{background:#fff;border-radius:20px;padding:36px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,.04)}
+.calc-form h3{font-size:20px;font-weight:700;margin-bottom:28px;color:var(--text)}
+.calc-group{margin-bottom:24px}
+.calc-group label{display:block;font-size:13px;font-weight:600;color:var(--gray);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.calc-group input[type=range]{width:100%;accent-color:var(--green);height:6px;cursor:pointer}
+.calc-val{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.calc-val span:first-child{font-size:22px;font-weight:800;color:var(--green)}
+.calc-val span:last-child{font-size:11px;color:var(--gray)}
+.calc-results{display:flex;flex-direction:column;gap:20px}
+.result-card{background:#fff;border-radius:16px;padding:28px;border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,.04)}
+.result-card.highlight{background:linear-gradient(135deg,var(--green-dark),var(--green));border:none}
+.result-card .rc-label{font-size:13px;font-weight:600;color:var(--gray);margin-bottom:8px}
+.result-card.highlight .rc-label{color:rgba(255,255,255,.7)}
+.result-card .rc-num{font-size:40px;font-weight:900;color:var(--green);letter-spacing:-1.5px}
+.result-card.highlight .rc-num{color:#fff}
+.result-card .rc-sub{font-size:13px;color:var(--gray);margin-top:4px}
+.result-card.highlight .rc-sub{color:rgba(255,255,255,.7)}
+
+/* TIMELINE */
+.timeline{position:relative;margin-top:56px;padding-left:40px}
+.timeline::before{content:'';position:absolute;left:16px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--green),var(--green-light))}
+.tl-item{position:relative;margin-bottom:40px}
+.tl-dot{position:absolute;left:-32px;top:4px;width:16px;height:16px;border-radius:50%;background:var(--green);border:3px solid #fff;box-shadow:0 0 0 3px var(--green)}
+.tl-item h4{font-size:16px;font-weight:700;margin-bottom:6px}
+.tl-item p{font-size:14px;color:var(--gray)}
+.tl-badge{display:inline-block;background:rgba(44,110,73,.1);color:var(--green);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;margin-bottom:8px}
+
+/* PRICING */
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:56px}
+.price-card{border-radius:20px;padding:36px;border:2px solid var(--border);transition:.3s;position:relative}
+.price-card:hover{transform:translateY(-4px)}
+.price-card.featured{border-color:var(--green);background:linear-gradient(135deg,#ECFDF5,#fff);box-shadow:0 12px 40px rgba(44,110,73,.15)}
+.price-card .featured-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:4px 20px;border-radius:20px;font-size:12px;font-weight:700}
+.price-card h3{font-size:20px;font-weight:700;margin-bottom:6px}
+.price-card .tagline{font-size:13px;color:var(--gray);margin-bottom:24px}
+.price-card .price{font-size:48px;font-weight:900;color:var(--green);letter-spacing:-2px;margin-bottom:4px}
+.price-card .price sup{font-size:24px;vertical-align:super}
+.price-card .price-period{font-size:13px;color:var(--gray);margin-bottom:28px}
+.price-features{list-style:none;margin-bottom:32px}
+.price-features li{padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;display:flex;align-items:center;gap:10px}
+.price-features li:last-child{border:none}
+.pf-check{color:var(--green);font-weight:900;font-size:16px}
+.price-btn{display:block;text-align:center;padding:14px;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;transition:.2s;border:none;width:100%}
+.price-btn.outline{border:2px solid var(--green);color:var(--green);background:transparent}
+.price-btn.outline:hover{background:var(--green);color:#fff}
+.price-btn.solid{background:var(--green);color:#fff}
+.price-btn.solid:hover{background:var(--green-dark)}
+
+/* TESTIMONIALS */
+.testi{background:var(--bg)}
+.testi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:48px}
+.testi-card{background:#fff;border-radius:16px;padding:28px;border:1px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,.04)}
+.testi-stars{color:var(--gold);font-size:18px;margin-bottom:14px}
+.testi-card blockquote{font-size:15px;line-height:1.7;color:var(--text);font-style:italic;margin-bottom:20px}
+.testi-author{display:flex;align-items:center;gap:12px}
+.testi-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-light));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;flex-shrink:0}
+.testi-author div span:first-child{display:block;font-size:14px;font-weight:700}
+.testi-author div span:last-child{font-size:12px;color:var(--gray)}
+
+/* CTA FINAL */
+.cta-final{background:linear-gradient(135deg,#0A1A10,#1B3A2D 50%,#234A35);text-align:center;padding:100px 40px}
+.cta-final h2{font-size:clamp(32px,5vw,56px);font-weight:900;color:#fff;letter-spacing:-2px;margin-bottom:20px}
+.cta-final h2 span{color:var(--gold)}
+.cta-final p{font-size:18px;color:rgba(255,255,255,.7);max-width:540px;margin:0 auto 48px}
+.cta-form{display:flex;gap:12px;max-width:480px;margin:0 auto;flex-wrap:wrap}
+.cta-form input{flex:1;padding:16px 20px;border-radius:10px;border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:15px;min-width:200px}
+.cta-form input::placeholder{color:rgba(255,255,255,.4)}
+.cta-form input:focus{outline:none;border-color:var(--gold)}
+.cta-form button{padding:16px 32px;background:var(--gold);color:#1B3A2D;border:none;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;transition:.2s;white-space:nowrap}
+.cta-form button:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(212,168,67,.5)}
+.cta-garantia{margin-top:24px;font-size:13px;color:rgba(255,255,255,.5)}
+.cta-garantia strong{color:rgba(255,255,255,.8)}
+
+/* FOOTER */
+footer{background:#0A1A10;padding:40px;text-align:center}
+footer p{font-size:13px;color:rgba(255,255,255,.4)}
+footer strong{color:rgba(255,255,255,.7)}
+
+/* SCROLL ANIMATIONS */
+.reveal{opacity:0;transform:translateY(32px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:none}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  nav{padding:0 20px}
+  .nav-links{display:none}
+  section{padding:60px 20px}
+  .hero{padding:80px 20px 60px}
+  .hero-stats{gap:28px}
+  .cta-form{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><span>🌱</span> AgroSinergia</div>
+  <div class="nav-links">
+    <a href="#problema">El problema</a>
+    <a href="#funcionalidades">Funcionalidades</a>
+    <a href="#ahorro">Ahorro</a>
+    <a href="#precios">Precios</a>
+  </div>
+  <button class="nav-cta" onclick="document.getElementById('contacto').scrollIntoView({behavior:'smooth'})">Solicitar Demo →</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="inicio">
+  <div>
+    <div class="hero-badge">🚀 Plataforma agrícola todo en uno · 2026</div>
+    <h1>Tu finca, tu empresa.<br><span>Todo en un solo lugar.</span></h1>
+    <p>Deja de pagar por 8 herramientas distintas que no se hablan entre sí. AgroSinergia integra gestión, datos, IA y trazabilidad en una sola plataforma diseñada para el agro.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="document.getElementById('contacto').scrollIntoView({behavior:'smooth'})">Pedir Demo Gratuita →</button>
+      <button class="btn-outline" onclick="document.getElementById('ahorro').scrollIntoView({behavior:'smooth'})">Calcular mi ahorro</button>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num">-68%</div><div class="lbl">Tiempo en gestión</div></div>
+      <div class="hero-stat"><div class="num">12k€</div><div class="lbl">Ahorro medio anual</div></div>
+      <div class="hero-stat"><div class="num">1 app</div><div class="lbl">En lugar de 8 herramientas</div></div>
+      <div class="hero-stat"><div class="num">100%</div><div class="lbl">Trazabilidad garantizada</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEMA -->
+<section class="problem" id="problema">
+  <div class="container">
+    <div class="section-label">El problema real</div>
+    <h2>¿Cuántas herramientas usas<br><span>y cuántas te cuestan?</span></h2>
+    <p class="section-sub">La mayoría de explotaciones agrícolas gestionan su empresa con un mosaico de herramientas que no conectan entre sí — desperdiciando dinero, tiempo y datos.</p>
+    <div class="pain-grid">
+      <div class="pain-card reveal">
+        <div class="pain-icon">📋</div>
+        <h3>Excel para todo</h3>
+        <p>Hojas que nadie entiende, versiones distintas en cada ordenador, sin histórico real ni alertas automáticas.</p>
+        <div class="pain-cost">⏱ +8h/semana en gestión manual</div>
+      </div>
+      <div class="pain-card reveal">
+        <div class="pain-icon">💸</div>
+        <h3>Múltiples suscripciones</h3>
+        <p>Pagas por separado gestión de riego, cuaderno de campo SIGPAC, ERP, app de empleados, herramienta de pedidos...</p>
+        <div class="pain-cost">💶 4.000–15.000€/año en suscripciones</div>
+      </div>
+      <div class="pain-card reveal">
+        <div class="pain-icon">🔌</div>
+        <h3>Software que no conecta</h3>
+        <p>Tu app de meteorología no habla con tu sistema de riego. Tus pedidos no conectan con tus cosechas. Datos duplicados por todos lados.</p>
+        <div class="pain-cost">❌ Decisiones lentas y errores costosos</div>
+      </div>
+      <div class="pain-card reveal">
+        <div class="pain-icon">📱</div>
+        <h3>Los trabajadores no lo usan</h3>
+        <p>Sistemas complejos que requieren formación. En campo no hay PC, la app no funciona sin WiFi y los partes siguen siendo en papel.</p>
+        <div class="pain-cost">📉 Datos que nunca llegan a dirección</div>
+      </div>
+      <div class="pain-card reveal">
+        <div class="pain-icon">📦</div>
+        <h3>Trazabilidad imposible</h3>
+        <p>Cuando el cliente te pide el origen de un lote, buscas en 4 sistemas distintos. La auditoría GlobalGAP se convierte en una pesadilla.</p>
+        <div class="pain-cost">⚠️ Riesgo de pérdida de certificación</div>
+      </div>
+      <div class="pain-card reveal">
+        <div class="pain-icon">🤯</div>
+        <h3>Sin visibilidad en tiempo real</h3>
+        <p>¿Cuánto has cosechado esta semana? ¿Cuál es el coste real por hectárea? ¿Qué parcela está dando más margen? Nadie lo sabe.</p>
+        <div class="pain-cost">📊 Decisiones a ciegas</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VS SECTION -->
+<section class="vs-section" id="versus">
+  <div class="container">
+    <div class="section-label">Por qué todo en uno</div>
+    <h2>Herramientas sueltas <span>vs</span> AgroSinergia</h2>
+    <p class="section-sub">No es solo una cuestión de precio. Es de coherencia, velocidad y toma de decisiones.</p>
+
+    <div class="vs-wrap">
+      <div class="vs-col-bad">
+        <div class="vs-header">❌ Herramientas separadas</div>
+        <div class="vs-item"><div class="vi">✗</div><span>Datos dispersos en 6–10 sistemas distintos</span></div>
+        <div class="vs-item"><div class="vi">✗</div><span>Formación distinta para cada herramienta</span></div>
+        <div class="vs-item"><div class="vi">✗</div><span>Exportar, copiar, pegar entre sistemas</span></div>
+        <div class="vs-item"><div class="vi">✗</div><span>Soporte técnico de múltiples proveedores</span></div>
+        <div class="vs-item"><div class="vi">✗</div><span>Facturas distintas cada mes de cada software</span></div>
+        <div class="vs-item"><div class="vi">✗</div><span>Sin visión global: no ves el negocio completo</span></div>
+        <div class="vs-item"><div class="vi">✗</div><span>Integraciones que se rompen con cada actualización</span></div>
+        <div class="vs-item"><div class="vi">✗</div><span>La IA no sabe nada de tu finca específica</span></div>
+      </div>
+
+      <div class="vs-vs"><div class="vs-badge">VS</div></div>
+
+      <div class="vs-col-good">
+        <div class="vs-header">✅ AgroSinergia</div>
+        <div class="vs-item"><div class="vi">✓</div><span>Un único sistema, todos los datos conectados</span></div>
+        <div class="vs-item"><div class="vi">✓</div><span>Una sola app, todos la dominan en 1 día</span></div>
+        <div class="vs-item"><div class="vi">✓</div><span>Datos fluyen automáticamente entre módulos</span></div>
+        <div class="vs-item"><div class="vi">✓</div><span>Un proveedor, un contacto, un soporte</span></div>
+        <div class="vs-item"><div class="vi">✓</div><span>Una sola factura mensual predecible</span></div>
+        <div class="vs-item"><div class="vi">✓</div><span>Dashboard CEO: ves tu empresa entera en 10 segundos</span></div>
+        <div class="vs-item"><div class="vi">✓</div><span>Todo integrado nativamente, sin romperse</span></div>
+        <div class="vs-item"><div class="vi">✓</div><span>IA entrenada con los datos reales de TU finca</span></div>
+      </div>
+    </div>
+
+    <div class="cost-compare">
+      <div class="cost-box bad">
+        <h4>Lo que pagas ahora</h4>
+        <div class="price">~850€</div>
+        <div class="price-label">al mes · entre todas las herramientas</div>
+        <ul>
+          <li>Cuaderno SIGPAC/SGA <span>80€/mes</span></li>
+          <li>ERP agrícola <span>250€/mes</span></li>
+          <li>App gestión empleados <span>150€/mes</span></li>
+          <li>Software riego/sensores <span>120€/mes</span></li>
+          <li>Herramienta pedidos/CRM <span>120€/mes</span></li>
+          <li>Plataforma meteorológica <span>80€/mes</span></li>
+          <li>Trazabilidad/QR <span>50€/mes</span></li>
+        </ul>
+      </div>
+      <div class="cost-box good">
+        <h4>Con AgroSinergia</h4>
+        <div class="price">199€</div>
+        <div class="price-label">al mes · todo incluido sin límites</div>
+        <ul>
+          <li>Cuaderno de campo digital <span>✓</span></li>
+          <li>Gestión completa de finca <span>✓</span></li>
+          <li>RRHH + Fichajes <span>✓</span></li>
+          <li>Riego + Intervenciones <span>✓</span></li>
+          <li>Pedidos + Exportación <span>✓</span></li>
+          <li>Meteorología AEMET real <span>✓</span></li>
+          <li>Trazabilidad QR + IA <span>✓</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="saving-banner">
+      <h3>🎉 Ahorro real: hasta 651€/mes · 7.812€/año</h3>
+      <p>Sin contar el tiempo ahorrado en gestión manual — que vale muchísimo más.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FUNCIONALIDADES -->
+<section id="funcionalidades">
+  <div class="container">
+    <div class="section-label">Funcionalidades</div>
+    <h2>Todo lo que necesita<br><span>una empresa agrícola moderna</span></h2>
+    <p class="section-sub">Más de 15 módulos integrados que cubren cada área de tu explotación, desde la semilla hasta la factura.</p>
+    <div class="features-grid">
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">📊</div>
+        <h3>Dashboard Ejecutivo CEO</h3>
+        <p>Visión completa de tu empresa en una pantalla: cosechas del día, facturación activa, alertas críticas, costes por parcela y KPIs en tiempo real. Toma decisiones en 10 segundos, no en 2 horas.</p>
+        <div class="feat-tags"><span class="feat-tag">Tiempo real</span><span class="feat-tag">KPIs</span><span class="feat-tag">Alertas</span></div>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">📦</div>
+        <h3>Gestión de Pedidos y Exportación</h3>
+        <p>Pipeline completo de pedidos de exportación e importación de materiales. Estado de cada pedido, clientes, productos, fechas de entrega y seguimiento de facturación. Conectado con tus cosechas.</p>
+        <div class="feat-tags"><span class="feat-tag">Pipeline</span><span class="feat-tag">Exportación</span><span class="feat-tag">Trazabilidad</span></div>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">👥</div>
+        <h3>RRHH y Gestión de Personal</h3>
+        <p>Control de trabajadores, fichajes digitales, partes de trabajo, asistencia, productividad por empleado, gestión de cuadrillas y cumplimiento del Convenio del Campo. Todo en móvil.</p>
+        <div class="feat-tags"><span class="feat-tag">Fichajes</span><span class="feat-tag">Cuadrillas</span><span class="feat-tag">Productividad</span></div>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">🗺️</div>
+        <h3>Cartografía y Catastro</h3>
+        <p>Mapa interactivo de todas tus parcelas con capas de catastro oficial, búsqueda de fincas por referencia catastral, geocodificación de direcciones y visualización de tratamientos por zona.</p>
+        <div class="feat-tags"><span class="feat-tag">Catastro</span><span class="feat-tag">Leaflet</span><span class="feat-tag">Geocoding</span></div>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">🌿</div>
+        <h3>Gestión de Parcelas y Cosecha</h3>
+        <p>Ficha completa de cada parcela: variedad, superficie, fechas de siembra, estado fitosanitario, histórico de producción e intervenciones. Registro de cosecha con fotografías y geolocalización.</p>
+        <div class="feat-tags"><span class="feat-tag">Parcelas</span><span class="feat-tag">Cosecha</span><span class="feat-tag">Fotos</span></div>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">💧</div>
+        <h3>Riego y Tratamientos</h3>
+        <p>Planificación y registro de riegos con cálculo de evapotranspiración. Cuaderno de tratamientos fitosanitarios certificado para SIGPAC y GlobalGAP. Alertas por helada o riesgo fitosanitario.</p>
+        <div class="feat-tags"><span class="feat-tag">SIGPAC</span><span class="feat-tag">Fitosanitarios</span><span class="feat-tag">GlobalGAP</span></div>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">🌡️</div>
+        <h3>Meteorología AEMET en Tiempo Real</h3>
+        <p>Datos oficiales de AEMET para tu municipio: temperatura, humedad, viento, probabilidad de lluvia, alertas activas y previsión 7 días con recomendaciones agroclimáticas específicas para tu cultivo.</p>
+        <div class="feat-tags"><span class="feat-tag">AEMET</span><span class="feat-tag">Alertas</span><span class="feat-tag">Recomendaciones</span></div>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">🔍</div>
+        <h3>Trazabilidad QR Total</h3>
+        <p>Genera códigos QR para cada lote desde la parcela hasta el camión. Escanea en campo con el móvil y sigue el producto en tiempo real. Documentación de origen lista para cualquier auditoría en segundos.</p>
+        <div class="feat-tags"><span class="feat-tag">QR</span><span class="feat-tag">Lotes</span><span class="feat-tag">Auditoría</span></div>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">🤖</div>
+        <h3>Asistente IA Agrícola (Groq · Llama 3.1)</h3>
+        <p>IA entrenada con los datos reales de tu finca. Responde en lenguaje natural, crea tareas, registra cosechas, analiza fotos de enfermedades, genera informes ejecutivos y optimiza tus decisiones.</p>
+        <div class="feat-tags"><span class="feat-tag">IA</span><span class="feat-tag">LLM</span><span class="feat-tag">Análisis foto</span></div>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">📋</div>
+        <h3>Cuaderno de Campo Digital</h3>
+        <p>Cumple con la normativa del cuaderno de explotación agrícola digital. Registro automático de todas las operaciones, exportación a PDF y sincronización con SIGPAC y herramientas de certificación.</p>
+        <div class="feat-tags"><span class="feat-tag">Normativa</span><span class="feat-tag">PDF</span><span class="feat-tag">SIGPAC</span></div>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">🚛</div>
+        <h3>Logística y Transporte</h3>
+        <p>Gestión de rutas de transporte, albaranes digitales, control de conductores y vehículos. Incident reporting en tiempo real desde el móvil del conductor. Integración directa con pedidos de exportación.</p>
+        <div class="feat-tags"><span class="feat-tag">Rutas</span><span class="feat-tag">Albaranes</span><span class="feat-tag">Conductores</span></div>
+      </div>
+
+      <div class="feat-card reveal">
+        <div class="feat-icon">📱</div>
+        <h3>App Móvil Instalable (PWA)</h3>
+        <p>Funciona como app nativa en cualquier Android o iPhone sin pasar por la App Store. Instalación en 1 clic desde el navegador. Funciona sin WiFi con caché offline. Notificaciones push, cámara integrada.</p>
+        <div class="feat-tags"><span class="feat-tag">PWA</span><span class="feat-tag">Offline</span><span class="feat-tag">Sin App Store</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CALCULADORA ROI -->
+<section class="calculator" id="ahorro">
+  <div class="container">
+    <div class="section-label">Calculadora de ahorro</div>
+    <h2>Calcula tu <span>ROI real</span></h2>
+    <p class="section-sub">Ajusta los parámetros de tu explotación y ve cuánto ahorras al año con AgroSinergia.</p>
+    <div class="calc-wrap">
+      <div class="calc-form">
+        <h3>⚙️ Tu explotación</h3>
+        <div class="calc-group">
+          <label>Empleados / Temporeros</label>
+          <input type="range" id="r-empleados" min="5" max="100" value="25" oninput="calcROI()">
+          <div class="calc-val"><span id="v-empleados">25</span><span>trabajadores</span></div>
+        </div>
+        <div class="calc-group">
+          <label>Hectáreas en producción</label>
+          <input type="range" id="r-hectareas" min="10" max="500" value="80" oninput="calcROI()">
+          <div class="calc-val"><span id="v-hectareas">80</span><span>ha</span></div>
+        </div>
+        <div class="calc-group">
+          <label>Toneladas producidas / año</label>
+          <input type="range" id="r-toneladas" min="50" max="5000" value="600" oninput="calcROI()">
+          <div class="calc-val"><span id="v-toneladas">600</span><span>toneladas</span></div>
+        </div>
+        <div class="calc-group">
+          <label>Herramientas digitales actuales</label>
+          <input type="range" id="r-tools" min="1" max="12" value="5" oninput="calcROI()">
+          <div class="calc-val"><span id="v-tools">5</span><span>suscripciones</span></div>
+        </div>
+      </div>
+      <div class="calc-results" id="calc-results">
+        <div class="result-card">
+          <div class="rc-label">⏱ Horas ahorradas por semana</div>
+          <div class="rc-num" id="r-horas">-</div>
+          <div class="rc-sub">en tareas manuales, búsqueda de datos y gestión</div>
+        </div>
+        <div class="result-card">
+          <div class="rc-label">💶 Ahorro en suscripciones anuales</div>
+          <div class="rc-num" id="r-subs">-</div>
+          <div class="rc-sub">consolidando todas las herramientas en una</div>
+        </div>
+        <div class="result-card">
+          <div class="rc-label">📈 Mejora de margen estimada</div>
+          <div class="rc-num" id="r-margen">-</div>
+          <div class="rc-sub">por mejor trazabilidad, menos mermas y decisiones más rápidas</div>
+        </div>
+        <div class="result-card highlight">
+          <div class="rc-label">🎯 AHORRO TOTAL ESTIMADO / AÑO</div>
+          <div class="rc-num" id="r-total">-</div>
+          <div class="rc-sub">ROI medio: recuperas la inversión en <span id="r-payback">-</span> meses</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- IMPLEMENTACIÓN -->
+<section>
+  <div class="container">
+    <div class="section-label">Implementación</div>
+    <h2>En marcha en <span>menos de una semana</span></h2>
+    <p class="section-sub">Sin instalaciones, sin configuraciones complejas, sin formación larga. Tu equipo estará usando AgroSinergia desde el día 1.</p>
+    <div class="timeline">
+      <div class="tl-item reveal">
+        <div class="tl-dot"></div>
+        <div class="tl-badge">DÍA 1</div>
+        <h4>Acceso y configuración inicial</h4>
+        <p>Te entregamos acceso con tu empresa configurada. Importamos tus parcelas y empleados actuales. 2 horas de onboarding con tu equipo.</p>
+      </div>
+      <div class="tl-item reveal">
+        <div class="tl-dot"></div>
+        <div class="tl-badge">DÍA 2–3</div>
+        <h4>Formación del equipo de campo</h4>
+        <p>Los encargados y recolectores aprenden a usar la app en el móvil. Es tan sencilla que en 30 minutos ya están fichando y reportando incidencias.</p>
+      </div>
+      <div class="tl-item reveal">
+        <div class="tl-dot"></div>
+        <div class="tl-badge">DÍA 4–5</div>
+        <h4>Integración de datos históricos</h4>
+        <p>Importamos tus datos de cosechas, pedidos y parcelas anteriores para que la IA tenga contexto desde el primer día y los informes sean útiles.</p>
+      </div>
+      <div class="tl-item reveal">
+        <div class="tl-dot"></div>
+        <div class="tl-badge">DÍA 7</div>
+        <h4>Operación completa · Cancelación herramientas anteriores</h4>
+        <p>Tu empresa ya funciona completamente en AgroSinergia. Puedes cancelar las suscripciones antiguas. El ahorro empieza ese mismo mes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testi">
+  <div class="container">
+    <div class="section-label">Clientes</div>
+    <h2>Empresas que ya <span>lo están usando</span></h2>
+    <div class="testi-grid">
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>"Antes tardábamos 3 días en preparar la documentación para una auditoría GlobalGAP. Ahora son 20 minutos. Solo eso ya justifica todo."</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar">MR</div>
+          <div><span>Miguel Ruiz</span><span>Director Técnico · Finca Valle Verde, Murcia</span></div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>"Pagábamos más de 900€ al mes entre todas las herramientas. Con AgroSinergia pagamos 199€ y tenemos más funcionalidades. El ROI fue inmediato."</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar">CA</div>
+          <div><span>Carmen Aznar</span><span>Gerente · Cooperativa Agrícola El Palmeral</span></div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>"El asistente de IA me hace informes del estado de la finca cada mañana antes de llegar. Es como tener un gerente extra que no descansa."</blockquote>
+        <div class="testi-author">
+          <div class="testi-avatar">JL</div>
+          <div><span>José Lorente</span><span>CEO · Agrícola Lorente Hnos., Alicante</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="precios">
+  <div class="container">
+    <div class="section-label">Precios</div>
+    <h2>Transparente, predecible,<br><span>sin sorpresas</span></h2>
+    <p class="section-sub">Sin costes de implantación, sin licencias por usuario, sin letras pequeñas. Empieza con 30 días gratis.</p>
+    <div class="pricing-grid">
+      <div class="price-card reveal">
+        <h3>Esencial</h3>
+        <div class="tagline">Para fincas familiares y pequeñas explotaciones</div>
+        <div class="price"><sup>€</sup>79</div>
+        <div class="price-period">al mes · usuarios ilimitados</div>
+        <ul class="price-features">
+          <li><span class="pf-check">✓</span> Dashboard y parcelas</li>
+          <li><span class="pf-check">✓</span> RRHH y fichajes (hasta 15 emp.)</li>
+          <li><span class="pf-check">✓</span> Cuaderno de campo digital</li>
+          <li><span class="pf-check">✓</span> Trazabilidad QR básica</li>
+          <li><span class="pf-check">✓</span> Meteorología AEMET</li>
+          <li><span class="pf-check">✓</span> App móvil PWA</li>
+          <li><span class="pf-check">✓</span> Soporte por email</li>
+        </ul>
+        <button class="price-btn outline" onclick="document.getElementById('contacto').scrollIntoView({behavior:'smooth'})">Empezar gratis 30 días</button>
+      </div>
+
+      <div class="price-card featured reveal">
+        <div class="featured-badge">⭐ MÁS POPULAR</div>
+        <h3>Profesional</h3>
+        <div class="tagline">Para explotaciones medianas y grandes cooperativas</div>
+        <div class="price"><sup>€</sup>199</div>
+        <div class="price-period">al mes · usuarios y roles ilimitados</div>
+        <ul class="price-features">
+          <li><span class="pf-check">✓</span> Todo lo de Esencial</li>
+          <li><span class="pf-check">✓</span> IA agrícola Groq · Llama 3.1</li>
+          <li><span class="pf-check">✓</span> Gestión completa de pedidos</li>
+          <li><span class="pf-check">✓</span> Logística y transporte</li>
+          <li><span class="pf-check">✓</span> Cartografía y catastro</li>
+          <li><span class="pf-check">✓</span> Trazabilidad QR avanzada</li>
+          <li><span class="pf-check">✓</span> Control calidad + auditorías</li>
+          <li><span class="pf-check">✓</span> Soporte prioritario + onboarding</li>
+        </ul>
+        <button class="price-btn solid" onclick="document.getElementById('contacto').scrollIntoView({behavior:'smooth'})">Solicitar Demo →</button>
+      </div>
+
+      <div class="price-card reveal">
+        <h3>Enterprise</h3>
+        <div class="tagline">Para grupos agrícolas, cooperativas y grandes exportadoras</div>
+        <div class="price" style="font-size:32px;padding-top:8px">A medida</div>
+        <div class="price-period">según volumen y requisitos</div>
+        <ul class="price-features">
+          <li><span class="pf-check">✓</span> Todo lo de Profesional</li>
+          <li><span class="pf-check">✓</span> Servidor dedicado y datos propios</li>
+          <li><span class="pf-check">✓</span> Integraciones con ERP existente</li>
+          <li><span class="pf-check">✓</span> IA personalizada con tus datos</li>
+          <li><span class="pf-check">✓</span> Módulos a medida</li>
+          <li><span class="pf-check">✓</span> SLA garantizado 99.9%</li>
+          <li><span class="pf-check">✓</span> Account manager dedicado</li>
+        </ul>
+        <button class="price-btn outline" onclick="document.getElementById('contacto').scrollIntoView({behavior:'smooth'})">Contactar →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final" id="contacto">
+  <h2>¿Listo para <span>transformar</span><br>tu empresa agrícola?</h2>
+  <p>30 días de prueba gratuita. Sin tarjeta de crédito. Sin instalaciones. En marcha en menos de una semana.</p>
+  <div class="cta-form">
+    <input type="email" placeholder="tu@email.com" id="cta-email">
+    <button onclick="solicitarDemo()">Solicitar Demo Gratis →</button>
+  </div>
+  <p class="cta-garantia">✅ <strong>Sin permanencia</strong> · ✅ <strong>Cancela cuando quieras</strong> · ✅ <strong>Soporte en español</strong></p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2026 <strong>AgroSinergia · Somos Sinergia</strong> · Fruitum &amp; Fruchesco · Todos los derechos reservados</p>
+</footer>
+
+<script>
+// CALCULADORA ROI
+function calcROI(){
+  var emp=+document.getElementById('r-empleados').value;
+  var ha=+document.getElementById('r-hectareas').value;
+  var ton=+document.getElementById('r-toneladas').value;
+  var tools=+document.getElementById('r-tools').value;
+
+  document.getElementById('v-empleados').textContent=emp;
+  document.getElementById('v-hectareas').textContent=ha;
+  document.getElementById('v-toneladas').textContent=ton;
+  document.getElementById('v-tools').textContent=tools;
+
+  // Calculos
+  var horasSemana=Math.round(emp*0.4+ha*0.08+2);
+  var ahorroSubs=Math.round(tools*110-199)*12;
+  if(ahorroSubs<0)ahorroSubs=0;
+  var mejorMargen=Math.round(ton*2.8+ha*45);
+  var total=ahorroSubs+mejorMargen;
+  var payback=Math.round(199*12/Math.max(total,1)*12);
+  if(payback<1)payback=1;
+
+  document.getElementById('r-horas').textContent=horasSemana+'h/sem';
+  document.getElementById('r-subs').textContent=ahorroSubs.toLocaleString('es-ES')+'€/año';
+  document.getElementById('r-margen').textContent='+'+mejorMargen.toLocaleString('es-ES')+'€/año';
+  document.getElementById('r-total').textContent=total.toLocaleString('es-ES')+'€/año';
+  document.getElementById('r-payback').textContent=payback;
+}
+calcROI();
+
+// CTA DEMO
+function solicitarDemo(){
+  var email=document.getElementById('cta-email').value.trim();
+  if(!email||!email.includes('@')){alert('Introduce un email válido');return;}
+  alert('✅ ¡Gracias! Nos pondremos en contacto contigo en menos de 24h para tu demo personalizada.\n\nEmail: '+email);
+  document.getElementById('cta-email').value='';
+}
+
+// SCROLL REVEAL
+var observer=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(function(el){observer.observe(el)});
+
+// SMOOTH SCROLL NAV
+document.querySelectorAll('a[href^="#"]').forEach(function(a){
+  a.addEventListener('click',function(e){
+    e.preventDefault();
+    var t=document.querySelector(this.getAttribute('href'));
+    if(t)t.scrollIntoView({behavior:'smooth'});
+  });
+});
+</script>
+</body>
+</html>
