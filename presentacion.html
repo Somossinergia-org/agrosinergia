@@ -193,6 +193,11 @@ footer strong{color:rgba(255,255,255,.7)}
 .reveal.visible{opacity:1;transform:none}
 
 /* RESPONSIVE */
+@media(max-width:900px){
+  .pain-case{grid-template-columns:1fr !important;gap:24px !important}
+  .pain-case>div:first-child{order:2}
+  .pain-case>div:last-child{order:1}
+}
 @media(max-width:768px){
   nav{padding:0 20px}
   .nav-links{display:none}
@@ -236,48 +241,66 @@ footer strong{color:rgba(255,255,255,.7)}
   </div>
 </section>
 
-<!-- PROBLEMA -->
+<!-- PROBLEMA PROFUNDO -->
 <section class="problem" id="problema">
   <div class="container">
-    <div class="section-label">El problema real</div>
-    <h2>¿Cuántas herramientas usas<br><span>y cuántas te cuestan?</span></h2>
-    <p class="section-sub">La mayoría de explotaciones agrícolas gestionan su empresa con un mosaico de herramientas que no conectan entre sí — desperdiciando dinero, tiempo y datos.</p>
-    <div class="pain-grid">
-      <div class="pain-card reveal">
-        <div class="pain-icon">📋</div>
-        <h3>Excel para todo</h3>
-        <p>Hojas que nadie entiende, versiones distintas en cada ordenador, sin histórico real ni alertas automáticas.</p>
-        <div class="pain-cost">⏱ +8h/semana en gestión manual</div>
+    <div class="section-label">La Realidad del Sector</div>
+    <h2>El margen no se pierde en el campo.<br><span>Se pierde en la oficina.</span></h2>
+    <p class="section-sub">Tus tractores tienen GPS milimétrico, pero coordinas a 50 temporeros por WhatsApp y cruzas los partes de trabajo en Excel. La desconexión tecnológica te está costando decenas de miles de euros al año en fugas invisibles.</p>
+    
+    <div class="pain-cases" style="margin-top:48px;display:flex;flex-direction:column;gap:32px">
+      <!-- Caso 1 -->
+      <div class="pain-case" style="background:#fff;border-radius:20px;padding:40px;border:1px solid var(--border);border-left:4px solid var(--coral);box-shadow:0 8px 30px rgba(0,0,0,.04);display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center">
+        <div>
+          <div style="font-size:32px;margin-bottom:16px">🤯</div>
+          <h3 style="font-size:22px;margin-bottom:12px">El Lunes de Nóminas y Cuadrillas</h3>
+          <p style="font-size:15px;color:var(--gray);margin-bottom:16px"><strong>El dolor:</strong> Llega fin de mes. Tienes 3 encargados con libretas manchadas de barro, mensajes de WhatsApp con altas/bajas que nadie apuntó, y listados de RRHH que no cuadran con las cajas recolectadas. El departamento de administración pierde 2 días cruzando datos a mano, pagando horas extra de más "por si acaso" o enfrentando quejas por errores.</p>
+          <div style="background:rgba(76,149,108,.1);border-left:3px solid var(--green);padding:16px;border-radius:0 8px 8px 0">
+            <h4 style="font-size:14px;color:var(--green);margin-bottom:4px">La Solución AgroSinergia</h4>
+            <p style="font-size:13px;color:var(--text)">Fichaje QR en campo sin internet. El empleado escanea su código, el sistema geolocaliza el fichaje y lo asigna a parcela/tarea. A fin de mes, RRHH exporta el archivo para la gestoría en 3 clics. Cero libretas, cero desfases.</p>
+          </div>
+        </div>
+        <div style="background:var(--bg);padding:32px;border-radius:16px;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:12px">Impacto Económico</div>
+          <div style="font-size:48px;font-weight:900;color:var(--coral);letter-spacing:-2px;line-height:1">-4.000€</div>
+          <div style="font-size:13px;color:var(--gray);margin-top:8px">Pérdida anual estimada por errores de redondeo al alza, duplicidades y 40 horas mensuales del contable cuadrando partes a mano (explotación media 30 emp.).</div>
+        </div>
       </div>
-      <div class="pain-card reveal">
-        <div class="pain-icon">💸</div>
-        <h3>Múltiples suscripciones</h3>
-        <p>Pagas por separado gestión de riego, cuaderno de campo SIGPAC, ERP, app de empleados, herramienta de pedidos...</p>
-        <div class="pain-cost">💶 4.000–15.000€/año en suscripciones</div>
+
+      <!-- Caso 2 -->
+      <div class="pain-case" style="background:#fff;border-radius:20px;padding:40px;border:1px solid var(--border);border-left:4px solid var(--gold);box-shadow:0 8px 30px rgba(0,0,0,.04);display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center">
+        <div style="background:var(--bg);padding:32px;border-radius:16px;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:12px">Impacto Comercial</div>
+          <div style="font-size:48px;font-weight:900;color:var(--gold);letter-spacing:-2px;line-height:1">Bloqueo</div>
+          <div style="font-size:13px;color:var(--gray);margin-top:8px">Riesgo crítico de paralización de exportación por incompatibilidad de LMRs, o pérdida de confianza del cliente retail por tardar 48h en justificar un origen.</div>
+        </div>
+        <div>
+          <div style="font-size:32px;margin-bottom:16px">🕵️</div>
+          <h3 style="font-size:22px;margin-bottom:12px">La Auditoría GlobalGAP Inesperada</h3>
+          <p style="font-size:15px;color:var(--gray);margin-bottom:16px"><strong>El dolor:</strong> Un cliente europeo pide la trazabilidad exacta del lote #4402. Hay que rastrear: ¿qué parcela fue?, ¿qué fitosanitarios se echaron hace 40 días?, ¿quién fue el aplicador?, ¿cuál era la temperatura del almacén? Empieza la búsqueda en 4 programas distintos, llamando al técnico externo y buscando el cuaderno de campo (que lleva 2 semanas sin actualizarse).</p>
+          <div style="background:rgba(212,168,67,.15);border-left:3px solid var(--gold);padding:16px;border-radius:0 8px 8px 0">
+            <h4 style="font-size:14px;color:#967524;margin-bottom:4px">La Solución AgroSinergia</h4>
+            <p style="font-size:13px;color:var(--text)">Cada caja sale con un QR único vinculado nativamente al Cuaderno de Campo Digital. Al escanearlo, el cliente ve en 1 segundo: parcela exacta, histórico de tratamientos (conectado a la BBDD del MAPA), operarios, clima del día de cosecha y albarán de logística. Documentación generada en tiempo real.</p>
+          </div>
+        </div>
       </div>
-      <div class="pain-card reveal">
-        <div class="pain-icon">🔌</div>
-        <h3>Software que no conecta</h3>
-        <p>Tu app de meteorología no habla con tu sistema de riego. Tus pedidos no conectan con tus cosechas. Datos duplicados por todos lados.</p>
-        <div class="pain-cost">❌ Decisiones lentas y errores costosos</div>
-      </div>
-      <div class="pain-card reveal">
-        <div class="pain-icon">📱</div>
-        <h3>Los trabajadores no lo usan</h3>
-        <p>Sistemas complejos que requieren formación. En campo no hay PC, la app no funciona sin WiFi y los partes siguen siendo en papel.</p>
-        <div class="pain-cost">📉 Datos que nunca llegan a dirección</div>
-      </div>
-      <div class="pain-card reveal">
-        <div class="pain-icon">📦</div>
-        <h3>Trazabilidad imposible</h3>
-        <p>Cuando el cliente te pide el origen de un lote, buscas en 4 sistemas distintos. La auditoría GlobalGAP se convierte en una pesadilla.</p>
-        <div class="pain-cost">⚠️ Riesgo de pérdida de certificación</div>
-      </div>
-      <div class="pain-card reveal">
-        <div class="pain-icon">🤯</div>
-        <h3>Sin visibilidad en tiempo real</h3>
-        <p>¿Cuánto has cosechado esta semana? ¿Cuál es el coste real por hectárea? ¿Qué parcela está dando más margen? Nadie lo sabe.</p>
-        <div class="pain-cost">📊 Decisiones a ciegas</div>
+
+      <!-- Caso 3 -->
+      <div class="pain-case" style="background:#fff;border-radius:20px;padding:40px;border:1px solid var(--border);border-left:4px solid var(--blue);box-shadow:0 8px 30px rgba(0,0,0,.04);display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center">
+        <div>
+          <div style="font-size:32px;margin-bottom:16px">🌦️</div>
+          <h3 style="font-size:22px;margin-bottom:12px">Tratar, Regar y Rezar</h3>
+          <p style="font-size:15px;color:var(--gray);margin-bottom:16px"><strong>El dolor:</strong> Sacas los atomizadores a tratar El Limonar. El técnico no miró bien el viento, o no cruzó el dato de probabilidad de lluvia de AEMET con el calendario de aplicación. A media tarde cae un aguacero sorpresa que lava los 2.500€ de producto foliar que acabas de echar. Dinero, tiempo y producto tirados directamente al suelo.</p>
+          <div style="background:rgba(59,130,246,.1);border-left:3px solid var(--blue);padding:16px;border-radius:0 8px 8px 0">
+            <h4 style="font-size:14px;color:var(--blue);margin-bottom:4px">La Solución AgroSinergia</h4>
+            <p style="font-size:13px;color:var(--text)">Integración nativa con AEMET y algoritmos de IA predictiva. El sistema te lanza una alerta roja en el móvil antes de asignar la orden de trabajo: <em>"Aviso: 80% lluvia en las próximas 6 horas en El Limonar. Rendimiento foliar en riesgo."</em> Reprogramas con un clic.</p>
+          </div>
+        </div>
+        <div style="background:var(--bg);padding:32px;border-radius:16px;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:12px">Impacto Agronómico</div>
+          <div style="font-size:48px;font-weight:900;color:var(--blue);letter-spacing:-2px;line-height:1">-2.500€</div>
+          <div style="font-size:13px;color:var(--gray);margin-top:8px">Coste medio de un tratamiento foliar arruinado en una finca de 20 hectáreas (producto + combustible + jornales). Dinero que se tira por falta de datos cruzados.</div>
+        </div>
       </div>
     </div>
   </div>
