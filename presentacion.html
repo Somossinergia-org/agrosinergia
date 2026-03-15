@@ -9,7 +9,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --green:#2C6E49;--green-dark:#1B3A2D;--green-light:#4C956C;
-  --gold:#D4A843;--coral:#E07A5F;--blue:#3B82F6;
+  --gold:#D4A843;--coral:#E07A5F;--blue:#3B82F6;--purple:#9333EA;
   --text:#1E293B;--gray:#64748B;--border:#E2E8F0;--bg:#F8FAFC;
 }
 body{font-family:'Inter',sans-serif;color:var(--text);background:#fff;line-height:1.6}
@@ -300,6 +300,60 @@ footer strong{color:rgba(255,255,255,.7)}
           <div style="font-size:13px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:12px">Impacto Agronómico</div>
           <div style="font-size:48px;font-weight:900;color:var(--blue);letter-spacing:-2px;line-height:1">-2.500€</div>
           <div style="font-size:13px;color:var(--gray);margin-top:8px">Coste medio de un tratamiento foliar arruinado en una finca de 20 hectáreas (producto + combustible + jornales). Dinero que se tira por falta de datos cruzados.</div>
+        </div>
+      </div>
+
+      <!-- Caso 4 -->
+      <div class="pain-case" style="background:#fff;border-radius:20px;padding:40px;border:1px solid var(--border);border-left:4px solid var(--purple);box-shadow:0 8px 30px rgba(0,0,0,.04);display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center">
+        <div style="background:var(--bg);padding:32px;border-radius:16px;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:12px">Impacto Analítico</div>
+          <div style="font-size:48px;font-weight:900;color:var(--purple);letter-spacing:-2px;line-height:1">Ciega</div>
+          <div style="font-size:13px;color:var(--gray);margin-top:8px">No saber el coste de producción real de cada caja hasta que el contable cierra el trimestre, perdiendo oportunidades de negociar márgenes.</div>
+        </div>
+        <div>
+          <div style="font-size:32px;margin-bottom:16px">📉</div>
+          <h3 style="font-size:22px;margin-bottom:12px">Rentabilidad a Ciegas</h3>
+          <p style="font-size:15px;color:var(--gray);margin-bottom:16px"><strong>El dolor:</strong> Cierras el trato a 1,20€/kg de limón. ¿Ganas o pierdes dinero con la Parcela Norte? No lo sabes, porque el coste del abono, las horas de tractor, el riego y el tiempo de los podadores están en 5 papeles diferentes. Para cuando tienes el coste real de producción por hectárea, la campaña ha terminado.</p>
+          <div style="background:rgba(147,51,234,.1);border-left:3px solid var(--purple);padding:16px;border-radius:0 8px 8px 0">
+            <h4 style="font-size:14px;color:var(--purple);margin-bottom:4px">La Solución AgroSinergia</h4>
+            <p style="font-size:13px;color:var(--text)">El Dashboard CEO unifica inputs en tiempo real. Cuando un operario ficha en una parcela, su coste/hora se suma inmediatamente al desglose. Al asignar un riego o fertilizante, el módulo recalcula Costes vs. Ventas Esperadas automáticamente.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Caso 5 -->
+      <div class="pain-case" style="background:#fff;border-radius:20px;padding:40px;border:1px solid var(--border);border-left:4px solid #F59E0B;box-shadow:0 8px 30px rgba(0,0,0,.04);display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center">
+        <div>
+          <div style="font-size:32px;margin-bottom:16px">🚛</div>
+          <h3 style="font-size:22px;margin-bottom:12px">El Camión en la Puerta... Vacío</h3>
+          <p style="font-size:15px;color:var(--gray);margin-bottom:16px"><strong>El dolor:</strong> El pedido para Perpignan sale hoy a las 18:00. Logística mandó el camión. Sin embargo, el jefe de cuadrilla no sabía que este palet necesitaba un grado brix específico, o simplemente la recolección iba con retraso. El chofer espera 4 horas cobrando paralizaciones (o se va). Descoordinación pura entre el almacén, el transporte y el campo.</p>
+          <div style="background:rgba(245,158,11,.1);border-left:3px solid #F59E0B;padding:16px;border-radius:0 8px 8px 0">
+            <h4 style="font-size:14px;color:#D97706;margin-bottom:4px">La Solución AgroSinergia</h4>
+            <p style="font-size:13px;color:var(--text)">Integración del módulo Pedidos + Logística. El sistema avisa a todas las partes simultáneamente: los partes de cosecha cambian de color para priorizar ese pedido, el conductor tiene visibilidad del % llenado desde su app móvil, bloqueando tiempos de espera inútiles.</p>
+          </div>
+        </div>
+        <div style="background:var(--bg);padding:32px;border-radius:16px;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:12px">Impacto Logístico</div>
+          <div style="font-size:48px;font-weight:900;color:#F59E0B;letter-spacing:-2px;line-height:1">-900€</div>
+          <div style="font-size:13px;color:var(--gray);margin-top:8px">Gastos mensuales de logística ineficaz: horas extra, penalizaciones por retraso de carga, paralizaciones de transporte y fruta que se degrada expuesta.</div>
+        </div>
+      </div>
+
+      <!-- Caso 6 -->
+      <div class="pain-case" style="background:#fff;border-radius:20px;padding:40px;border:1px solid var(--border);border-left:4px solid #3B82F6;box-shadow:0 8px 30px rgba(0,0,0,.04);display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center">
+        <div style="background:var(--bg);padding:32px;border-radius:16px;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:12px">Impacto Fitosanitario</div>
+          <div style="font-size:48px;font-weight:900;color:#3B82F6;letter-spacing:-2px;line-height:1">-1.200€</div>
+          <div style="font-size:13px;color:var(--gray);margin-top:8px">Dinero tirado aplicando el plaguicida incorrecto al confundir los síntomas, más el daño o merma directa a la calidad del fruto cosechado.</div>
+        </div>
+        <div>
+          <div style="font-size:32px;margin-bottom:16px">🦟</div>
+          <h3 style="font-size:22px;margin-bottom:12px">Plagas Diagnosticadas a Ojo</h3>
+          <p style="font-size:15px;color:var(--gray);margin-bottom:16px"><strong>El dolor:</strong> Un temporero ve "manchas raras" en unas hojas del sector 4. Le hace una foto mala, se la pasa por WhatsApp al encargado. El encargado cree que es Trips y pide aplicar acaricida general urgente. Dos días después, el técnico experto la ve y dice: "No, eso es negrilla por mosca blanca, el acaricida no le hace nada". Producto y tiempo tirados al suelo.</p>
+          <div style="background:rgba(59,130,246,.1);border-left:3px solid #3B82F6;padding:16px;border-radius:0 8px 8px 0">
+            <h4 style="font-size:14px;color:#2563EB;margin-bottom:4px">La Solución AgroSinergia</h4>
+            <p style="font-size:13px;color:var(--text)">Módulo de Análisis por IA (Groq Vision) directamente en el campo. El peón toma la foto desde la App (incluso sin WiFi). El Agrónomo IA detecta visualmente si es cochinilla, piojo o falta de potasio, con % de confianza. Lanza un aviso al ERP del técnico para revisión centralizada.</p>
+          </div>
         </div>
       </div>
     </div>
