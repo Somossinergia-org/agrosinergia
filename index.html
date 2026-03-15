@@ -15348,10 +15348,16 @@ function _aiInit(){
       _updateQuickBtns();
     }
   } else {
-    keySetup.style.display='flex';
-    chatUI.style.display='none';
+    // Sin key: mostrar chat con mensaje inline (no bloquear con pantalla de key)
+    keySetup.style.display='none';
+    chatUI.style.display='flex';
+    var u2=_getUser();
+    var n2=u2?u2.name.split(' ')[0]:'Usuario';
+    _chatHistory=[];
+    _addMsg('assistant','¡Hola '+n2+'! 🤖 Soy el asistente IA de AgroSinergia.\n\n🔑 Pega tu API Key de Groq (gratis en console.groq.com/keys) directamente aquí y pulsa Enviar para activarme.');
   }
 }
+
 
 window._aiShowKeySetup=function(){
   document.getElementById('ai-key-setup').style.display='flex';
@@ -15396,6 +15402,16 @@ window._aiSend=function(){
   var input=document.getElementById('ai-input');
   var text=(input.value||'').trim();
   if(!text)return;
+  // Auto-detección de key de Groq pegada directamente en el chat
+  if(text.startsWith('gsk_')&&text.length>20&&!getKey()){
+    setKey(text);
+    input.value='';input.style.height='';
+    _chatHistory=[];
+    document.getElementById('ai-messages').innerHTML='';
+    _aiInit();
+    _addMsg('assistant','✅ ¡Key de Groq activada! Ya puedes hablar con el asistente. ¿En qué te ayudo?');
+    return;
+  }
   input.value='';input.style.height='';
   _addMsg('user',text);
   var typing=_addTyping();
@@ -15411,6 +15427,7 @@ window._aiSend=function(){
     _addMsg('assistant','❌ Error: '+err);
   });
 };
+
 
 window._aiKeydown=function(e){
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();window._aiSend();}
