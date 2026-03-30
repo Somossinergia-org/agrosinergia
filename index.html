@@ -11733,13 +11733,11 @@ M.innerHTML+='<div class="page" id="page-transporte">'+
   '<button class="tab-btn" data-group="transp" data-tab="rutas" onclick="showTab(\'transp\',\'rutas\')">\uD83D\uDDFA\uFE0F Rutas</button>'+
   '<button class="tab-btn" data-group="transp" data-tab="historial" onclick="showTab(\'transp\',\'historial\')">\uD83D\uDCCB Historial</button>'+
   '<button class="tab-btn" data-group="transp" data-tab="estadisticas" onclick="showTab(\'transp\',\'estadisticas\')">\uD83D\uDCC8 Estad\u00edsticas</button>'+
-  '<button class="tab-btn" data-group="transp" data-tab="mapa" onclick="showTab(\'transp\',\'mapa\'); if(window.initMapaLogistico) window.initMapaLogistico();">\uD83D\uDFE2 Live API</button>'+
 '</div>'+
 '<div class="tab-content active" data-group="transp" id="tab-transp-flota"><div id="transp-flota-content"></div></div>'+
 '<div class="tab-content" data-group="transp" id="tab-transp-rutas"><div id="transp-rutas-list"></div></div>'+
 '<div class="tab-content" data-group="transp" id="tab-transp-historial"><div id="transp-hist-list"></div></div>'+
 '<div class="tab-content" data-group="transp" id="tab-transp-estadisticas"><div id="transp-estadisticas-content"></div></div>'+
-'<div class="tab-content" data-group="transp" id="tab-transp-mapa"><div id="mapa-logistico-container" style="display:flex; flex-direction:column; height:calc(100vh - 180px);"></div></div>'+
 '</div>';
 
 function renderTranspStats(){
@@ -16324,13 +16322,8 @@ cssNom.textContent=`
 document.head.appendChild(cssNom);
 
 // ── Crear barra de búsqueda en el mapa ───────────────────────────
-  window.handleLogout=_doLogout;
-})();
-</script>
-
-<script>
-// ====== FLOTA Y TRANSPORTE ENGINE ======
-(function() {
+function injectNominatimSearchBar(){
+  // Buscar el contenedor del mapa por diferentes IDs posibles
   var mapContainer=document.getElementById('map-container')||
     document.getElementById('main-map')||
     document.querySelector('.leaflet-container')?.parentElement;
@@ -16605,10 +16598,11 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
   window.logout=_doLogout;
   window.handleLogout=_doLogout;
 })();
+
 </script>
 
 <script>
-// ====== FLOTA Y TRANSPORTE ENGINE ======
+// ====== FLOTA Y TRANSPORTE ENGINE ====== TRANSPORTE ENGINE ======
 (function() {
   var mapTransporte = null;
   var markersInfo = {}; // id -> marker
@@ -16708,12 +16702,11 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
   }
 
   function renderMapMarkers() {
-    var map = window.mapTransporte || mapTransporte;
-    if(!map) return;
+    if(!mapTransporte) return;
     
     mockFlota.forEach(function(v) {
       if(!markersInfo[v.id]) {
-        markersInfo[v.id] = L.marker([v.lat, v.lng], {icon: createMarkerIcon(v)}).addTo(map);
+        markersInfo[v.id] = L.marker([v.lat, v.lng], {icon: createMarkerIcon(v)}).addTo(mapTransporte);
         markersInfo[v.id].on('click', function() { window.abrirTelemetria(v.id); });
       } else {
         markersInfo[v.id].setLatLng([v.lat, v.lng]);
@@ -16721,7 +16714,6 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
       }
     });
   }
-  window.renderMapMarkers = renderMapMarkers;
 
   function simulateAPITracking() {
     mockFlota.forEach(function(v) {
@@ -16806,20 +16798,19 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
       if(!window.mapTransporte) {
         window.mapTransporte = L.map('map-transporte').setView([38.5, -0.5], 8);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          attribution: '&copy; OSM &amp; CARTO',
+          attribution: '&copy; OSM & CARTO',
           subdomains: 'abcd',
           maxZoom: 20
         }).addTo(window.mapTransporte);
+        renderMapMarkers();
         trackingInterval = setInterval(simulateAPITracking, 3000);
       } else {
         window.mapTransporte.invalidateSize();
       }
-      window.renderMapMarkers();
       window.renderFlotaList();
     }, 100);
   };
 })();
-
 </script>
 </body>
 </html>
