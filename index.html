@@ -11733,11 +11733,12 @@ M.innerHTML+='<div class="page" id="page-transporte">'+
   '<button class="tab-btn" data-group="transp" data-tab="rutas" onclick="showTab(\'transp\',\'rutas\')">\uD83D\uDDFA\uFE0F Rutas</button>'+
   '<button class="tab-btn" data-group="transp" data-tab="historial" onclick="showTab(\'transp\',\'historial\')">\uD83D\uDCCB Historial</button>'+
   '<button class="tab-btn" data-group="transp" data-tab="estadisticas" onclick="showTab(\'transp\',\'estadisticas\')">\uD83D\uDCC8 Estad\u00edsticas</button>'+
-'</div>'+
-'<div class="tab-content active" data-group="transp" id="tab-transp-flota"><div id="transp-flota-content"></div></div>'+
+  '<button class="tab-btn" data-group="transp" data-tab="mapa" onclick="showTab(\'transp\',\'mapa\'); if(window.initMapaLogistico) window.initMapaLogistico();">\uD83D\uDFE2 Live API</button>'+
+'</div>'+'<div class="tab-content active" data-group="transp" id="tab-transp-flota"><div id="transp-flota-content"></div></div>'+
 '<div class="tab-content" data-group="transp" id="tab-transp-rutas"><div id="transp-rutas-list"></div></div>'+
 '<div class="tab-content" data-group="transp" id="tab-transp-historial"><div id="transp-hist-list"></div></div>'+
 '<div class="tab-content" data-group="transp" id="tab-transp-estadisticas"><div id="transp-estadisticas-content"></div></div>'+
+'<div class="tab-content" data-group="transp" id="tab-transp-mapa" style="flex:1;min-height:500px;"><div id="mapa-logistico-container" style="height:500px;display:flex;flex-direction:column;"></div></div>'+
 '</div>';
 
 function renderTranspStats(){
