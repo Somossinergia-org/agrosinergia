@@ -16324,8 +16324,13 @@ cssNom.textContent=`
 document.head.appendChild(cssNom);
 
 // ── Crear barra de búsqueda en el mapa ───────────────────────────
-function injectNominatimSearchBar(){
-  // Buscar el contenedor del mapa por diferentes IDs posibles
+  window.handleLogout=_doLogout;
+})();
+</script>
+
+<script>
+// ====== FLOTA Y TRANSPORTE ENGINE ======
+(function() {
   var mapContainer=document.getElementById('map-container')||
     document.getElementById('main-map')||
     document.querySelector('.leaflet-container')?.parentElement;
@@ -16600,9 +16605,9 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
   window.logout=_doLogout;
   window.handleLogout=_doLogout;
 })();
+</script>
 
-
-
+<script>
 // ====== FLOTA Y TRANSPORTE ENGINE ======
 (function() {
   var mapTransporte = null;
