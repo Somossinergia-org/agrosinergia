@@ -16602,6 +16602,7 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
 })();
 
 
+
 // ====== FLOTA Y TRANSPORTE ENGINE ======
 (function() {
   var mapTransporte = null;
@@ -16702,11 +16703,12 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
   }
 
   function renderMapMarkers() {
-    if(!mapTransporte) return;
+    var map = window.mapTransporte || mapTransporte;
+    if(!map) return;
     
     mockFlota.forEach(function(v) {
       if(!markersInfo[v.id]) {
-        markersInfo[v.id] = L.marker([v.lat, v.lng], {icon: createMarkerIcon(v)}).addTo(mapTransporte);
+        markersInfo[v.id] = L.marker([v.lat, v.lng], {icon: createMarkerIcon(v)}).addTo(map);
         markersInfo[v.id].on('click', function() { window.abrirTelemetria(v.id); });
       } else {
         markersInfo[v.id].setLatLng([v.lat, v.lng]);
@@ -16714,6 +16716,7 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
       }
     });
   }
+  window.renderMapMarkers = renderMapMarkers;
 
   function simulateAPITracking() {
     mockFlota.forEach(function(v) {
@@ -16798,15 +16801,15 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
       if(!window.mapTransporte) {
         window.mapTransporte = L.map('map-transporte').setView([38.5, -0.5], 8);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          attribution: '&copy; OSM & CARTO',
+          attribution: '&copy; OSM &amp; CARTO',
           subdomains: 'abcd',
           maxZoom: 20
         }).addTo(window.mapTransporte);
-        renderMapMarkers();
         trackingInterval = setInterval(simulateAPITracking, 3000);
       } else {
         window.mapTransporte.invalidateSize();
       }
+      window.renderMapMarkers();
       window.renderFlotaList();
     }, 100);
   };
