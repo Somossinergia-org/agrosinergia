@@ -1,5 +1,5 @@
-// AgroSinergia Service Worker — v1.1
-const CACHE = 'agrosinergia-v1.1';
+// AgroSinergia Service Worker — v1.3
+const CACHE = 'agrosinergia-v1.3';
 const OFFLINE_URL = '/index.html';
 
 // Archivos esenciales a cachear
