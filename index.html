@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -16618,34 +16618,68 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
   var isFetching       = false;
   var lastSync         = null;
 
-  // ── CORS-aware fetch con manejo de rate-limit ──────────────────────────────
-  function cgpsFetch(params) {
-    var url = CGPS_BASE + '?' + params;
-    return fetch(url)
+  // ── CORS-aware fetch con multi-proxy fallback y rate-limit ──────────────────
+  var _PROXIES = [
+    function(u) { return 'https://corsproxy.io/?' + encodeURIComponent(u); },
+    function(u) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u); },
+    function(u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
+    function(u) { return 'https://thingproxy.freeboard.io/fetch/' + u; }
+  ];
+
+  function _parseGPS(text) {
+    var t = (text || '').trim();
+    if(!t || t[0] === '<' || t.toLowerCase().startsWith('oops') || t.toLowerCase().startsWith('error')) {
+      throw new Error('Non-JSON response: ' + t.slice(0, 80));
+    }
+    if(t.startsWith('wait')) {
+      return { _wait: parseInt(t.split(' ')[1]) || 15 };
+    }
+    return JSON.parse(t);
+  }
+
+  function _tryProxy(url, idx) {
+    if(idx >= _PROXIES.length) {
+      console.warn('[CGPS] All proxies failed for', url);
+      return Promise.resolve(null);
+    }
+    var proxyUrl = _PROXIES[idx](url);
+    return fetch(proxyUrl, { cache: 'no-store' })
       .then(function(r) { return r.text(); })
       .then(function(text) {
-        if(text.trim().startsWith('wait')) {
-          var secs = (parseInt(text.split(' ')[1]) || 15) + 1;
+        var data = _parseGPS(text);
+        if(data && data._wait) {
+          var secs = data._wait + 1;
+          return new Promise(function(res) { setTimeout(res, secs * 1000); })
+            .then(function() { return _tryProxy(url, idx); });
+        }
+        return data;
+      })
+      .catch(function(e) {
+        console.warn('[CGPS] Proxy #' + idx + ' failed:', e.message);
+        return _tryProxy(url, idx + 1);
+      });
+  }
+
+  function cgpsFetch(params) {
+    var url = CGPS_BASE + '?' + params;
+    // Intento directo primero (funciona si la API tiene CORS habilitado o estamos en HTTP)
+    return fetch(url, { cache: 'no-store' })
+      .then(function(r) { return r.text(); })
+      .then(function(text) {
+        var data = _parseGPS(text);
+        if(data && data._wait) {
+          var secs = data._wait + 1;
           return new Promise(function(res) { setTimeout(res, secs * 1000); })
             .then(function() { return cgpsFetch(params); });
         }
-        return JSON.parse(text);
+        return data;
       })
       .catch(function() {
-        var proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-        return fetch(proxy)
-          .then(function(r2) { return r2.text(); })
-          .then(function(t2) {
-            if(t2.trim().startsWith('wait')) {
-              var s2 = (parseInt(t2.split(' ')[1]) || 15) + 1;
-              return new Promise(function(res) { setTimeout(res, s2 * 1000); })
-                .then(function() { return cgpsFetch(params); });
-            }
-            return JSON.parse(t2);
-          })
-          .catch(function(e) { console.warn('ControlGPS API unavailable:', e); return null; });
+        // Fallback: cadena de proxies CORS
+        return _tryProxy(url, 0);
       });
   }
+
 
   // ── Convertir objeto API al formato UI ─────────────────────────────────────
   function apiVehToUI(v) {
