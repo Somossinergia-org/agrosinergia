@@ -16617,6 +16617,7 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
   var trackingInterval = null;
   var isFetching       = false;
   var lastSync         = null;
+  var _mapCentered     = false;  // solo centra mapa la primera vez
 
   // ── CORS-aware fetch con multi-proxy fallback y rate-limit ──────────────────
   var _PROXIES = [
@@ -16863,8 +16864,9 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
         markersInfo[v.id].setPopupContent(popup);
       }
     });
-    if(valid.length && Object.keys(markersInfo).length === valid.length) {
+    if(valid.length && !_mapCentered) {
       mapTransporte.setView([valid[0].lat, valid[0].lng], 12);
+      _mapCentered = true;
     }
   }
 
@@ -17082,7 +17084,7 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
 
     setTimeout(function() {
       if(!window.mapTransporte) {
-        window.mapTransporte = L.map('map-transporte').setView([38.5, -0.5], 8);
+        window.mapTransporte = L.map('map-transporte').setView([38.0, -0.9], 9);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
           attribution: '&copy; OSM &amp; CARTO',
           subdomains: 'abcd',
