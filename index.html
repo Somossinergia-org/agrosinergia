@@ -752,6 +752,7 @@ const pages=[
   {id:"transporte",icon:"\u{1F69B}",label:"Flota y Transporte",section:"Transporte"},
   {id:"siex",icon:"\u2705",label:"SIEX",section:"Cumplimiento"},
   {id:"auditorias",icon:"\u{1F4CB}",label:"Auditor\u00edas",section:"Cumplimiento",badge:"1"},
+  {id:"certificaciones",icon:"\u{1F3C5}",label:"IFS / GlobalGAP",section:"Cumplimiento"},
   {id:"explotaciones",icon:"\u{1F3E2}",label:"Explotaciones",section:"Admin"},
   {id:"usuarios",icon:"\u{1F465}",label:"Usuarios",section:"Admin"},
   {id:"roles",icon:"\u{1F511}",label:"Roles y Permisos",section:"Admin"},
@@ -2121,6 +2122,340 @@ M.innerHTML+=`<div class="page" id="page-auditorias">
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px" id="aud-docs-grid"></div>
 </div>
 </div>`;
+
+// ====== IFS / GLOBALGAP PAGE ======
+M.innerHTML += `<div class="page" id="page-certificaciones">
+<div class="header">
+  <h1>🏅 IFS / GlobalGAP</h1>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span class="badge" style="font-size:11px;padding:5px 12px;background:rgba(16,185,129,.1);color:#059669;border:1px solid rgba(16,185,129,.25)">✅ 2 Certificados Vigentes</span>
+    <button class="btn btn-primary" onclick="window.ifsPrintReport()">📥 Exportar Informe</button>
+    <div style="display:flex;gap:4px;background:var(--light);border-radius:8px;padding:3px" id="cert-view-toggle">
+      <button id="cert-btn-grid" onclick="window.setCertView('grid')" style="padding:5px 10px;border:none;border-radius:6px;background:var(--primary);color:#fff;cursor:pointer;font-size:12px">⋮⋮ Cuadrícula</button>
+      <button id="cert-btn-list" onclick="window.setCertView('list')" style="padding:5px 10px;border:none;border-radius:6px;background:transparent;color:var(--gray);cursor:pointer;font-size:12px">☰ Lista</button>
+    </div>
+  </div>
+</div>
+
+<div id="cert-kpis" class="stat-row"></div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-group="cert" data-tab="overview" onclick="showTab('cert','overview');window.renderCertOverview()">🎯 Resumen</button>
+  <button class="tab-btn" data-group="cert" data-tab="ifs" onclick="showTab('cert','ifs');window.renderIFSChecklist()">🏅 Checklist IFS</button>
+  <button class="tab-btn" data-group="cert" data-tab="ggap" onclick="showTab('cert','ggap');window.renderGlobalGAP()">🌍 GlobalGAP</button>
+  <button class="tab-btn" data-group="cert" data-tab="docs" onclick="showTab('cert','docs');window.renderCertDocs()">📂 Documentos</button>
+</div>
+
+<div class="tab-content active" data-group="cert" id="tab-cert-overview">
+  <div id="cert-overview-content"></div>
+</div>
+<div class="tab-content" data-group="cert" id="tab-cert-ifs">
+  <div id="cert-ifs-content"></div>
+</div>
+<div class="tab-content" data-group="cert" id="tab-cert-ggap">
+  <div id="cert-ggap-content"></div>
+</div>
+<div class="tab-content" data-group="cert" id="tab-cert-docs">
+  <div id="cert-docs-content"></div>
+</div>
+</div>`;
+
+// ====== IFS / GLOBALGAP ENGINE ======
+(function(){
+'use strict';
+
+var _certView = 'grid';
+
+var _certData = [
+  { id:'C-001', nombre:'IFS Food v8', organismo:'Bureau Veritas', explot:'Fruitum 2016 SL',
+    emision:'10/01/2026', vencimiento:'10/01/2027', numero:'IFS-BV-2026-AL04521',
+    estado:'Vigente', color:'#3B82F6', icono:'🏅', puntuacion: 96.4,
+    nivel: 'Higher Level', proxima_audit: '15/01/2027',
+    docs:['Certificado IFS Food 2026.pdf','Informe auditoría IFS.pdf','Plan de acción NCs.pdf'] },
+  { id:'C-002', nombre:'GlobalGAP IFA v6', organismo:'AENOR', explot:'Fruitum 2016 SL',
+    emision:'12/06/2025', vencimiento:'12/06/2026', numero:'GGN 4050373-AL07890',
+    estado:'Próximo venc.', color:'#F59E0B', icono:'🌍', puntuacion: 100,
+    nivel: 'Opción 1', proxima_audit: '01/06/2026',
+    docs:['Certificado GlobalGAP 2025.pdf','Informe auditoría GG.pdf'] },
+  { id:'C-003', nombre:'CAECV Ecológico', organismo:'CAECV', explot:'Fruchesco',
+    emision:'01/01/2026', vencimiento:'31/12/2026', numero:'CV-ECO-FRU-2026',
+    estado:'Vigente', color:'#10B981', icono:'🌿', puntuacion: null,
+    nivel: 'Producción Ecológica', proxima_audit: 'Ene 2027',
+    docs:['Certificado CAECV 2026.pdf','Listado parcelas eco.pdf'] }
+];
+
+var _ifsChecklist = [
+  { cap:'1', titulo:'Responsabilidad de la Dirección', items:[
+    { id:'1.1', desc:'Política de Calidad y Seguridad Alimentaria documentada y comunicada', ok:true, kko:false },
+    { id:'1.2', desc:'Estructura organizativa, responsabilidades y funciones definidas', ok:true, kko:false },
+    { id:'1.3', desc:'Foco al cliente — revisiones contractuales', ok:true, kko:false }
+  ]},
+  { cap:'2', titulo:'Sistema de Gestión de Calidad y Seguridad Alimentaria', items:[
+    { id:'2.1', desc:'APPCC implementado y verificado (Codex Alimentarius)', ok:true, kko:false },
+    { id:'2.2', desc:'Requisitos reglamentarios cumplidos', ok:true, kko:false },
+    { id:'2.3', desc:'Gestión de alergenoss documentada', ok:false, kko:false, nc:'NC-IFS-001', ncTipo:'Menor' },
+    { id:'2.4', desc:'Procedimientos de retirada y recall documentados', ok:true, kko:false }
+  ]},
+  { cap:'3', titulo:'Gestión de Recursos', items:[
+    { id:'3.1', desc:'Higiene personal: formación y registros completos', ok:true, kko:false },
+    { id:'3.2', desc:'Ropa de trabajo y EPIs adecuados', ok:true, kko:false },
+    { id:'3.3', desc:'Formación continua documentada', ok:false, kko:false, nc:'NC-IFS-002', ncTipo:'Menor' }
+  ]},
+  { cap:'4', titulo:'Planificación y Proceso Productivo', items:[
+    { id:'4.1', desc:'Especificaciones de producto actualizadas y accesibles', ok:true, kko:false },
+    { id:'4.2', desc:'Etiquetado conforme a normativa vigente', ok:true, kko:false },
+    { id:'4.3', desc:'Trazabilidad garantizada lote a lote', ok:true, kko:false },
+    { id:'4.4', desc:'Control de proveedores: homologación y evaluación', ok:true, kko:false },
+    { id:'4.5', desc:'Infraestructura e higiene de instalaciones', ok:true, kko:false }
+  ]},
+  { cap:'5', titulo:'Mediciones, Análisis y Mejora', items:[
+    { id:'5.1', desc:'Auditorías internas programadas y realizadas', ok:true, kko:false },
+    { id:'5.2', desc:'Acción correctiva — seguimiento de NCs', ok:true, kko:false },
+    { id:'5.3', desc:'Control de equipos de medición (calibración)', ok:false, kko:false, nc:'NC-IFS-003', ncTipo:'Menor' }
+  ]}
+];
+
+var _ggapModulos = [
+  { mod:'AF', titulo:'Granja de Base — Todos los productos', pct:100, color:'#10B981', items:32, ok:32 },
+  { mod:'CB', titulo:'Cultivos de Base', pct:97, color:'#3B82F6', items:30, ok:29 },
+  { mod:'FV', titulo:'Frutas y Hortalizas', pct:100, color:'#10B981', items:28, ok:28 },
+  { mod:'SMK', titulo:'Trabajadores y Salud Laboral', pct:94, color:'#8B5CF6', items:18, ok:17 }
+];
+
+var _certDocs = [
+  { nombre:'Certificado IFS Food v8 2026', tipo:'Certificado', fecha:'10/01/2026', size:'312 KB', color:'#3B82F6', icono:'🏅' },
+  { nombre:'Informe Auditoría IFS — Bureau Veritas', tipo:'Informe', fecha:'08/01/2026', size:'1.4 MB', color:'#3B82F6', icono:'📄' },
+  { nombre:'Plan de Acción NCs IFS 2026', tipo:'Plan Acción', fecha:'20/01/2026', size:'280 KB', color:'#EF4444', icono:'⚠️' },
+  { nombre:'Certificado GlobalGAP IFA v6 2025', tipo:'Certificado', fecha:'12/06/2025', size:'245 KB', color:'#F59E0B', icono:'🌍' },
+  { nombre:'Informe Auditoría GlobalGAP — AENOR', tipo:'Informe', fecha:'10/06/2025', size:'980 KB', color:'#F59E0B', icono:'📄' },
+  { nombre:'Certificado CAECV Ecológico 2026', tipo:'Certificado', fecha:'01/01/2026', size:'180 KB', color:'#10B981', icono:'🌿' },
+  { nombre:'APPCC — Plan Análisis de Peligros', tipo:'Procedimiento', fecha:'15/01/2026', size:'2.1 MB', color:'#8B5CF6', icono:'📝' },
+  { nombre:'Procedimiento de Recall y Retirada', tipo:'Procedimiento', fecha:'10/01/2026', size:'340 KB', color:'#8B5CF6', icono:'📝' }
+];
+
+// ── KPIs ──
+function renderCertKPIs() {
+  var el = document.getElementById('cert-kpis'); if(!el) return;
+  var vigentes = _certData.filter(function(c){ return c.estado === 'Vigente'; }).length;
+  var proxVenc = _certData.filter(function(c){ return c.estado === 'Próximo venc.'; }).length;
+  var allItems = 0, okItems = 0;
+  _ifsChecklist.forEach(function(c){ c.items.forEach(function(i){ allItems++; if(i.ok) okItems++; }); });
+  var ifsPct = Math.round(okItems / allItems * 100);
+  el.innerHTML =
+    '<div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:16px">' +
+    kpiBox('🏅 Certificados', vigentes + ' Vigentes', '#10B981', 'de ' + _certData.length + ' totales') +
+    kpiBox('⚠️ Próximos venc.', proxVenc, '#F59E0B', 'Renovación recomendada') +
+    kpiBox('📊 IFS Cumplimiento', ifsPct + '%', ifsPct >= 95 ? '#10B981' : '#EF4444', okItems + '/' + allItems + ' reqs. OK') +
+    kpiBox('🌍 GlobalGAP Score', '100%', '#10B981', 'All Opción 1 conforme') +
+    '</div>';
+}
+function kpiBox(label, value, color, sub) {
+  return '<div class="card" style="padding:16px;text-align:center;border-top:3px solid ' + color + '">' +
+    '<div style="font-size:22px;font-weight:800;color:' + color + ';margin-bottom:4px">' + value + '</div>' +
+    '<div style="font-size:11px;font-weight:700;color:var(--dark);text-transform:uppercase;letter-spacing:.5px">' + label + '</div>' +
+    (sub ? '<div style="font-size:10px;color:var(--gray);margin-top:3px">' + sub + '</div>' : '') +
+    '</div>';
+}
+
+// ── Vista toggle ──
+window.setCertView = function(v) {
+  _certView = v;
+  var gBtn = document.getElementById('cert-btn-grid'), lBtn = document.getElementById('cert-btn-list');
+  if(gBtn) { gBtn.style.background = v==='grid' ? 'var(--primary)' : 'transparent'; gBtn.style.color = v==='grid' ? '#fff' : 'var(--gray)'; }
+  if(lBtn) { lBtn.style.background = v==='list' ? 'var(--primary)' : 'transparent'; lBtn.style.color = v==='list' ? '#fff' : 'var(--gray)'; }
+  window.renderCertOverview();
+};
+
+// ── Tab: Resumen (grid / list) ──
+window.renderCertOverview = function() {
+  var el = document.getElementById('cert-overview-content'); if(!el) return;
+  if(_certView === 'grid') {
+    var h = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">';
+    _certData.forEach(function(c) {
+      var estadoBg = c.estado === 'Vigente' ? 'rgba(16,185,129,.1)' : 'rgba(245,158,11,.12)';
+      var estadoCol = c.estado === 'Vigente' ? '#059669' : '#D97706';
+      var scoreBar = c.puntuacion ? (
+        '<div style="margin-top:12px">' +
+        '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray);margin-bottom:4px"><span>Puntuación auditoría</span><strong style="color:' + (c.puntuacion>=95?'#10B981':'#F59E0B') + '">' + c.puntuacion + '%</strong></div>' +
+        '<div style="height:6px;background:var(--border);border-radius:3px"><div style="width:' + c.puntuacion + '%;height:100%;background:' + (c.puntuacion>=95?'#10B981':'#F59E0B') + ';border-radius:3px;transition:width .5s"></div></div>' +
+        '</div>'
+      ) : '';
+      h +=
+        '<div class="card" style="padding:20px;border-top:4px solid ' + c.color + ';transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform=\'translateY(-3px)\';this.style.boxShadow=\'var(--shadow-lg)\'" onmouseout="this.style.transform=\'none\';this.style.boxShadow=\'\'">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">' +
+            '<div><span style="font-size:26px">' + c.icono + '</span></div>' +
+            '<span style="font-size:11px;font-weight:700;background:' + estadoBg + ';color:' + estadoCol + ';padding:3px 10px;border-radius:20px">' + c.estado + '</span>' +
+          '</div>' +
+          '<div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:4px">' + c.nombre + '</div>' +
+          '<div style="font-size:12px;color:var(--gray);margin-bottom:10px">' + c.organismo + ' • ' + c.explot + '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">' +
+            '<div style="background:var(--light);padding:8px;border-radius:7px"><div style="color:var(--gray)">Número</div><strong style="font-size:10px">' + c.numero + '</strong></div>' +
+            '<div style="background:var(--light);padding:8px;border-radius:7px"><div style="color:var(--gray)">Vencimiento</div><strong style="color:' + (c.estado==='Próximo venc.'?'#D97706':'var(--dark)') + '">' + c.vencimiento + '</strong></div>' +
+            '<div style="background:var(--light);padding:8px;border-radius:7px"><div style="color:var(--gray)">Nivel</div><strong>' + c.nivel + '</strong></div>' +
+            '<div style="background:var(--light);padding:8px;border-radius:7px"><div style="color:var(--gray)">Próx. Audit.</div><strong>' + c.proxima_audit + '</strong></div>' +
+          '</div>' +
+          scoreBar +
+          '<div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">' +
+          c.docs.map(function(d){ return '<span style="font-size:10px;background:rgba(0,0,0,.04);padding:3px 8px;border-radius:5px;color:var(--gray)">📎 ' + d + '</span>'; }).join('') +
+          '</div>' +
+        '</div>';
+    });
+    h += '</div>';
+    el.innerHTML = h;
+  } else {
+    // Lista
+    var h = '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Certificado</th><th>Organismo</th><th>Explotación</th><th>Número</th><th>Emisión</th><th>Vencimiento</th><th>Puntuación</th><th>Estado</th></tr></thead><tbody>';
+    _certData.forEach(function(c) {
+      var estadoBg = c.estado === 'Vigente' ? 'rgba(16,185,129,.1)' : 'rgba(245,158,11,.12)';
+      var estadoCol = c.estado === 'Vigente' ? '#059669' : '#D97706';
+      h += '<tr>' +
+        '<td><span style="font-size:16px">' + c.icono + '</span> <strong>' + c.nombre + '</strong></td>' +
+        '<td>' + c.organismo + '</td>' +
+        '<td>' + c.explot + '</td>' +
+        '<td style="font-size:11px;color:var(--gray)">' + c.numero + '</td>' +
+        '<td>' + c.emision + '</td>' +
+        '<td style="color:' + (c.estado==='Próximo venc.'?'#D97706':'inherit') + ';font-weight:' + (c.estado==='Próximo venc.'?'700':'400') + '">' + c.vencimiento + '</td>' +
+        '<td>' + (c.puntuacion ? '<strong style="color:' + (c.puntuacion>=95?'#10B981':'#F59E0B') + '">' + c.puntuacion + '%</strong>' : '—') + '</td>' +
+        '<td><span style="font-size:11px;font-weight:700;background:' + estadoBg + ';color:' + estadoCol + ';padding:2px 8px;border-radius:12px">' + c.estado + '</span></td>' +
+        '</tr>';
+    });
+    h += '</tbody></table></div>';
+    el.innerHTML = h;
+  }
+};
+
+// ── Tab: IFS Checklist ──
+window.renderIFSChecklist = function() {
+  var el = document.getElementById('cert-ifs-content'); if(!el) return;
+  var totalItems = 0, okItems = 0, ncItems = 0;
+  _ifsChecklist.forEach(function(c){ c.items.forEach(function(i){ totalItems++; if(i.ok) okItems++; else ncItems++; }); });
+  var pct = Math.round(okItems/totalItems*100);
+  var h =
+    '<div style="display:flex;gap:16px;align-items:center;margin-bottom:20px;background:var(--light);border-radius:12px;padding:16px">' +
+      '<div style="flex:1">' +
+        '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">' +
+          '<span style="font-weight:700;color:var(--dark)">Cumplimiento IFS Food v8</span>' +
+          '<strong style="color:' + (pct>=95?'#10B981':'#EF4444') + ';font-size:16px">' + pct + '%</strong>' +
+        '</div>' +
+        '<div style="height:10px;background:var(--border);border-radius:5px"><div style="width:' + pct + '%;height:100%;background:' + (pct>=95?'#10B981':'#EF4444') + ';border-radius:5px;transition:width .6s"></div></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:12px;text-align:center">' +
+        '<div><div style="font-size:20px;font-weight:800;color:#10B981">' + okItems + '</div><div style="font-size:10px;color:var(--gray)">✅ OK</div></div>' +
+        '<div><div style="font-size:20px;font-weight:800;color:#EF4444">' + ncItems + '</div><div style="font-size:10px;color:var(--gray)">⚠️ NC</div></div>' +
+        '<div><div style="font-size:20px;font-weight:800;color:var(--gray)">' + totalItems + '</div><div style="font-size:10px;color:var(--gray)">Total</div></div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;flex-direction:column;gap:12px">';
+
+  _ifsChecklist.forEach(function(cap) {
+    var capOk = cap.items.filter(function(i){ return i.ok; }).length;
+    h += '<div class="card" style="padding:16px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+        '<div style="font-size:14px;font-weight:700;color:var(--dark)">📌 Capítulo ' + cap.cap + ': ' + cap.titulo + '</div>' +
+        '<span style="font-size:12px;background:' + (capOk===cap.items.length?'rgba(16,185,129,.1)':'rgba(239,68,68,.08)') + ';color:' + (capOk===cap.items.length?'#059669':'#DC2626') + ';padding:2px 10px;border-radius:12px;font-weight:700">' + capOk + '/' + cap.items.length + '</span>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px">';
+    cap.items.forEach(function(item) {
+      var icon = item.ok ? '✅' : '❌';
+      var bg = item.ok ? 'rgba(16,185,129,.05)' : 'rgba(239,68,68,.06)';
+      var border = item.ok ? '2px solid rgba(16,185,129,.2)' : '2px solid rgba(239,68,68,.2)';
+      h += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:' + bg + ';border-radius:8px;border:' + border + '">' +
+        '<span style="font-size:16px">' + icon + '</span>' +
+        '<div style="flex:1;font-size:12px;color:var(--dark)"><strong>' + item.id + '</strong> — ' + item.desc + '</div>' +
+        (item.nc ? '<span style="font-size:10px;background:rgba(239,68,68,.1);color:#DC2626;padding:2px 6px;border-radius:5px;font-weight:700;white-space:nowrap">' + item.nc + ' ' + item.ncTipo + '</span>' : '') +
+      '</div>';
+    });
+    h += '</div></div>';
+  });
+  h += '</div>';
+  el.innerHTML = h;
+};
+
+// ── Tab: GlobalGAP ──
+window.renderGlobalGAP = function() {
+  var el = document.getElementById('cert-ggap-content'); if(!el) return;
+  var h =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">' +
+      '<div class="card" style="padding:20px;border-top:4px solid #F59E0B">' +
+        '<div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:4px">🌍 GlobalGAP IFA v6 — Opción 1</div>' +
+        '<div style="font-size:11px;color:var(--gray);margin-bottom:12px">GGN: 4050373-AL07890 • AENOR • Vence: 12/06/2026</div>' +
+        '<span style="font-size:11px;font-weight:700;background:rgba(245,158,11,.1);color:#D97706;padding:3px 10px;border-radius:12px">⚠️ Renovación en 72 días</span>' +
+      '</div>' +
+      '<div class="card" style="padding:20px;border-top:4px solid #10B981">' +
+        '<div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:4px">📊 Resultado última auditoría</div>' +
+        '<div style="font-size:36px;font-weight:900;color:#10B981">100%</div>' +
+        '<div style="font-size:11px;color:var(--gray)">Todos los puntos de control superados • 0 NCs</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">';
+
+  _ggapModulos.forEach(function(m) {
+    h += '<div class="card" style="padding:18px;border-left:4px solid ' + m.color + '">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+        '<div><span style="font-size:11px;font-weight:900;color:' + m.color + ';background:' + m.color + '18;padding:2px 8px;border-radius:5px">' + m.mod + '</span></div>' +
+        '<strong style="font-size:16px;color:' + m.color + '">' + m.pct + '%</strong>' +
+      '</div>' +
+      '<div style="font-size:12px;font-weight:600;color:var(--dark);margin-bottom:10px">' + m.titulo + '</div>' +
+      '<div style="height:8px;background:var(--border);border-radius:4px"><div style="width:' + m.pct + '%;height:100%;background:' + m.color + ';border-radius:4px;transition:width .5s"></div></div>' +
+      '<div style="font-size:11px;color:var(--gray);margin-top:6px">' + m.ok + '/' + m.items + ' puntos superados</div>' +
+    '</div>';
+  });
+  h += '</div>';
+  el.innerHTML = h;
+};
+
+// ── Tab: Documentos ──
+window.renderCertDocs = function() {
+  var el = document.getElementById('cert-docs-content'); if(!el) return;
+  var h = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">';
+  _certDocs.forEach(function(d) {
+    h += '<div class="card" style="padding:16px;display:flex;align-items:center;gap:14px;border-left:3px solid ' + d.color + ';cursor:pointer;transition:box-shadow .2s" onmouseover="this.style.boxShadow=\'var(--shadow-lg)\'" onmouseout="this.style.boxShadow=\'\'">' +
+      '<div style="font-size:30px;min-width:40px;text-align:center">' + d.icono + '</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:12px;font-weight:700;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + d.nombre + '</div>' +
+        '<div style="font-size:11px;color:var(--gray)">' + d.tipo + ' • ' + d.fecha + '</div>' +
+        '<div style="font-size:10px;color:var(--gray)">📀 ' + d.size + '</div>' +
+      '</div>' +
+      '<button style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 8px;cursor:pointer;font-size:14px;color:var(--gray)" title="Descargar">⬇️</button>' +
+    '</div>';
+  });
+  h += '</div>';
+  el.innerHTML = h;
+};
+
+// ── Export ──
+window.ifsPrintReport = function() {
+  var totalItems = 0, okItems = 0;
+  _ifsChecklist.forEach(function(c){ c.items.forEach(function(i){ totalItems++; if(i.ok) okItems++; }); });
+  var pct = Math.round(okItems/totalItems*100);
+  var win = window.open('', '_blank');
+  win.document.write('<html><head><title>Informe Certificaciones</title><style>body{font-family:sans-serif;padding:30px;color:#1a1a1a}h1{color:#2c6e49}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f5f5f5}.ok{color:#059669;font-weight:700}.nc{color:#DC2626;font-weight:700}</style></head><body>');
+  win.document.write('<h1>🏅 Informe IFS / GlobalGAP — AgroSinergia</h1>');
+  win.document.write('<p><strong>Fecha:</strong> ' + new Date().toLocaleDateString('es-ES') + ' | <strong>Cumplimiento IFS:</strong> ' + pct + '%</p>');
+  win.document.write('<h2>Certificados Vigentes</h2><table><tr><th>Certificado</th><th>Organismo</th><th>Número</th><th>Vencimiento</th><th>Estado</th></tr>');
+  _certData.forEach(function(c){ win.document.write('<tr><td>' + c.nombre + '</td><td>' + c.organismo + '</td><td>' + c.numero + '</td><td>' + c.vencimiento + '</td><td class="' + (c.estado==='Vigente'?'ok':'nc') + '">' + c.estado + '</td></tr>'); });
+  win.document.write('</table><h2>Checklist IFS (' + okItems + '/' + totalItems + ' = ' + pct + '%)</h2>');
+  _ifsChecklist.forEach(function(cap){
+    win.document.write('<h3>Cap. ' + cap.cap + ': ' + cap.titulo + '</h3><ul>');
+    cap.items.forEach(function(i){ win.document.write('<li class="' + (i.ok?'ok':'nc') + '">[' + (i.ok?'✅':'❌') + '] ' + i.id + ' — ' + i.desc + (i.nc?' (' + i.nc + ')':'') + '</li>'); });
+    win.document.write('</ul>');
+  });
+  win.document.write('</body></html>'); win.document.close(); win.print();
+};
+
+// ── Init cuando se muestra la página ──
+var _certInit = false;
+var _origShowPage = window.showPage;
+window.showPage = function(id) {
+  if(_origShowPage) _origShowPage(id);
+  if(id === 'certificaciones' && !_certInit) {
+    _certInit = true;
+    renderCertKPIs();
+    window.renderCertOverview();
+  }
+};
+
+})();
 
 // ====== AUDITORIAS ENGINE ======
 (function(){
