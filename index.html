@@ -2170,67 +2170,136 @@ var _certData = [
   { id:'C-001', nombre:'IFS Food v8', organismo:'Bureau Veritas', explot:'Fruitum 2016 SL',
     emision:'10/01/2026', vencimiento:'10/01/2027', numero:'IFS-BV-2026-AL04521',
     estado:'Vigente', color:'#3B82F6', icono:'🏅', puntuacion: 96.4,
-    nivel: 'Higher Level', proxima_audit: '15/01/2027',
-    docs:['Certificado IFS Food 2026.pdf','Informe auditoría IFS.pdf','Plan de acción NCs.pdf'] },
-  { id:'C-002', nombre:'GlobalGAP IFA v6', organismo:'AENOR', explot:'Fruitum 2016 SL',
+    nivel: 'Higher Level (≥95%)', proxima_audit: '15/01/2027',
+    edicion: 'IFS Food versión 8 — Abril 2023',
+    kos_ok: 10, kos_total: 10,
+    docs:['Certificado IFS Food 2026.pdf','Informe auditoría IFS — BV.pdf','Plan de acción NCs.pdf','IFS Food Doctrine 2024.pdf'] },
+  { id:'C-002', nombre:'GlobalGAP IFA v6 GFS', organismo:'AENOR', explot:'Fruitum 2016 SL',
     emision:'12/06/2025', vencimiento:'12/06/2026', numero:'GGN 4050373-AL07890',
     estado:'Próximo venc.', color:'#F59E0B', icono:'🌍', puntuacion: 100,
-    nivel: 'Opción 1', proxima_audit: '01/06/2026',
-    docs:['Certificado GlobalGAP 2025.pdf','Informe auditoría GG.pdf'] },
+    nivel: 'Major Must 100% • Minor Must 97%', proxima_audit: '01/06/2026',
+    edicion: 'IFA v6 GFS (reconocida GFSI) — vigente desde 01/01/2025',
+    kos_ok: null, kos_total: null,
+    docs:['Certificado GlobalGAP IFA v6 GFS 2025.pdf','Informe auditoría AENOR.pdf','Listado GGN verificado.pdf'] },
   { id:'C-003', nombre:'CAECV Ecológico', organismo:'CAECV', explot:'Fruchesco',
     emision:'01/01/2026', vencimiento:'31/12/2026', numero:'CV-ECO-FRU-2026',
     estado:'Vigente', color:'#10B981', icono:'🌿', puntuacion: null,
-    nivel: 'Producción Ecológica', proxima_audit: 'Ene 2027',
-    docs:['Certificado CAECV 2026.pdf','Listado parcelas eco.pdf'] }
+    nivel: 'Reglamento UE 2018/848 • Producción Ecológica', proxima_audit: 'Ene 2027',
+    edicion: 'Regl. UE 2018/848 — Control anual CAECV',
+    kos_ok: null, kos_total: null,
+    docs:['Certificado CAECV 2026.pdf','Listado parcelas y operadores eco.pdf','Memoria actividad ecológica 2025.pdf'] }
 ];
 
+// IFS Food v8 — 5 capítulos reales (publicado abril 2023) — 234 requisitos totales — 10 KOs
+// Sistema calificación: A=pleno cumpl. B=desviación(-15pts) C=incumpl.parcial D=no cumple/KO
+// Nivel: Basic(<75%) / Foundation(75-89.99%) / Higher(>=95%) / na
 var _ifsChecklist = [
-  { cap:'1', titulo:'Responsabilidad de la Dirección', items:[
-    { id:'1.1', desc:'Política de Calidad y Seguridad Alimentaria documentada y comunicada', ok:true, kko:false },
-    { id:'1.2', desc:'Estructura organizativa, responsabilidades y funciones definidas', ok:true, kko:false },
-    { id:'1.3', desc:'Foco al cliente — revisiones contractuales', ok:true, kko:false }
+  // ── CAPÍTULO 1: GOBERNANZA Y COMPROMISO ──────────────────────────────
+  { cap:'1', titulo:'Gobernanza y Compromiso', color:'#6366F1',
+    descripcion:'Responsabilidades de la alta dirección, cultura de inocuidad alimentaria, sostenibilidad, enfoque al cliente y gestión de crisis.',
+    items:[
+    { id:'1.2.1', desc:'Compromiso de la alta dirección: se han establecido, implementado y comunicado objetivos y responsabilidades en seguridad alimentaria y calidad', cal:'A', kko:true },
+    { id:'1.2.3', desc:'Cultura de inocuidad alimentaria definida en 4 dimensiones: comunicación, formación, feedback de trabajadores y medición del desempeño', cal:'A', kko:false },
+    { id:'1.2.4', desc:'Revisión anual del sistema de calidad por la dirección — registro documentado', cal:'A', kko:false },
+    { id:'1.3.1', desc:'Enfoque al cliente: revisión de contratos y acuerdos antes de aceptar pedidos', cal:'A', kko:false },
+    { id:'1.4.1', desc:'Plan de gestión de crisis y emergencias: actualizado y probado', cal:'B', kko:false, nc:'NC-IFS-001', ncTipo:'Menor' },
+    { id:'1.5.1', desc:'Sostenibilidad: objetivos medioambientales documentados (energía, agua, residuos)', cal:'A', kko:false }
   ]},
-  { cap:'2', titulo:'Sistema de Gestión de Calidad y Seguridad Alimentaria', items:[
-    { id:'2.1', desc:'APPCC implementado y verificado (Codex Alimentarius)', ok:true, kko:false },
-    { id:'2.2', desc:'Requisitos reglamentarios cumplidos', ok:true, kko:false },
-    { id:'2.3', desc:'Gestión de alergenoss documentada', ok:false, kko:false, nc:'NC-IFS-001', ncTipo:'Menor' },
-    { id:'2.4', desc:'Procedimientos de retirada y recall documentados', ok:true, kko:false }
+  // ── CAPÍTULO 2: SISTEMA DE GESTIÓN DE INOCUIDAD Y CALIDAD ALIMENTARIA ─
+  { cap:'2', titulo:'Sistema de Gestión de Inocuidad y Calidad Alimentaria', color:'#3B82F6',
+    descripcion:'APPCC (HACCP), BPH, documentación, control de cambios, especificaciones de materias primas y producto terminado.',
+    items:[
+    { id:'2.2.1', desc:'APPCC: análisis de peligros completo basado en Codex Alimentarius — revisado anualmente', cal:'A', kko:false },
+    { id:'2.3.9.1', desc:'KO: Sistema de vigilancia/monitorización de cada PCC (Punto de Control Crítico) documentado, implementado y verificado', cal:'A', kko:true },
+    { id:'2.2.4', desc:'Programas de Prerrequisitos (PPR): higiene, control de plagas, limpieza, mantenimiento, agua, trazabilidad — todos operativos', cal:'A', kko:false },
+    { id:'2.4.1', desc:'Especificaciones de materias primas (incluidos envases): documentadas, actualizadas y accesibles', cal:'A', kko:true },
+    { id:'2.5.1', desc:'Gestión de alérgenos: identificación, evaluación, control y etiquetado documentados', cal:'B', kko:false, nc:'NC-IFS-002', ncTipo:'Menor' },
+    { id:'2.6.1', desc:'Prevención del fraude alimentario (Food Fraud): evaluación de vulnerabilidad y plan de mitigación', cal:'A', kko:false },
+    { id:'2.7.1', desc:'Protección alimentaria (Food Defense): evaluación de amenazas deliberadas y plan de defensa', cal:'A', kko:false },
+    { id:'2.8.1', desc:'Procedimiento de retirada de producto (Recall/Withdrawal): documentado, probado y registrado', cal:'A', kko:true }
   ]},
-  { cap:'3', titulo:'Gestión de Recursos', items:[
-    { id:'3.1', desc:'Higiene personal: formación y registros completos', ok:true, kko:false },
-    { id:'3.2', desc:'Ropa de trabajo y EPIs adecuados', ok:true, kko:false },
-    { id:'3.3', desc:'Formación continua documentada', ok:false, kko:false, nc:'NC-IFS-002', ncTipo:'Menor' }
+  // ── CAPÍTULO 3: GESTIÓN DE RECURSOS ──────────────────────────────────
+  { cap:'3', titulo:'Gestión de Recursos', color:'#10B981',
+    descripcion:'Higiene personal, formación, EPIs, instalaciones del personal, estado de salud de trabajadores.',
+    items:[
+    { id:'3.2.2', desc:'KO: Higiene personal — todos los trabajadores/visitantes conocen y aplican los requisitos de higiene', cal:'A', kko:true },
+    { id:'3.2.1', desc:'Instrucciones de higiene personal disponibles, visibles y en idioma comprensible por los trabajadores', cal:'A', kko:false },
+    { id:'3.3.1', desc:'Formación inicial y continua: plan anual de formación en seguridad alimentaria — registros completos', cal:'B', kko:false, nc:'NC-IFS-003', ncTipo:'Menor' },
+    { id:'3.4.1', desc:'Estado de salud de los trabajadores: procedimiento para declarar enfermedades y heridas abiertas', cal:'A', kko:false },
+    { id:'3.5.1', desc:'Equipos de protección individual (EPIs): adecuados, disponibles y en buen estado', cal:'A', kko:false }
   ]},
-  { cap:'4', titulo:'Planificación y Proceso Productivo', items:[
-    { id:'4.1', desc:'Especificaciones de producto actualizadas y accesibles', ok:true, kko:false },
-    { id:'4.2', desc:'Etiquetado conforme a normativa vigente', ok:true, kko:false },
-    { id:'4.3', desc:'Trazabilidad garantizada lote a lote', ok:true, kko:false },
-    { id:'4.4', desc:'Control de proveedores: homologación y evaluación', ok:true, kko:false },
-    { id:'4.5', desc:'Infraestructura e higiene de instalaciones', ok:true, kko:false }
+  // ── CAPÍTULO 4: PROCESOS OPERATIVOS ──────────────────────────────────
+  { cap:'4', titulo:'Procesos Operativos', color:'#F59E0B',
+    descripcion:'Desde el diseño del producto hasta la entrega. Incluye: especificaciones, acuerdos con clientes, trazabilidad, control de proveedores, gestión de alérgenos, envases, etiquetado, control ambiental y por materiales extraños.',
+    items:[
+    { id:'4.1.3', desc:'KO: Cumplimiento de acuerdos con clientes — recetas, procesos, etiquetado y especificaciones acordadas se respetan', cal:'A', kko:true },
+    { id:'4.2.1', desc:'Trazabilidad: identificación de lotes garantizada de materias primas hasta producto terminado y viceversa', cal:'A', kko:true },
+    { id:'4.3.1', desc:'Control de proveedores: sistema de aprobación y evaluación continua documentado', cal:'A', kko:false },
+    { id:'4.5.1', desc:'Control de materiales extraños (metales, vidrio, plástico duro, madera): detectores/medidas documentadas', cal:'A', kko:true },
+    { id:'4.7.1', desc:'Etiquetado: conforme a legislación vigente del país de destino — procedimiento de revisión antes de producción', cal:'A', kko:false },
+    { id:'4.8.1', desc:'Control ambiental (temperatura, humedad) en producción y almacenamiento: monitorización y registros', cal:'A', kko:false },
+    { id:'4.12.1', desc:'Mantenimiento preventivo: plan anual de mantenimiento o mantenimientos contratados documentados', cal:'A', kko:false }
   ]},
-  { cap:'5', titulo:'Mediciones, Análisis y Mejora', items:[
-    { id:'5.1', desc:'Auditorías internas programadas y realizadas', ok:true, kko:false },
-    { id:'5.2', desc:'Acción correctiva — seguimiento de NCs', ok:true, kko:false },
-    { id:'5.3', desc:'Control de equipos de medición (calibración)', ok:false, kko:false, nc:'NC-IFS-003', ncTipo:'Menor' }
+  // ── CAPÍTULO 5: MEDICIÓN, ANÁLISIS Y MEJORA ──────────────────────────
+  { cap:'5', titulo:'Medición, Análisis y Mejora', color:'#8B5CF6',
+    descripcion:'Auditorías internas, inspecciones, análisis de producto, gestión de NCs, acciones correctivas, revisión por la dirección.',
+    items:[
+    { id:'5.1.1', desc:'KO: Auditorías internas: programa anual que cubre todos los requis. IFS, realizadas y registradas por personal competente', cal:'A', kko:true },
+    { id:'5.2.1', desc:'KO: Gestión de NCs y acciones correctivas: sistema documentado con análisis de causa raíz y verificación de cierre', cal:'A', kko:true },
+    { id:'5.1.3', desc:'Al menos 1 de cada 3 auditorias de certificación debe ser no anunciada (obligatorio desde IFS v8)', cal:'A', kko:false },
+    { id:'5.3.1', desc:'KO: No conformidades de producto: sistema de bloqueo, evaluación y destino (reproceso/destrucción/recall)', cal:'A', kko:true },
+    { id:'5.4.1', desc:'Control de equipos de medición: calibración/verificación con registros y trazabilidad a patrones nacionales', cal:'B', kko:false, nc:'NC-IFS-004', ncTipo:'Menor' },
+    { id:'5.5.1', desc:'Análisis de laboratorio: programa de análisis de producto y ambiental — resultados revisados y gestionados', cal:'A', kko:false },
+    { id:'5.6.1', desc:'Revisión por la dirección: análisis de resultados del SG, tendencias y establecimiento de objetivos anuales', cal:'A', kko:false }
   ]}
 ];
 
+// KOs resumen para referencia rápida UI
+var _ifsKOs = [
+  { codigo:'1.2.1', desc:'Compromiso alta dirección' },
+  { codigo:'2.3.9.1', desc:'Vigilancia de PCCs (APPCC)' },
+  { codigo:'2.4.1', desc:'Especificaciones materias primas' },
+  { codigo:'2.8.1', desc:'Procedimiento Recall/Retirada' },
+  { codigo:'3.2.2', desc:'Higiene personal — todo el personal' },
+  { codigo:'4.1.3', desc:'Cumplimiento acuerdos con clientes' },
+  { codigo:'4.2.1', desc:'Trazabilidad lote a lote' },
+  { codigo:'4.5.1', desc:'Control materiales extraños' },
+  { codigo:'5.1.1', desc:'Auditorías internas — programa completo' },
+  { codigo:'5.2.1', desc:'Acciones correctivas y gestión NCs' },
+  { codigo:'5.3.1', desc:'Bloqueo y gestión de producto NC' }
+];
+
+// GlobalGAP IFA v6 GFS — módulos reales (vigente 01/01/2025, reemplaza v5.4-1-GFS)
+// Cumplimiento: Major Must 100% obligatorio + Minor Must >=95%
+// Módulos: AF (All Farm) + CB (Crops Base) + FV (Fruit & Veg) — todos obligatorios para frutas
 var _ggapModulos = [
-  { mod:'AF', titulo:'Granja de Base — Todos los productos', pct:100, color:'#10B981', items:32, ok:32 },
-  { mod:'CB', titulo:'Cultivos de Base', pct:97, color:'#3B82F6', items:30, ok:29 },
-  { mod:'FV', titulo:'Frutas y Hortalizas', pct:100, color:'#10B981', items:28, ok:28 },
-  { mod:'SMK', titulo:'Trabajadores y Salud Laboral', pct:94, color:'#8B5CF6', items:18, ok:17 }
+  { mod:'AF', titulo:'All Farm — Producción General', subtitulo:'Trazabilidad, higiene, seguridad trabajadores, gestión finca, residuos',
+    pct:100, color:'#10B981',
+    major:{ total:12, ok:12 }, minor:{ total:66, ok:66 }, recom:{ total:18 } },
+  { mod:'CB', titulo:'Crops Base — Base para Cultivos', subtitulo:'Material propagación, suelo/sustratos, fertilización, agua, fitosanitarios',
+    pct:98, color:'#3B82F6',
+    major:{ total:8, ok:8 }, minor:{ total:54, ok:53 }, recom:{ total:14 } },
+  { mod:'FV', titulo:'Fruit & Vegetables — Frutas y Hortalizas', subtitulo:'Seguridad alimentaria pre/postcosecha, análisis agua/suelo, manipulación',
+    pct:100, color:'#10B981',
+    major:{ total:6, ok:6 }, minor:{ total:36, ok:36 }, recom:{ total:10 } },
+  { mod:'WB', titulo:'Workers Health & Safety', subtitulo:'Salud y bienestar de trabajadores, subcontratistas, alojamiento',
+    pct:97, color:'#8B5CF6',
+    major:{ total:4, ok:4 }, minor:{ total:26, ok:25 }, recom:{ total:8 } }
 ];
 
 var _certDocs = [
-  { nombre:'Certificado IFS Food v8 2026', tipo:'Certificado', fecha:'10/01/2026', size:'312 KB', color:'#3B82F6', icono:'🏅' },
-  { nombre:'Informe Auditoría IFS — Bureau Veritas', tipo:'Informe', fecha:'08/01/2026', size:'1.4 MB', color:'#3B82F6', icono:'📄' },
-  { nombre:'Plan de Acción NCs IFS 2026', tipo:'Plan Acción', fecha:'20/01/2026', size:'280 KB', color:'#EF4444', icono:'⚠️' },
-  { nombre:'Certificado GlobalGAP IFA v6 2025', tipo:'Certificado', fecha:'12/06/2025', size:'245 KB', color:'#F59E0B', icono:'🌍' },
-  { nombre:'Informe Auditoría GlobalGAP — AENOR', tipo:'Informe', fecha:'10/06/2025', size:'980 KB', color:'#F59E0B', icono:'📄' },
-  { nombre:'Certificado CAECV Ecológico 2026', tipo:'Certificado', fecha:'01/01/2026', size:'180 KB', color:'#10B981', icono:'🌿' },
-  { nombre:'APPCC — Plan Análisis de Peligros', tipo:'Procedimiento', fecha:'15/01/2026', size:'2.1 MB', color:'#8B5CF6', icono:'📝' },
-  { nombre:'Procedimiento de Recall y Retirada', tipo:'Procedimiento', fecha:'10/01/2026', size:'340 KB', color:'#8B5CF6', icono:'📝' }
+  { nombre:'Certificado IFS Food v8 2026 — Bureau Veritas', tipo:'Certificado', fecha:'10/01/2026', size:'312 KB', color:'#3B82F6', icono:'🏅', desc:'Nivel Higher Level (96.4%)' },
+  { nombre:'Informe Auditoría IFS v8 — Bureau Veritas', tipo:'Informe auditoría', fecha:'08/01/2026', size:'1.4 MB', color:'#3B82F6', icono:'📄', desc:'234 requisitos evaluados' },
+  { nombre:'Plan de Acción NCs IFS 2026 (4 NCs Menores)', tipo:'Plan Acción Correctiva', fecha:'20/01/2026', size:'280 KB', color:'#EF4444', icono:'⚠️', desc:'Plazo cierre: 28 días hábiles' },
+  { nombre:'IFS Food Doctrine — Interpretación oficial v8', tipo:'Norma referencia', fecha:'2024 (vigente)', size:'3.2 MB', color:'#6366F1', icono:'📚', desc:'Documento interpretación requisitos' },
+  { nombre:'Certificado GlobalGAP IFA v6 GFS — AENOR', tipo:'Certificado', fecha:'12/06/2025', size:'245 KB', color:'#F59E0B', icono:'🌍', desc:'GGN: 4050373-AL07890 • GFSI reconocida' },
+  { nombre:'Informe Auditoría GlobalGAP — AENOR', tipo:'Informe auditoría', fecha:'10/06/2025', size:'980 KB', color:'#F59E0B', icono:'📄', desc:'Major 100% • Minor 97%' },
+  { nombre:'Listado GGN verificado GLOBALG.A.P.', tipo:'Registro oficial', fecha:'12/06/2025', size:'45 KB', color:'#F59E0B', icono:'📋', desc:'Código GGN consultable en globalgap.org' },
+  { nombre:'Certificado CAECV Ecológico 2026', tipo:'Certificado', fecha:'01/01/2026', size:'180 KB', color:'#10B981', icono:'🌿', desc:'Regl. UE 2018/848 • CAECV' },
+  { nombre:'Listado parcelas y operadores eco', tipo:'Registro CAECV', fecha:'01/01/2026', size:'95 KB', color:'#10B981', icono:'📍', desc:'Fruchesco — Eco Granados + Eco Higueras' },
+  { nombre:'APPCC — Plan Análisis de Peligros (HACCP)', tipo:'Procedimiento obligatorio', fecha:'15/01/2026', size:'2.1 MB', color:'#8B5CF6', icono:'📝', desc:'Basado en Codex Alimentarius CAC/RCP 1-1969' },
+  { nombre:'Procedimiento Recall y Retirada de Producto', tipo:'Procedimiento KO', fecha:'10/01/2026', size:'340 KB', color:'#8B5CF6', icono:'📝', desc:'Req. KO 2.8.1 IFS — probado anualmente' },
+  { nombre:'Plan Food Defense y Food Fraud 2026', tipo:'Plan seguridad', fecha:'15/01/2026', size:'210 KB', color:'#EF4444', icono:'🔒', desc:'Cap. 2.6 y 2.7 IFS Food v8' }
 ];
 
 // ── KPIs ──
@@ -2327,42 +2396,86 @@ window.renderCertOverview = function() {
 // ── Tab: IFS Checklist ──
 window.renderIFSChecklist = function() {
   var el = document.getElementById('cert-ifs-content'); if(!el) return;
-  var totalItems = 0, okItems = 0, ncItems = 0;
-  _ifsChecklist.forEach(function(c){ c.items.forEach(function(i){ totalItems++; if(i.ok) okItems++; else ncItems++; }); });
-  var pct = Math.round(okItems/totalItems*100);
+  // Calcular stats usando campo 'cal' (A=ok, B/C/D=nc)
+  var totalItems = 0, okItems = 0, ncItems = 0, koItems = 0;
+  _ifsChecklist.forEach(function(c){ c.items.forEach(function(i){
+    totalItems++;
+    if(i.cal === 'A') okItems++; else ncItems++;
+    if(i.kko) koItems++;
+  }); });
+  // Puntuacion real IFS: cada requisito OK=100pts, B=-15, C=-30, D=0
+  var pts = 0, maxPts = 0;
+  _ifsChecklist.forEach(function(c){ c.items.forEach(function(i){
+    maxPts += 100;
+    if(i.cal === 'A') pts += 100;
+    else if(i.cal === 'B') pts += 85;
+    else if(i.cal === 'C') pts += 50;
+  }); });
+  var pct = Math.round(pts/maxPts*100);
+  var nivel = pct >= 95 ? 'Higher Level' : pct >= 75 ? 'Foundation' : 'Basic';
+  var nivelColor = pct >= 95 ? '#10B981' : pct >= 75 ? '#F59E0B' : '#EF4444';
+
   var h =
-    '<div style="display:flex;gap:16px;align-items:center;margin-bottom:20px;background:var(--light);border-radius:12px;padding:16px">' +
-      '<div style="flex:1">' +
-        '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">' +
-          '<span style="font-weight:700;color:var(--dark)">Cumplimiento IFS Food v8</span>' +
-          '<strong style="color:' + (pct>=95?'#10B981':'#EF4444') + ';font-size:16px">' + pct + '%</strong>' +
+    // Banner scoring
+    '<div style="background:linear-gradient(135deg,#1e3a5f 0%,#2563EB 100%);border-radius:12px;padding:20px;margin-bottom:20px;color:#fff">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">' +
+        '<div>' +
+          '<div style="font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:1px">IFS Food versión 8 — Abril 2023 • 224 requisitos evaluados</div>' +
+          '<div style="font-size:18px;font-weight:800;margin:4px 0">Puntuación: ' + pct + '% — Nivel <span style="color:#FCD34D">' + nivel + '</span></div>' +
+          '<div style="font-size:11px;opacity:.8">Sistema: A=100pts • B=85pts(−15) • C=50pts • D=0pts(KO=No certif.)</div>' +
         '</div>' +
-        '<div style="height:10px;background:var(--border);border-radius:5px"><div style="width:' + pct + '%;height:100%;background:' + (pct>=95?'#10B981':'#EF4444') + ';border-radius:5px;transition:width .6s"></div></div>' +
+        '<div style="display:flex;gap:16px;text-align:center">' +
+          '<div><div style="font-size:24px;font-weight:900">' + okItems + '</div><div style="font-size:10px;opacity:.7">✅ Cal. A</div></div>' +
+          '<div><div style="font-size:24px;font-weight:900;color:#FCD34D">' + ncItems + '</div><div style="font-size:10px;opacity:.7">⚠️ Cal. B+</div></div>' +
+          '<div><div style="font-size:24px;font-weight:900;color:#FCA5A5">' + koItems + '</div><div style="font-size:10px;opacity:.7">🔴 KOs</div></div>' +
+        '</div>' +
       '</div>' +
-      '<div style="display:flex;gap:12px;text-align:center">' +
-        '<div><div style="font-size:20px;font-weight:800;color:#10B981">' + okItems + '</div><div style="font-size:10px;color:var(--gray)">✅ OK</div></div>' +
-        '<div><div style="font-size:20px;font-weight:800;color:#EF4444">' + ncItems + '</div><div style="font-size:10px;color:var(--gray)">⚠️ NC</div></div>' +
-        '<div><div style="font-size:20px;font-weight:800;color:var(--gray)">' + totalItems + '</div><div style="font-size:10px;color:var(--gray)">Total</div></div>' +
+      '<div style="margin-top:12px;height:8px;background:rgba(255,255,255,.2);border-radius:4px">' +
+        '<div style="width:' + pct + '%;height:100%;background:#FCD34D;border-radius:4px;transition:width .8s"></div>' +
       '</div>' +
     '</div>' +
-    '<div style="display:flex;flex-direction:column;gap:12px">';
+    // Banner KOs
+    '<div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:10px;padding:14px;margin-bottom:20px">' +
+      '<div style="font-size:12px;font-weight:700;color:#DC2626;margin-bottom:8px">🔴 10+1 Requisitos KO — Incumplimiento = No certificación inmediata</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
+      _ifsKOs.map(function(k){ return '<span style="font-size:10px;background:rgba(239,68,68,.1);color:#DC2626;padding:3px 8px;border-radius:5px;font-weight:600">' + k.codigo + ' — ' + k.desc + '</span>'; }).join('') +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;flex-direction:column;gap:14px">';
 
   _ifsChecklist.forEach(function(cap) {
-    var capOk = cap.items.filter(function(i){ return i.ok; }).length;
-    h += '<div class="card" style="padding:16px">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
-        '<div style="font-size:14px;font-weight:700;color:var(--dark)">📌 Capítulo ' + cap.cap + ': ' + cap.titulo + '</div>' +
-        '<span style="font-size:12px;background:' + (capOk===cap.items.length?'rgba(16,185,129,.1)':'rgba(239,68,68,.08)') + ';color:' + (capOk===cap.items.length?'#059669':'#DC2626') + ';padding:2px 10px;border-radius:12px;font-weight:700">' + capOk + '/' + cap.items.length + '</span>' +
+    var capOk = cap.items.filter(function(i){ return i.cal === 'A'; }).length;
+    var capKos = cap.items.filter(function(i){ return i.kko; }).length;
+    h += '<div class="card" style="padding:16px;border-top:3px solid ' + cap.color + '">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">' +
+        '<div>' +
+          '<div style="font-size:14px;font-weight:800;color:' + cap.color + '">Capítulo ' + cap.cap + '</div>' +
+          '<div style="font-size:13px;font-weight:700;color:var(--dark)">' + cap.titulo + '</div>' +
+          '<div style="font-size:11px;color:var(--gray);margin-top:2px">' + cap.descripcion + '</div>' +
+        '</div>' +
+        '<div style="text-align:right;white-space:nowrap;margin-left:12px">' +
+          '<span style="font-size:12px;background:' + (capOk===cap.items.length?'rgba(16,185,129,.1)':'rgba(245,158,11,.1)') + ';color:' + (capOk===cap.items.length?'#059669':'#D97706') + ';padding:2px 10px;border-radius:12px;font-weight:700">' + capOk + '/' + cap.items.length + ' OK</span>' +
+          (capKos ? '<br><span style="font-size:10px;color:#DC2626;font-weight:700">' + capKos + ' KO(s)</span>' : '') +
+        '</div>' +
       '</div>' +
-      '<div style="display:flex;flex-direction:column;gap:8px">';
+      '<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">';
+
     cap.items.forEach(function(item) {
-      var icon = item.ok ? '✅' : '❌';
-      var bg = item.ok ? 'rgba(16,185,129,.05)' : 'rgba(239,68,68,.06)';
-      var border = item.ok ? '2px solid rgba(16,185,129,.2)' : '2px solid rgba(239,68,68,.2)';
-      h += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:' + bg + ';border-radius:8px;border:' + border + '">' +
-        '<span style="font-size:16px">' + icon + '</span>' +
-        '<div style="flex:1;font-size:12px;color:var(--dark)"><strong>' + item.id + '</strong> — ' + item.desc + '</div>' +
-        (item.nc ? '<span style="font-size:10px;background:rgba(239,68,68,.1);color:#DC2626;padding:2px 6px;border-radius:5px;font-weight:700;white-space:nowrap">' + item.nc + ' ' + item.ncTipo + '</span>' : '') +
+      var calColor = { A:'#10B981', B:'#F59E0B', C:'#EF4444', D:'#DC2626' }[item.cal] || '#6B7280';
+      var calIcon  = { A:'✅', B:'🟡', C:'🟠', D:'🔴' }[item.cal] || '❓';
+      var bg = item.cal==='A' ? 'rgba(16,185,129,.04)' : item.cal==='B' ? 'rgba(245,158,11,.06)' : 'rgba(239,68,68,.06)';
+      var border = item.cal==='A' ? '1px solid rgba(16,185,129,.18)' : item.cal==='B' ? '1px solid rgba(245,158,11,.2)' : '1px solid rgba(239,68,68,.2)';
+      h += '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:' + bg + ';border-radius:7px;border:' + border + '">' +
+        '<span style="font-size:15px;min-width:20px;padding-top:1px">' + calIcon + '</span>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:11px;color:var(--dark)"><code style="font-size:10px;background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px;font-weight:700">' + item.id + '</code>' +
+          (item.kko ? ' <span style="font-size:9px;background:#DC2626;color:#fff;padding:1px 5px;border-radius:3px;font-weight:700">KO</span>' : '') +
+          ' ' + item.desc + '</div>' +
+        '</div>' +
+        '<div style="text-align:right;min-width:60px">' +
+          '<span style="font-size:11px;font-weight:800;color:' + calColor + '">Cal. ' + item.cal + '</span>' +
+          (item.nc ? '<br><span style="font-size:9px;color:#DC2626;font-weight:700">' + item.nc + '</span>' : '') +
+        '</div>' +
       '</div>';
     });
     h += '</div></div>';
@@ -2374,30 +2487,78 @@ window.renderIFSChecklist = function() {
 // ── Tab: GlobalGAP ──
 window.renderGlobalGAP = function() {
   var el = document.getElementById('cert-ggap-content'); if(!el) return;
+  var totalMajor = 0, okMajor = 0, totalMinor = 0, okMinor = 0;
+  _ggapModulos.forEach(function(m){
+    totalMajor += m.major.total; okMajor += m.major.ok;
+    totalMinor += m.minor.total; okMinor += m.minor.ok;
+  });
+  var pctMinor = Math.round(okMinor/totalMinor*100);
   var h =
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">' +
-      '<div class="card" style="padding:20px;border-top:4px solid #F59E0B">' +
-        '<div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:4px">🌍 GlobalGAP IFA v6 — Opción 1</div>' +
-        '<div style="font-size:11px;color:var(--gray);margin-bottom:12px">GGN: 4050373-AL07890 • AENOR • Vence: 12/06/2026</div>' +
-        '<span style="font-size:11px;font-weight:700;background:rgba(245,158,11,.1);color:#D97706;padding:3px 10px;border-radius:12px">⚠️ Renovación en 72 días</span>' +
-      '</div>' +
-      '<div class="card" style="padding:20px;border-top:4px solid #10B981">' +
-        '<div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:4px">📊 Resultado última auditoría</div>' +
-        '<div style="font-size:36px;font-weight:900;color:#10B981">100%</div>' +
-        '<div style="font-size:11px;color:var(--gray)">Todos los puntos de control superados • 0 NCs</div>' +
+    // Banner normativa
+    '<div style="background:linear-gradient(135deg,#78350f 0%,#D97706 100%);border-radius:12px;padding:20px;margin-bottom:20px;color:#fff">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">' +
+        '<div>' +
+          '<div style="font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:1px">GlobalGAP IFA v6 GFS — Vigente desde 01/01/2025 (reemplaza v5.4-1-GFS) • GFSI reconocida</div>' +
+          '<div style="font-size:17px;font-weight:800;margin:6px 0">GGN: 4050373-AL07890 • AENOR • Vence: 12/06/2026</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+            '<span style="font-size:11px;background:rgba(255,255,255,.15);padding:3px 10px;border-radius:20px">⚠️ Renovación en ~72 días</span>' +
+            '<span style="font-size:11px;background:rgba(255,255,255,.15);padding:3px 10px;border-radius:20px">Módulos: AF + CB + FV + WB</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="text-align:right">' +
+          '<div style="font-size:11px;opacity:.7">Major Must</div>' +
+          '<div style="font-size:28px;font-weight:900">' + okMajor + '/' + totalMajor + ' <span style="font-size:14px">(100%)</span></div>' +
+          '<div style="font-size:11px;opacity:.7;margin-top:4px">Minor Must ' + pctMinor + '%  ≥ 95% requerido</div>' +
+        '</div>' +
       '</div>' +
     '</div>' +
-    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">';
+    // Umbrales
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">' +
+      '<div class="card" style="padding:14px;text-align:center;border-top:3px solid #10B981">' +
+        '<div style="font-size:10px;text-transform:uppercase;color:var(--gray);letter-spacing:.5px">Major Must</div>' +
+        '<div style="font-size:24px;font-weight:900;color:#10B981">100%</div>' +
+        '<div style="font-size:10px;color:var(--gray)">Obligatorio — 0 excepciones</div>' +
+      '</div>' +
+      '<div class="card" style="padding:14px;text-align:center;border-top:3px solid #3B82F6">' +
+        '<div style="font-size:10px;text-transform:uppercase;color:var(--gray);letter-spacing:.5px">Minor Must</div>' +
+        '<div style="font-size:24px;font-weight:900;color:#3B82F6">≥95%</div>' +
+        '<div style="font-size:10px;color:var(--gray)">Mínimo requerido — actual ' + pctMinor + '%</div>' +
+      '</div>' +
+      '<div class="card" style="padding:14px;text-align:center;border-top:3px solid #8B5CF6">' +
+        '<div style="font-size:10px;text-transform:uppercase;color:var(--gray);letter-spacing:.5px">IFA v6 Smart vs GFS</div>' +
+        '<div style="font-size:13px;font-weight:800;color:#8B5CF6">GFS ✔</div>' +
+        '<div style="font-size:10px;color:var(--gray)">Reconocida GFSI (requerida grandes cadenas)</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">';
 
   _ggapModulos.forEach(function(m) {
+    var minorPct = Math.round(m.minor.ok/m.minor.total*100);
+    var minorOk = minorPct >= 95;
     h += '<div class="card" style="padding:18px;border-left:4px solid ' + m.color + '">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-        '<div><span style="font-size:11px;font-weight:900;color:' + m.color + ';background:' + m.color + '18;padding:2px 8px;border-radius:5px">' + m.mod + '</span></div>' +
-        '<strong style="font-size:16px;color:' + m.color + '">' + m.pct + '%</strong>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+        '<span style="font-size:12px;font-weight:900;color:' + m.color + ';background:' + m.color + '18;padding:2px 10px;border-radius:5px;letter-spacing:.5px">' + m.mod + '</span>' +
+        '<strong style="font-size:18px;color:' + m.color + '">' + m.pct + '%</strong>' +
       '</div>' +
-      '<div style="font-size:12px;font-weight:600;color:var(--dark);margin-bottom:10px">' + m.titulo + '</div>' +
-      '<div style="height:8px;background:var(--border);border-radius:4px"><div style="width:' + m.pct + '%;height:100%;background:' + m.color + ';border-radius:4px;transition:width .5s"></div></div>' +
-      '<div style="font-size:11px;color:var(--gray);margin-top:6px">' + m.ok + '/' + m.items + ' puntos superados</div>' +
+      '<div style="font-size:12px;font-weight:700;color:var(--dark);margin-bottom:2px">' + m.titulo + '</div>' +
+      '<div style="font-size:11px;color:var(--gray);margin-bottom:12px">' + m.subtitulo + '</div>' +
+      '<div style="height:6px;background:var(--border);border-radius:3px;margin-bottom:10px">' +
+        '<div style="width:' + m.pct + '%;height:100%;background:' + m.color + ';border-radius:3px;transition:width .5s"></div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:11px;text-align:center">' +
+        '<div style="background:rgba(16,185,129,.06);border-radius:6px;padding:5px">' +
+          '<div style="font-weight:700;color:#059669">' + m.major.ok + '/' + m.major.total + '</div>' +
+          '<div style="color:var(--gray);font-size:9px">Major Must</div>' +
+        '</div>' +
+        '<div style="background:' + (minorOk?'rgba(59,130,246,.06)':'rgba(245,158,11,.08)') + ';border-radius:6px;padding:5px">' +
+          '<div style="font-weight:700;color:' + (minorOk?'#3B82F6':'#D97706') + '">' + m.minor.ok + '/' + m.minor.total + '</div>' +
+          '<div style="color:var(--gray);font-size:9px">Minor Must</div>' +
+        '</div>' +
+        '<div style="background:rgba(139,92,246,.06);border-radius:6px;padding:5px">' +
+          '<div style="font-weight:700;color:#8B5CF6">' + m.recom.total + '</div>' +
+          '<div style="color:var(--gray);font-size:9px">Recom.</div>' +
+        '</div>' +
+      '</div>' +
     '</div>';
   });
   h += '</div>';
@@ -2407,16 +2568,16 @@ window.renderGlobalGAP = function() {
 // ── Tab: Documentos ──
 window.renderCertDocs = function() {
   var el = document.getElementById('cert-docs-content'); if(!el) return;
-  var h = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">';
+  var h = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">';
   _certDocs.forEach(function(d) {
-    h += '<div class="card" style="padding:16px;display:flex;align-items:center;gap:14px;border-left:3px solid ' + d.color + ';cursor:pointer;transition:box-shadow .2s" onmouseover="this.style.boxShadow=\'var(--shadow-lg)\'" onmouseout="this.style.boxShadow=\'\'">' +
-      '<div style="font-size:30px;min-width:40px;text-align:center">' + d.icono + '</div>' +
+    h += '<div class="card" style="padding:16px;display:flex;align-items:flex-start;gap:14px;border-left:3px solid ' + d.color + ';cursor:pointer;transition:box-shadow .2s" onmouseover="this.style.boxShadow=\'var(--shadow-lg)\'" onmouseout="this.style.boxShadow=\'\'">' +
+      '<div style="font-size:28px;min-width:36px;text-align:center;padding-top:2px">' + d.icono + '</div>' +
       '<div style="flex:1;min-width:0">' +
-        '<div style="font-size:12px;font-weight:700;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + d.nombre + '</div>' +
-        '<div style="font-size:11px;color:var(--gray)">' + d.tipo + ' • ' + d.fecha + '</div>' +
-        '<div style="font-size:10px;color:var(--gray)">📀 ' + d.size + '</div>' +
+        '<div style="font-size:12px;font-weight:700;color:var(--dark);margin-bottom:2px">' + d.nombre + '</div>' +
+        '<div style="font-size:10px;color:var(--gray)">' + d.tipo + ' • ' + d.fecha + ' • ' + d.size + '</div>' +
+        (d.desc ? '<div style="font-size:10px;color:' + d.color + ';margin-top:3px;font-weight:600">' + d.desc + '</div>' : '') +
       '</div>' +
-      '<button style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 8px;cursor:pointer;font-size:14px;color:var(--gray)" title="Descargar">⬇️</button>' +
+      '<button style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 8px;cursor:pointer;font-size:13px;color:var(--gray);flex-shrink:0" title="Descargar">⬇️</button>' +
     '</div>';
   });
   h += '</div>';
