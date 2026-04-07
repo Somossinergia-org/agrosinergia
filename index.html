@@ -818,6 +818,15 @@ const pages=[
   {id:"stock",icon:"\u{1F4E6}",label:"Stock",section:"Recursos"},
   {id:"maquinaria",icon:"\u{1F527}",label:"Maquinaria y Herramientas",section:"Recursos"},
   {id:"transporte",icon:"\u{1F69B}",label:"Flota y Transporte",section:"Transporte"},
+  {id:"entradas",icon:"\u{1F69C}",label:"Entradas de Fruta",section:"Almac\u00e9n"},
+  {id:"palets",icon:"\u{1F4E6}",label:"Palets",section:"Almac\u00e9n"},
+  {id:"clientes",icon:"\u{1F91D}",label:"Clientes",section:"Almac\u00e9n"},
+  {id:"transportistas",icon:"\u{1F69A}",label:"Transportistas",section:"Almac\u00e9n"},
+  {id:"productos",icon:"\u{1F34F}",label:"Productos y Variedades",section:"Almac\u00e9n"},
+  {id:"ctrl-recepcion",icon:"\u{1F4CB}",label:"Control Recepci\u00f3n",section:"Controles"},
+  {id:"ctrl-liberacion",icon:"\u2705",label:"Liberaci\u00f3n Producto",section:"Controles"},
+  {id:"ctrl-agua",icon:"\u{1F4A7}",label:"Control de Agua",section:"Controles"},
+  {id:"ctrl-limpieza",icon:"\u{1F9F9}",label:"Limpieza e Higiene",section:"Controles"},
   {id:"siex",icon:"\u2705",label:"SIEX",section:"Cumplimiento"},
   {id:"auditorias",icon:"\u{1F4CB}",label:"Auditor\u00edas",section:"Cumplimiento",badge:"1"},
   {id:"certificaciones",icon:"\u{1F3C5}",label:"IFS / GlobalGAP",section:"Cumplimiento"},
@@ -18254,6 +18263,1211 @@ document.getElementById('pwa-banner-close').addEventListener('click',function(){
   };
 
 })();
+
+// ==================== CLIENTES ====================
+M.innerHTML+=`<div class="page" id="page-clientes">
+<div class="header"><h1>🤝 Clientes</h1>
+  <button class="btn btn-primary" onclick="nuevoClienteModal()">+ Nuevo Cliente</button>
+</div>
+<div id="clientes-stats" class="stat-row"></div>
+<div style="display:flex;gap:8px;margin:14px 0;flex-wrap:wrap">
+  <input type="text" id="cli-buscar" placeholder="🔍 Buscar cliente..." oninput="renderClientes()" style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;flex:1;min-width:200px">
+  <select id="cli-filtro-pais" onchange="renderClientes()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff">
+    <option value="">Todos los países</option>
+    <option>España</option><option>Francia</option><option>Alemania</option>
+    <option>Países Bajos</option><option>Reino Unido</option><option>Italia</option>
+  </select>
+</div>
+<div id="clientes-tabla"></div>
+</div>`;
+
+(function(){
+var _defClientes=[
+  {id:1,nombre:'Pierre Duval',empresa:'Rungis Import SARL',pais:'Francia',ciudad:'Paris - Rungis MIN',tel:'+33 1 46 87 12 34',email:'pierre@rungis-import.fr',cert:'GlobalGAP',forma_pago:'30 días',limite_credito:50000,activo:true,notas:'Cliente prioritario desde 2018. Pide breva y higo Colar principalmente.'},
+  {id:2,nombre:'Jan de Groot',empresa:'De Groot BV',pais:'Países Bajos',ciudad:'Rotterdam',tel:'+31 10 411 22 33',email:'j.degroot@degroot.nl',cert:'GlobalGAP + EU Organic',forma_pago:'60 días',limite_credito:40000,activo:true,notas:'Solo producto ecológico certificado CAECV.'},
+  {id:3,nombre:'Thomas Müller',empresa:'Frucht Import GmbH',pais:'Alemania',ciudad:'Frankfurt',tel:'+49 69 12345 678',email:'t.muller@fruchtimport.de',cert:'GlobalGAP',forma_pago:'30 días',limite_credito:60000,activo:true,notas:'Granada Mollar y Wonderful. Temporada ago-nov.'},
+  {id:4,nombre:'Sarah Green',empresa:'Green Fresh Ltd',pais:'Reino Unido',ciudad:'Londres - New Covent Garden',tel:'+44 20 7720 1234',email:'s.green@greenfresh.co.uk',cert:'GlobalGAP + BRC',forma_pago:'45 días',limite_credito:35000,activo:true,notas:'Pide calibres grandes y presentación premium.'},
+  {id:5,nombre:'Marco Bianchi',empresa:'Bianchi Frutta SRL',pais:'Italia',ciudad:'Milán',tel:'+39 02 123 456',email:'m.bianchi@bianchifrutta.it',cert:'GlobalGAP',forma_pago:'30 días',limite_credito:25000,activo:false,notas:'Actualmente inactivo. Retomar en campaña 2026.'}
+];
+
+var clientes=AgroStore.load('agri_clientes',[]);
+if(!clientes.length){clientes=_defClientes;AgroStore.save('agri_clientes',clientes);}
+
+var flagPais={'Francia':'🇫🇷','Países Bajos':'🇳🇱','Alemania':'🇩🇪','Reino Unido':'🇬🇧','Italia':'🇮🇹','España':'🇪🇸'};
+
+function renderClientesStats(){
+  var el=document.getElementById('clientes-stats');if(!el)return;
+  var activos=clientes.filter(function(c){return c.activo;});
+  var paises=[...new Set(clientes.map(function(c){return c.pais;}))];
+  var credito=activos.reduce(function(s,c){return s+c.limite_credito;},0);
+  el.innerHTML='<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(44,110,73,.1);color:var(--accent)">🤝</div><div class="stat-body"><div class="stat-val">'+activos.length+'</div><div class="stat-label">Clientes activos</div></div></div>'+
+    '<div class="stat-mini s-blue"><div class="stat-icon" style="background:rgba(59,130,246,.1);color:#3B82F6">🌍</div><div class="stat-body"><div class="stat-val">'+paises.length+'</div><div class="stat-label">Países</div></div></div>'+
+    '<div class="stat-mini s-gold"><div class="stat-icon" style="background:rgba(212,168,67,.1);color:var(--gold)">💶</div><div class="stat-body"><div class="stat-val">'+Math.round(credito/1000)+'k€</div><div class="stat-label">Crédito total</div></div></div>';
+}
+
+window.renderClientes=function(){
+  renderClientesStats();
+  var buscar=(document.getElementById('cli-buscar')||{}).value||'';
+  var pais=(document.getElementById('cli-filtro-pais')||{}).value||'';
+  var fil=clientes.filter(function(c){
+    if(buscar&&(c.nombre+c.empresa+c.ciudad).toLowerCase().indexOf(buscar.toLowerCase())<0)return false;
+    if(pais&&c.pais!==pais)return false;
+    return true;
+  });
+  var el=document.getElementById('clientes-tabla');if(!el)return;
+  if(!fil.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--gray)">No se encontraron clientes</div>';return;}
+  var h='<div class="tbl-wrap"><table><tr><th>Cliente</th><th>País</th><th>Certificación</th><th>Pago</th><th>Crédito</th><th>Estado</th><th></th></tr>';
+  fil.forEach(function(c){
+    var fl=flagPais[c.pais]||'🌍';
+    h+='<tr>';
+    h+='<td><div style="font-weight:600">'+c.nombre+'</div><div style="font-size:11px;color:var(--gray)">'+c.empresa+'</div><div style="font-size:11px;color:var(--gray)">'+c.ciudad+'</div></td>';
+    h+='<td>'+fl+' '+c.pais+'</td>';
+    h+='<td><span class="tag tag-green" style="font-size:10px">'+c.cert+'</span></td>';
+    h+='<td style="font-size:12px">'+c.forma_pago+'</td>';
+    h+='<td style="font-weight:600">'+c.limite_credito.toLocaleString('es-ES')+'€</td>';
+    h+='<td><span class="tag '+(c.activo?'tag-green':'tag-gray')+'">'+(c.activo?'Activo':'Inactivo')+'</span></td>';
+    h+='<td><button class="btn btn-sm btn-outline" onclick="verCliente('+c.id+')">Ver</button> <button class="btn btn-sm btn-outline" onclick="editarCliente('+c.id+')" style="margin-top:2px">✏️</button></td>';
+    h+='</tr>';
+  });
+  h+='</table></div>';
+  el.innerHTML=h;
+};
+
+window.verCliente=function(id){
+  var c=clientes.find(function(x){return x.id===id;});if(!c)return;
+  var pedidos=(window._pedidosExport||[]).filter(function(p){return p.cliente===c.nombre;});
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  var fl=flagPais[c.pais]||'🌍';
+  md.innerHTML='<h2 style="margin-bottom:4px">'+fl+' '+c.nombre+'</h2><div class="modal-sub">'+c.empresa+' · '+c.ciudad+'</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;font-size:13px">'+
+    '<div><strong>Teléfono:</strong> '+c.tel+'</div>'+
+    '<div><strong>Email:</strong> '+c.email+'</div>'+
+    '<div><strong>Certificación exigida:</strong> <span class="tag tag-green" style="font-size:11px">'+c.cert+'</span></div>'+
+    '<div><strong>Forma de pago:</strong> '+c.forma_pago+'</div>'+
+    '<div><strong>Límite crédito:</strong> <strong style="color:var(--primary)">'+c.limite_credito.toLocaleString('es-ES')+'€</strong></div>'+
+    '<div><strong>Estado:</strong> <span class="tag '+(c.activo?'tag-green':'tag-gray')+'">'+(c.activo?'Activo':'Inactivo')+'</span></div>'+
+    '</div>'+
+    (c.notas?'<div style="margin-top:12px;padding:10px;background:rgba(0,0,0,.03);border-radius:8px;font-size:12px"><strong>📝 Notas:</strong> '+c.notas+'</div>':'')+
+    (pedidos.length?'<div style="margin-top:16px"><strong>Pedidos recientes ('+pedidos.length+'):</strong>'+
+      '<div class="tbl-wrap" style="margin-top:8px"><table><tr><th>Código</th><th>Producto</th><th>Valor</th><th>Estado</th></tr>'+
+      pedidos.slice(0,5).map(function(p){return '<tr><td>'+p.id+'</td><td>'+p.producto+'</td><td>'+p.valor.toLocaleString('es-ES')+'€</td><td><span class="tag '+(p.estado==='Entregado'?'tag-green':'tag-yellow')+'" style="font-size:10px">'+p.estado+'</span></td></tr>';}).join('')+
+      '</table></div></div>':'')+
+    '<div class="btn-group" style="margin-top:16px"><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cerrar</button></div>';
+  openModal('modal-pedido');
+};
+
+window.editarCliente=function(id){
+  var c=clientes.find(function(x){return x.id===id;})||{id:0,nombre:'',empresa:'',pais:'Francia',ciudad:'',tel:'',email:'',cert:'GlobalGAP',forma_pago:'30 días',limite_credito:20000,activo:true,notas:''};
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  md.innerHTML='<h2 style="margin-bottom:16px">'+(c.id?'✏️ Editar':'➕ Nuevo')+' Cliente</h2>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+    '<div class="form-group"><label>Nombre contacto *</label><input class="form-control" id="cli-nom" value="'+(c.nombre||'')+'"></div>'+
+    '<div class="form-group"><label>Empresa *</label><input class="form-control" id="cli-emp" value="'+(c.empresa||'')+'"></div>'+
+    '<div class="form-group"><label>País *</label><select class="form-control" id="cli-pais"><option>Francia</option><option>Países Bajos</option><option>Alemania</option><option>Reino Unido</option><option>Italia</option><option>España</option></select></div>'+
+    '<div class="form-group"><label>Ciudad / Mercado</label><input class="form-control" id="cli-ciudad" value="'+(c.ciudad||'')+'"></div>'+
+    '<div class="form-group"><label>Teléfono</label><input class="form-control" id="cli-tel" value="'+(c.tel||'')+'"></div>'+
+    '<div class="form-group"><label>Email</label><input class="form-control" id="cli-email" value="'+(c.email||'')+'"></div>'+
+    '<div class="form-group"><label>Certificación exigida</label><input class="form-control" id="cli-cert" value="'+(c.cert||'GlobalGAP')+'"></div>'+
+    '<div class="form-group"><label>Forma de pago</label><select class="form-control" id="cli-pago"><option>30 días</option><option>45 días</option><option>60 días</option><option>Contado</option></select></div>'+
+    '<div class="form-group"><label>Límite crédito (€)</label><input type="number" class="form-control" id="cli-credito" value="'+(c.limite_credito||20000)+'"></div>'+
+    '<div class="form-group"><label>Estado</label><select class="form-control" id="cli-activo"><option value="1"'+(c.activo?' selected':'')+'>Activo</option><option value="0"'+(!c.activo?' selected':'')+'>Inactivo</option></select></div>'+
+    '</div>'+
+    '<div class="form-group" style="margin-top:10px"><label>Notas</label><textarea class="form-control" id="cli-notas" rows="2">'+(c.notas||'')+'</textarea></div>'+
+    '<input type="hidden" id="cli-id" value="'+(c.id||0)+'">'+
+    '<div class="btn-group" style="margin-top:14px"><button class="btn btn-primary" onclick="guardarCliente()">💾 Guardar</button><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button></div>';
+  var selPais=document.getElementById('cli-pais');if(selPais)selPais.value=c.pais||'Francia';
+  var selPago=document.getElementById('cli-pago');if(selPago)selPago.value=c.forma_pago||'30 días';
+  openModal('modal-pedido');
+};
+
+window.nuevoClienteModal=function(){window.editarCliente(0);};
+
+window.guardarCliente=function(){
+  var id=parseInt(document.getElementById('cli-id').value)||0;
+  var obj={
+    id:id||(clientes.reduce(function(m,c){return Math.max(m,c.id);},0)+1),
+    nombre:document.getElementById('cli-nom').value||'Sin nombre',
+    empresa:document.getElementById('cli-emp').value||'',
+    pais:document.getElementById('cli-pais').value||'Francia',
+    ciudad:document.getElementById('cli-ciudad').value||'',
+    tel:document.getElementById('cli-tel').value||'',
+    email:document.getElementById('cli-email').value||'',
+    cert:document.getElementById('cli-cert').value||'GlobalGAP',
+    forma_pago:document.getElementById('cli-pago').value||'30 días',
+    limite_credito:parseInt(document.getElementById('cli-credito').value)||0,
+    activo:document.getElementById('cli-activo').value==='1',
+    notas:document.getElementById('cli-notas').value||''
+  };
+  if(id){var idx=clientes.findIndex(function(c){return c.id===id;});if(idx>=0)clientes[idx]=obj;else clientes.push(obj);}
+  else clientes.push(obj);
+  AgroStore.save('agri_clientes',clientes);
+  closeModal('modal-pedido');
+  renderClientes();
+  notifySaved('Cliente guardado');
+};
+
+setTimeout(function(){if(document.getElementById('clientes-tabla'))renderClientes();},300);
+var _spCli=showPage;showPage=function(id){_spCli(id);if(id==='clientes')renderClientes();};
+})();
+
+
+// ==================== TRANSPORTISTAS ====================
+M.innerHTML+=`<div class="page" id="page-transportistas">
+<div class="header"><h1>🚛 Transportistas</h1>
+  <button class="btn btn-primary" onclick="nuevoTransportistaModal()">+ Nuevo Transportista</button>
+</div>
+<div id="trans-tabla"></div>
+</div>`;
+
+(function(){
+var _defTrans=[
+  {id:1,nombre:'Logifruit SL',cif:'B-12345678',tel:'+34 963 456 789',email:'operaciones@logifruit.es',tipo:'Empresa transporte',vehiculos:'Góndola ATP 13.6m, Frigorífico 7.5t',licencias:'T-OE Alicante 2026, CMR vigente',activo:true,notas:'Transporte frigorífico nacional e internacional. Principal proveedor.'},
+  {id:2,nombre:'TFE Express',cif:'B-87654321',tel:'+34 91 234 5678',email:'tfe@tfe.es',tipo:'Empresa transporte',vehiculos:'Remolque estándar 13.6m',licencias:'T-OE Madrid 2026',activo:true,notas:'Transporte España-Países Bajos-Bélgica. Runner de semana.'},
+  {id:3,nombre:'Ahmed Benaissa (propio)',cif:'—',tel:'+34 655 123 456',email:'',tipo:'Transportista propio',vehiculos:'Furgón Iveco Daily 1234 HBK',licencias:'Carnet C + CAP 2025',activo:true,notas:'Empleado de la empresa. Transporte local finca-almacén.'}
+];
+
+var trans=AgroStore.load('agri_transportistas',[]);
+if(!trans.length){trans=_defTrans;AgroStore.save('agri_transportistas',trans);}
+
+window.renderTransportistas=function(){
+  var el=document.getElementById('trans-tabla');if(!el)return;
+  var h='<div class="tbl-wrap"><table><tr><th>Nombre</th><th>CIF</th><th>Tipo</th><th>Vehículos</th><th>Contacto</th><th>Estado</th><th></th></tr>';
+  trans.forEach(function(t){
+    h+='<tr>';
+    h+='<td><div style="font-weight:600">'+t.nombre+'</div></td>';
+    h+='<td style="font-family:monospace;font-size:12px">'+t.cif+'</td>';
+    h+='<td><span class="tag tag-blue" style="font-size:10px">'+t.tipo+'</span></td>';
+    h+='<td style="font-size:11px;max-width:200px">'+t.vehiculos+'</td>';
+    h+='<td style="font-size:12px">'+t.tel+'<br><span style="color:var(--gray)">'+t.email+'</span></td>';
+    h+='<td><span class="tag '+(t.activo?'tag-green':'tag-gray')+'">'+(t.activo?'Activo':'Inactivo')+'</span></td>';
+    h+='<td><button class="btn btn-sm btn-outline" onclick="editarTransportista('+t.id+')">✏️</button></td>';
+    h+='</tr>';
+  });
+  h+='</table></div>';
+  el.innerHTML=h;
+};
+
+window.editarTransportista=function(id){
+  var t=trans.find(function(x){return x.id===id;})||{id:0,nombre:'',cif:'',tel:'',email:'',tipo:'Empresa transporte',vehiculos:'',licencias:'',activo:true,notas:''};
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  md.innerHTML='<h2 style="margin-bottom:16px">'+(t.id?'✏️ Editar':'➕ Nuevo')+' Transportista</h2>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+    '<div class="form-group"><label>Nombre / Razón Social *</label><input class="form-control" id="tr-nom" value="'+(t.nombre||'')+'"></div>'+
+    '<div class="form-group"><label>CIF / NIF</label><input class="form-control" id="tr-cif" value="'+(t.cif||'')+'"></div>'+
+    '<div class="form-group"><label>Teléfono</label><input class="form-control" id="tr-tel" value="'+(t.tel||'')+'"></div>'+
+    '<div class="form-group"><label>Email</label><input class="form-control" id="tr-email" value="'+(t.email||'')+'"></div>'+
+    '<div class="form-group"><label>Tipo</label><select class="form-control" id="tr-tipo"><option>Empresa transporte</option><option>Autónomo</option><option>Transportista propio</option></select></div>'+
+    '<div class="form-group"><label>Estado</label><select class="form-control" id="tr-activo"><option value="1"'+(t.activo?' selected':'')+'>Activo</option><option value="0"'+(!t.activo?' selected':'')+'>Inactivo</option></select></div>'+
+    '</div>'+
+    '<div class="form-group"><label>Vehículos / Matrículas</label><input class="form-control" id="tr-vehs" value="'+(t.vehiculos||'')+'"></div>'+
+    '<div class="form-group"><label>Licencias / Permisos</label><input class="form-control" id="tr-lic" value="'+(t.licencias||'')+'"></div>'+
+    '<div class="form-group"><label>Notas</label><textarea class="form-control" id="tr-notas" rows="2">'+(t.notas||'')+'</textarea></div>'+
+    '<input type="hidden" id="tr-id" value="'+(t.id||0)+'">'+
+    '<div class="btn-group" style="margin-top:14px"><button class="btn btn-primary" onclick="guardarTransportista()">💾 Guardar</button><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button></div>';
+  var selTipo=document.getElementById('tr-tipo');if(selTipo)selTipo.value=t.tipo||'Empresa transporte';
+  openModal('modal-pedido');
+};
+
+window.nuevoTransportistaModal=function(){window.editarTransportista(0);};
+
+window.guardarTransportista=function(){
+  var id=parseInt(document.getElementById('tr-id').value)||0;
+  var obj={
+    id:id||(trans.reduce(function(m,t){return Math.max(m,t.id);},0)+1),
+    nombre:document.getElementById('tr-nom').value||'Sin nombre',
+    cif:document.getElementById('tr-cif').value||'—',
+    tel:document.getElementById('tr-tel').value||'',
+    email:document.getElementById('tr-email').value||'',
+    tipo:document.getElementById('tr-tipo').value||'Empresa transporte',
+    vehiculos:document.getElementById('tr-vehs').value||'',
+    licencias:document.getElementById('tr-lic').value||'',
+    activo:document.getElementById('tr-activo').value==='1',
+    notas:document.getElementById('tr-notas').value||''
+  };
+  if(id){var idx=trans.findIndex(function(t){return t.id===id;});if(idx>=0)trans[idx]=obj;else trans.push(obj);}
+  else trans.push(obj);
+  AgroStore.save('agri_transportistas',trans);
+  closeModal('modal-pedido');
+  renderTransportistas();
+  notifySaved('Transportista guardado');
+};
+
+setTimeout(function(){if(document.getElementById('trans-tabla'))renderTransportistas();},300);
+var _spTrans=showPage;showPage=function(id){_spTrans(id);if(id==='transportistas')renderTransportistas();};
+})();
+
+
+// ==================== PRODUCTOS Y VARIEDADES ====================
+M.innerHTML+=`<div class="page" id="page-productos">
+<div class="header"><h1>🍏 Productos y Variedades</h1>
+  <button class="btn btn-primary" onclick="nuevoProductoModal()">+ Producto</button>
+</div>
+<div id="prod-lista"></div>
+</div>`;
+
+(function(){
+var _defProd=[
+  {id:1,nombre:'Breva',tipo:'Fruta fresca',icon:'🫐',variedades:[
+    {id:101,nombre:'Breva Colar',calibres:['35-40mm','40-45mm','45-50mm'],descripcion:'Variedad principal. Temporada jun-jul.'},
+    {id:102,nombre:'Breva Cuello Dama',calibres:['30-35mm','35-40mm'],descripcion:'Variedad secundaria. Menor producción.'}
+  ]},
+  {id:2,nombre:'Higo',tipo:'Fruta fresca',icon:'🫐',variedades:[
+    {id:201,nombre:'Higo Colar',calibres:['35-40mm','40-45mm'],descripcion:'Higo tardío. Principal en Fruchesco Eco.'},
+    {id:202,nombre:'Higo San Antonio',calibres:['30-35mm','35-40mm'],descripcion:'Higo temprano.'},
+    {id:203,nombre:'Higo Colar ECO',calibres:['35-40mm','40-45mm'],descripcion:'Certificación CAECV ecológico.'}
+  ]},
+  {id:3,nombre:'Granada',tipo:'Fruta fresca',icon:'🍎',variedades:[
+    {id:301,nombre:'Granada Mollar',calibres:['60-70mm','70-80mm','80-90mm'],descripcion:'Principal variedad. Alta demanda exportación.'},
+    {id:302,nombre:'Granada Wonderful ECO',calibres:['70-80mm','80-90mm'],descripcion:'Ecológica. Prima de precio +20%.'}
+  ]},
+  {id:4,nombre:'Limón',tipo:'Fruta fresca',icon:'🍋',variedades:[
+    {id:401,nombre:'Limón Verna',calibres:['2','3','4'],descripcion:'Variedad principal Vega Baja.'}
+  ]}
+];
+
+var productos=AgroStore.load('agri_productos',[]);
+if(!productos.length){productos=_defProd;AgroStore.save('agri_productos',productos);}
+
+window.renderProductos=function(){
+  var el=document.getElementById('prod-lista');if(!el)return;
+  var h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">';
+  productos.forEach(function(p){
+    h+='<div class="chart-container" style="margin:0;padding:16px">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+    h+='<div><span style="font-size:24px">'+p.icon+'</span> <strong style="font-size:16px;margin-left:6px">'+p.nombre+'</strong></div>';
+    h+='<span class="tag tag-green" style="font-size:10px">'+p.tipo+'</span></div>';
+    h+='<div style="font-size:12px;color:var(--gray);margin-bottom:10px">'+p.variedades.length+' variedades</div>';
+    p.variedades.forEach(function(v){
+      h+='<div style="padding:8px 10px;background:rgba(0,0,0,.03);border-radius:8px;margin-bottom:6px">';
+      h+='<div style="display:flex;justify-content:space-between;align-items:center">';
+      h+='<strong style="font-size:13px">'+v.nombre+'</strong>';
+      h+='<button class="btn btn-sm btn-outline" onclick="editarVariedad('+p.id+','+v.id+')" style="font-size:10px">✏️</button></div>';
+      h+='<div style="font-size:11px;color:var(--gray);margin-top:3px">'+v.descripcion+'</div>';
+      h+='<div style="margin-top:4px">'+v.calibres.map(function(c){return '<span class="tag tag-blue" style="font-size:10px;margin-right:3px">'+c+'</span>';}).join('')+'</div>';
+      h+='</div>';
+    });
+    h+='<button class="btn btn-sm btn-outline" onclick="nuevaVariedadModal('+p.id+')" style="margin-top:8px;width:100%;font-size:11px">+ Variedad</button>';
+    h+='</div>';
+  });
+  h+='</div>';
+  el.innerHTML=h;
+};
+
+window.nuevoProductoModal=function(){
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  md.innerHTML='<h2 style="margin-bottom:16px">➕ Nuevo Producto</h2>'+
+    '<div class="form-group"><label>Nombre *</label><input class="form-control" id="prd-nom" placeholder="Ej: Naranja"></div>'+
+    '<div class="form-group"><label>Tipo</label><select class="form-control" id="prd-tipo"><option>Fruta fresca</option><option>Verdura / Hortaliza</option><option>Cítrico</option><option>Fruto seco</option></select></div>'+
+    '<div class="form-group"><label>Icono (emoji)</label><input class="form-control" id="prd-icon" value="🍊" style="font-size:20px;width:80px"></div>'+
+    '<div class="btn-group" style="margin-top:14px"><button class="btn btn-primary" onclick="guardarProducto()">💾 Guardar</button><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button></div>';
+  openModal('modal-pedido');
+};
+
+window.guardarProducto=function(){
+  var nom=document.getElementById('prd-nom').value;if(!nom)return;
+  var maxId=productos.reduce(function(m,p){return Math.max(m,p.id);},0);
+  productos.push({id:maxId+1,nombre:nom,tipo:document.getElementById('prd-tipo').value,icon:document.getElementById('prd-icon').value||'🍊',variedades:[]});
+  AgroStore.save('agri_productos',productos);
+  closeModal('modal-pedido');renderProductos();notifySaved('Producto guardado');
+};
+
+window.nuevaVariedadModal=function(prodId){
+  var p=productos.find(function(x){return x.id===prodId;});if(!p)return;
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  md.innerHTML='<h2 style="margin-bottom:16px">➕ Nueva Variedad — '+p.nombre+'</h2>'+
+    '<div class="form-group"><label>Nombre variedad *</label><input class="form-control" id="var-nom" placeholder="Ej: Mollar Elche"></div>'+
+    '<div class="form-group"><label>Calibres (separados por coma)</label><input class="form-control" id="var-cal" placeholder="40-45mm, 45-50mm"></div>'+
+    '<div class="form-group"><label>Descripción</label><textarea class="form-control" id="var-desc" rows="2"></textarea></div>'+
+    '<input type="hidden" id="var-prod-id" value="'+prodId+'">'+
+    '<div class="btn-group" style="margin-top:14px"><button class="btn btn-primary" onclick="guardarVariedad()">💾 Guardar</button><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button></div>';
+  openModal('modal-pedido');
+};
+
+window.editarVariedad=function(prodId,varId){
+  var p=productos.find(function(x){return x.id===prodId;});if(!p)return;
+  var v=p.variedades.find(function(x){return x.id===varId;});if(!v)return;
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  md.innerHTML='<h2 style="margin-bottom:16px">✏️ Editar Variedad — '+v.nombre+'</h2>'+
+    '<div class="form-group"><label>Nombre variedad *</label><input class="form-control" id="var-nom" value="'+v.nombre+'"></div>'+
+    '<div class="form-group"><label>Calibres (separados por coma)</label><input class="form-control" id="var-cal" value="'+v.calibres.join(', ')+'"></div>'+
+    '<div class="form-group"><label>Descripción</label><textarea class="form-control" id="var-desc" rows="2">'+v.descripcion+'</textarea></div>'+
+    '<input type="hidden" id="var-prod-id" value="'+prodId+'"><input type="hidden" id="var-id" value="'+varId+'">'+
+    '<div class="btn-group" style="margin-top:14px"><button class="btn btn-primary" onclick="guardarVariedad()">💾 Guardar</button>'+
+    '<button class="btn btn-outline" style="background:rgba(239,68,68,.08);color:#b91c1c;border-color:#fecaca" onclick="eliminarVariedad('+prodId+','+varId+')">🗑️ Eliminar</button>'+
+    '<button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button></div>';
+  openModal('modal-pedido');
+};
+
+window.guardarVariedad=function(){
+  var prodId=parseInt(document.getElementById('var-prod-id').value);
+  var varId=parseInt((document.getElementById('var-id')||{}).value)||0;
+  var nom=document.getElementById('var-nom').value;if(!nom)return;
+  var cals=document.getElementById('var-cal').value.split(',').map(function(c){return c.trim();}).filter(Boolean);
+  var desc=document.getElementById('var-desc').value;
+  var p=productos.find(function(x){return x.id===prodId;});if(!p)return;
+  if(varId){var vi=p.variedades.findIndex(function(v){return v.id===varId;});if(vi>=0)p.variedades[vi]={id:varId,nombre:nom,calibres:cals,descripcion:desc};}
+  else{var maxVId=p.variedades.reduce(function(m,v){return Math.max(m,v.id);},prodId*100);p.variedades.push({id:maxVId+1,nombre:nom,calibres:cals,descripcion:desc});}
+  AgroStore.save('agri_productos',productos);
+  closeModal('modal-pedido');renderProductos();notifySaved('Variedad guardada');
+};
+
+window.eliminarVariedad=function(prodId,varId){
+  if(!confirm('¿Eliminar esta variedad?'))return;
+  var p=productos.find(function(x){return x.id===prodId;});if(!p)return;
+  p.variedades=p.variedades.filter(function(v){return v.id!==varId;});
+  AgroStore.save('agri_productos',productos);
+  closeModal('modal-pedido');renderProductos();notifySaved('Variedad eliminada');
+};
+
+// Expose para que Entradas pueda usarlo
+window._getProductos=function(){return productos;};
+
+setTimeout(function(){if(document.getElementById('prod-lista'))renderProductos();},300);
+var _spProd=showPage;showPage=function(id){_spProd(id);if(id==='productos')renderProductos();};
+})();
+
+
+// ==================== ENTRADAS DE FRUTA ====================
+M.innerHTML+=`<div class="page" id="page-entradas">
+<div class="header"><h1>🚜 Entradas de Fruta</h1>
+  <button class="btn btn-primary" onclick="nuevaEntradaModal()">+ Nueva Entrada</button>
+</div>
+<div id="entradas-stats" class="stat-row"></div>
+<div style="display:flex;gap:8px;margin:14px 0;flex-wrap:wrap">
+  <input type="text" id="ent-buscar" placeholder="🔍 Buscar finca, producto..." oninput="renderEntradas()" style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;flex:1;min-width:180px">
+  <select id="ent-filtro-est" onchange="renderEntradas()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff">
+    <option value="">Todos los estados</option>
+    <option value="pendiente">Pendiente control</option>
+    <option value="controlado">Controlado</option>
+    <option value="liberado">Liberado</option>
+    <option value="rechazado">Rechazado</option>
+  </select>
+</div>
+<div id="entradas-lista"></div>
+</div>`;
+
+(function(){
+var hoy=new Date().toISOString().slice(0,10);
+var _defEntradas=[
+  {id:'ENT-001',fecha:'2026-04-01',finca:'El Rincón',transportista:'Ahmed Benaissa (propio)',matricula:'1234 HBK',kg_bruto:2840,estado:'liberado',responsable:'María García',notas:'Cosecha mañana. Muy buena calidad.',
+   lineas:[
+    {id:1,producto:'Breva',variedad:'Breva Colar',calibre:'40-45mm',kg:1620,kg_neto:1587,merma_pct:2,calidad:'primera',loteId:'LOT-2026-041'},
+    {id:2,producto:'Breva',variedad:'Breva Cuello Dama',calibre:'35-40mm',kg:1220,kg_neto:1183,merma_pct:3,calidad:'primera',loteId:'LOT-2026-042'}
+   ]},
+  {id:'ENT-002',fecha:'2026-04-03',finca:'La Dehesa',transportista:'Logifruit SL',matricula:'4521-BCD',kg_bruto:4100,estado:'controlado',responsable:'José Martínez',notas:'Separar producto ecológico.',
+   lineas:[
+    {id:1,producto:'Higo',variedad:'Higo Colar ECO',calibre:'40-45mm',kg:2500,kg_neto:2450,merma_pct:2,calidad:'primera',loteId:'LOT-2026-043'},
+    {id:2,producto:'Higo',variedad:'Higo San Antonio',calibre:'35-40mm',kg:1600,kg_neto:1552,merma_pct:3,calidad:'segunda',loteId:'LOT-2026-044'}
+   ]},
+  {id:'ENT-003',fecha:hoy,finca:'Eco Granados',transportista:'TFE Express',matricula:'9876-XYZ',kg_bruto:6200,estado:'pendiente',responsable:'',notas:'',
+   lineas:[
+    {id:1,producto:'Granada',variedad:'Granada Mollar',calibre:'70-80mm',kg:3800,kg_neto:0,merma_pct:0,calidad:'pendiente',loteId:''},
+    {id:2,producto:'Granada',variedad:'Granada Wonderful ECO',calibre:'80-90mm',kg:2400,kg_neto:0,merma_pct:0,calidad:'pendiente',loteId:''}
+   ]}
+];
+
+var entradas=AgroStore.load('agri_entradas',[]);
+if(!entradas.length){entradas=_defEntradas;AgroStore.save('agri_entradas',entradas);}
+
+var estadoStyle={
+  pendiente:{cls:'tag-yellow',label:'⏳ Pendiente'},
+  controlado:{cls:'tag-blue',label:'🔍 Controlado'},
+  liberado:{cls:'tag-green',label:'✅ Liberado'},
+  rechazado:{cls:'tag-red',label:'❌ Rechazado'}
+};
+
+function saveEntradas(){AgroStore.save('agri_entradas',entradas);}
+
+function renderEntradasStats(){
+  var el=document.getElementById('entradas-stats');if(!el)return;
+  var hoyStr=new Date().toISOString().slice(0,10);
+  var hoyE=entradas.filter(function(e){return e.fecha===hoyStr;});
+  var kgTotal=entradas.reduce(function(s,e){return s+e.kg_bruto;},0);
+  var pend=entradas.filter(function(e){return e.estado==='pendiente';}).length;
+  var lib=entradas.filter(function(e){return e.estado==='liberado';}).length;
+  el.innerHTML='<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(44,110,73,.1);color:var(--accent)">🚜</div><div class="stat-body"><div class="stat-val">'+entradas.length+'</div><div class="stat-label">Total entradas</div></div></div>'+
+    '<div class="stat-mini s-blue"><div class="stat-icon" style="background:rgba(59,130,246,.1);color:#3B82F6">📅</div><div class="stat-body"><div class="stat-val">'+hoyE.length+'</div><div class="stat-label">Hoy</div></div></div>'+
+    '<div class="stat-mini s-gold"><div class="stat-icon" style="background:rgba(212,168,67,.1);color:var(--gold)">⚖️</div><div class="stat-body"><div class="stat-val">'+(kgTotal/1000).toFixed(1)+'t</div><div class="stat-label">Kg totales</div></div></div>'+
+    '<div class="stat-mini s-coral"><div class="stat-icon" style="background:rgba(231,111,81,.1);color:var(--coral)">⏳</div><div class="stat-body"><div class="stat-val">'+pend+'</div><div class="stat-label">Sin controlar</div></div></div>'+
+    '<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(44,110,73,.1);color:var(--accent)">✅</div><div class="stat-body"><div class="stat-val">'+lib+'</div><div class="stat-label">Liberadas</div></div></div>';
+}
+
+window.renderEntradas=function(){
+  renderEntradasStats();
+  var buscar=((document.getElementById('ent-buscar')||{}).value||'').toLowerCase();
+  var est=(document.getElementById('ent-filtro-est')||{}).value||'';
+  var fil=entradas.filter(function(e){
+    if(buscar&&(e.id+e.finca+(e.lineas.map(function(l){return l.producto;}).join(' '))).toLowerCase().indexOf(buscar)<0)return false;
+    if(est&&e.estado!==est)return false;
+    return true;
+  }).sort(function(a,b){return b.fecha.localeCompare(a.fecha);});
+  var el=document.getElementById('entradas-lista');if(!el)return;
+  if(!fil.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--gray)">No hay entradas registradas</div>';return;}
+  var h='<div class="tbl-wrap"><table><tr><th>ID</th><th>Fecha</th><th>Finca</th><th>Transportista</th><th>Productos</th><th>Kg bruto</th><th>Líneas</th><th>Estado</th><th></th></tr>';
+  fil.forEach(function(e){
+    var st=estadoStyle[e.estado]||estadoStyle.pendiente;
+    var prods=[...new Set(e.lineas.map(function(l){return l.producto;}))].join(', ');
+    h+='<tr style="cursor:pointer" onclick="verEntrada(\''+e.id+'\')">';
+    h+='<td><strong style="font-family:monospace;color:var(--primary)">'+e.id+'</strong></td>';
+    h+='<td>'+e.fecha+'</td>';
+    h+='<td style="font-weight:600">'+e.finca+'</td>';
+    h+='<td style="font-size:12px">'+e.transportista+'<br><span style="color:var(--gray)">'+e.matricula+'</span></td>';
+    h+='<td style="font-size:12px">'+prods+'</td>';
+    h+='<td style="font-weight:600">'+e.kg_bruto.toLocaleString('es-ES')+' kg</td>';
+    h+='<td style="text-align:center">'+e.lineas.length+'</td>';
+    h+='<td><span class="tag '+st.cls+'" style="font-size:11px">'+st.label+'</span></td>';
+    h+='<td onclick="event.stopPropagation()"><button class="btn btn-sm btn-outline" onclick="verEntrada(\''+e.id+'\')">Ver</button></td>';
+    h+='</tr>';
+  });
+  h+='</table></div>';
+  el.innerHTML=h;
+};
+
+window.verEntrada=function(id){
+  var e=entradas.find(function(x){return x.id===id;});if(!e)return;
+  var st=estadoStyle[e.estado]||estadoStyle.pendiente;
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  var h='<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">';
+  h+='<div><h2 style="margin:0">🚜 '+e.id+'</h2><div class="modal-sub">'+e.finca+' — '+e.fecha+'</div></div>';
+  h+='<span class="tag '+st.cls+'">'+st.label+'</span></div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;margin-bottom:14px">';
+  h+='<div><strong>Transportista:</strong> '+e.transportista+'</div>';
+  h+='<div><strong>Matrícula:</strong> '+e.matricula+'</div>';
+  h+='<div><strong>Kg bruto total:</strong> <strong style="color:var(--primary)">'+e.kg_bruto.toLocaleString('es-ES')+' kg</strong></div>';
+  h+='<div><strong>Responsable control:</strong> '+(e.responsable||'— Pendiente')+'</div>';
+  h+='</div>';
+  if(e.notas)h+='<div style="padding:10px;background:rgba(0,0,0,.03);border-radius:8px;font-size:12px;margin-bottom:14px"><strong>📝 Notas:</strong> '+e.notas+'</div>';
+  h+='<div style="font-weight:700;margin-bottom:8px">📦 Líneas de entrada ('+e.lineas.length+')</div>';
+  h+='<div class="tbl-wrap"><table><tr><th>Producto</th><th>Variedad</th><th>Calibre</th><th>Kg bruto</th><th>Kg neto</th><th>Merma</th><th>Calidad</th><th>Lote</th></tr>';
+  e.lineas.forEach(function(l){
+    h+='<tr>';
+    h+='<td>'+l.producto+'</td>';
+    h+='<td style="font-size:12px">'+l.variedad+'</td>';
+    h+='<td><span class="tag tag-blue" style="font-size:10px">'+l.calibre+'</span></td>';
+    h+='<td style="font-weight:600">'+l.kg.toLocaleString('es-ES')+' kg</td>';
+    h+='<td>'+(l.kg_neto?l.kg_neto.toLocaleString('es-ES')+' kg':'—')+'</td>';
+    h+='<td>'+(l.merma_pct?l.merma_pct+'%':'—')+'</td>';
+    h+='<td><span class="tag '+(l.calidad==='primera'?'tag-green':l.calidad==='segunda'?'tag-yellow':'tag-gray')+'" style="font-size:10px">'+l.calidad+'</span></td>';
+    h+='<td style="font-family:monospace;font-size:11px;color:var(--primary)">'+(l.loteId||'<span style="color:var(--gray)">Sin asignar</span>')+'</td>';
+    h+='</tr>';
+  });
+  h+='</table></div>';
+  h+='<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">';
+  if(e.estado==='pendiente')h+='<button class="btn btn-primary" onclick="cambiarEstadoEntrada(\''+e.id+'\',\'controlado\');closeModal(\'modal-pedido\')">🔍 Marcar como Controlado</button>';
+  if(e.estado==='controlado')h+='<button class="btn btn-primary" onclick="liberarEntrada(\''+e.id+'\')">✅ Liberar y generar lotes</button>';
+  h+='<button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cerrar</button>';
+  h+='</div>';
+  md.innerHTML=h;
+  openModal('modal-pedido');
+};
+
+window.cambiarEstadoEntrada=function(id,estado){
+  var e=entradas.find(function(x){return x.id===id;});if(!e)return;
+  e.estado=estado;
+  saveEntradas();renderEntradas();notifySaved('Estado actualizado: '+estado);
+};
+
+window.liberarEntrada=function(id){
+  var e=entradas.find(function(x){return x.id===id;});if(!e)return;
+  e.estado='liberado';
+  var lotes=AgroStore.load('agri_lotes',[]);
+  var maxLot=lotes.reduce(function(m,l){var n=parseInt((l.codigo||'').replace(/\D/g,''))||0;return Math.max(m,n);},40);
+  e.lineas.forEach(function(l){
+    if(!l.loteId){
+      maxLot++;
+      var loteId='LOT-'+new Date().getFullYear()+'-'+String(maxLot).padStart(3,'0');
+      l.loteId=loteId;
+      l.kg_neto=Math.round(l.kg*(1-(l.merma_pct||2)/100));
+      lotes.push({id:maxLot,codigo:loteId,parcela:e.finca,tipo:l.producto+' '+l.variedad,kg:l.kg_neto,fecha:e.fecha,estado:'almacen',calidad:l.calidad,entradaId:e.id,origen:e.finca});
+    }
+  });
+  AgroStore.save('agri_lotes',lotes);
+  saveEntradas();
+  closeModal('modal-pedido');
+  renderEntradas();
+  notifySaved('Entrada liberada. Lotes generados automáticamente.');
+};
+
+window.nuevaEntradaModal=function(){
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  var hoyStr=new Date().toISOString().slice(0,10);
+  var transportistas=AgroStore.load('agri_transportistas',[]);
+  var transOpts=transportistas.map(function(t){return '<option>'+t.nombre+'</option>';}).join('');
+  var fincas=['El Rincón','La Dehesa','Los Llanos','La Cañada','Eco Granados','Eco Higueras'];
+  var fincaOpts=fincas.map(function(f){return '<option>'+f+'</option>';}).join('');
+  md.innerHTML='<h2 style="margin-bottom:16px">🚜 Nueva Entrada de Fruta</h2>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+    '<div class="form-group"><label>Fecha *</label><input type="date" class="form-control" id="ne-fecha" value="'+hoyStr+'"></div>'+
+    '<div class="form-group"><label>Finca origen *</label><select class="form-control" id="ne-finca">'+fincaOpts+'</select></div>'+
+    '<div class="form-group"><label>Transportista *</label><select class="form-control" id="ne-trans">'+transOpts+'</select></div>'+
+    '<div class="form-group"><label>Matrícula vehículo</label><input class="form-control" id="ne-matricula" placeholder="Ej: 1234 HBK"></div>'+
+    '<div class="form-group"><label>Kg bruto total</label><input type="number" class="form-control" id="ne-kg" placeholder="0"></div>'+
+    '<div class="form-group"><label>Responsable control</label><input class="form-control" id="ne-resp" placeholder="Nombre responsable"></div>'+
+    '</div>'+
+    '<div class="form-group" style="margin-top:8px"><label>Notas / Observaciones</label><textarea class="form-control" id="ne-notas" rows="2"></textarea></div>'+
+    '<div style="font-weight:700;margin:14px 0 8px">📦 Líneas de producto</div>'+
+    '<div id="ne-lineas-container"></div>'+
+    '<button class="btn btn-outline" onclick="agregarLineaEntrada()" style="width:100%;margin-top:6px;font-size:12px">+ Añadir línea</button>'+
+    '<div class="btn-group" style="margin-top:16px"><button class="btn btn-primary" onclick="guardarEntrada()">💾 Registrar Entrada</button><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button></div>';
+  openModal('modal-pedido');
+  agregarLineaEntrada();
+};
+
+var _lineaCount=0;
+window.agregarLineaEntrada=function(){
+  _lineaCount++;
+  var n=_lineaCount;
+  var productos=window._getProductos?window._getProductos():[];
+  var prodOpts=productos.map(function(p){
+    var vars=p.variedades.map(function(v){return '<option data-prod="'+p.nombre+'">'+v.nombre+'</option>';}).join('');
+    return '<optgroup label="'+p.nombre+'">'+vars+'</optgroup>';
+  }).join('');
+  var c=document.getElementById('ne-lineas-container');if(!c)return;
+  var d=document.createElement('div');
+  d.id='linea-'+n;
+  d.style.cssText='padding:10px;background:rgba(44,110,73,.04);border-radius:8px;margin-bottom:8px;border:1px solid rgba(44,110,73,.1)';
+  d.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+    '<strong style="font-size:13px">Línea '+n+'</strong>'+
+    '<button onclick="document.getElementById(\'linea-'+n+'\').remove()" style="background:none;border:none;color:var(--coral);cursor:pointer;font-size:16px">✕</button></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">'+
+    '<div class="form-group" style="margin:0"><label style="font-size:11px">Variedad *</label><select class="form-control ne-variedad" id="ne-var-'+n+'" style="font-size:12px">'+prodOpts+'</select></div>'+
+    '<div class="form-group" style="margin:0"><label style="font-size:11px">Calibre</label><input class="form-control ne-calibre" id="ne-cal-'+n+'" style="font-size:12px" placeholder="Ej: 40-45mm"></div>'+
+    '<div class="form-group" style="margin:0"><label style="font-size:11px">Kg bruto</label><input type="number" class="form-control ne-kg" id="ne-kgl-'+n+'" style="font-size:12px" placeholder="0"></div>'+
+    '<div class="form-group" style="margin:0"><label style="font-size:11px">Merma %</label><input type="number" class="form-control ne-merma" id="ne-mer-'+n+'" style="font-size:12px" value="2" min="0" max="30"></div>'+
+    '</div>';
+  c.appendChild(d);
+};
+
+window.guardarEntrada=function(){
+  var fecha=document.getElementById('ne-fecha').value;
+  var finca=document.getElementById('ne-finca').value;
+  var trans=document.getElementById('ne-trans').value;
+  var mat=document.getElementById('ne-matricula').value;
+  var kgTotal=parseInt(document.getElementById('ne-kg').value)||0;
+  var resp=document.getElementById('ne-resp').value;
+  var notas=document.getElementById('ne-notas').value;
+  var productos=window._getProductos?window._getProductos():[];
+  var lineas=[];
+  document.querySelectorAll('[id^="linea-"]').forEach(function(d){
+    var n=d.id.replace('linea-','');
+    var varSel=document.getElementById('ne-var-'+n);
+    var varNom=varSel?varSel.value:'';
+    var cal=document.getElementById('ne-cal-'+n);
+    var kgL=parseInt((document.getElementById('ne-kgl-'+n)||{}).value)||0;
+    var mer=parseFloat((document.getElementById('ne-mer-'+n)||{}).value)||2;
+    var prodNom='';
+    productos.forEach(function(p){p.variedades.forEach(function(v){if(v.nombre===varNom)prodNom=p.nombre;});});
+    if(varNom&&kgL>0){lineas.push({id:lineas.length+1,producto:prodNom||varNom,variedad:varNom,calibre:cal?cal.value:'',kg:kgL,kg_neto:0,merma_pct:mer,calidad:'pendiente',loteId:''});}
+  });
+  if(!fecha||!finca||lineas.length===0){alert('Completa fecha, finca y al menos una línea de producto');return;}
+  var maxN=entradas.reduce(function(m,e){var n=parseInt(e.id.replace('ENT-',''))||0;return Math.max(m,n);},0);
+  var newId='ENT-'+String(maxN+1).padStart(3,'0');
+  var kgCalc=kgTotal||lineas.reduce(function(s,l){return s+l.kg;},0);
+  entradas.unshift({id:newId,fecha:fecha,finca:finca,transportista:trans,matricula:mat,kg_bruto:kgCalc,estado:'pendiente',responsable:resp,notas:notas,lineas:lineas});
+  _lineaCount=0;
+  saveEntradas();closeModal('modal-pedido');renderEntradas();notifySaved('Entrada '+newId+' registrada');
+};
+
+// Exponer para que Controles pueda leer
+window._getEntradas=function(){return entradas;};
+
+setTimeout(function(){if(document.getElementById('entradas-lista'))renderEntradas();},400);
+var _spEnt=showPage;showPage=function(id){_spEnt(id);if(id==='entradas'){_lineaCount=0;renderEntradas();}};
+})();
+
+
+// ==================== PALETS ====================
+M.innerHTML+=`<div class="page" id="page-palets">
+<div class="header"><h1>📦 Gestión de Palets</h1>
+  <button class="btn btn-primary" onclick="nuevoPaletModal()">+ Nuevo Palet</button>
+</div>
+<div id="palets-stats" class="stat-row"></div>
+<div style="display:flex;gap:8px;margin:14px 0;flex-wrap:wrap">
+  <input type="text" id="pal-buscar" placeholder="🔍 Buscar ID, lote, producto..." oninput="renderPalets()" style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;flex:1;min-width:180px">
+  <select id="pal-filtro-est" onchange="renderPalets()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff">
+    <option value="">Todos</option>
+    <option value="camara">En cámara</option>
+    <option value="confeccion">En confección</option>
+    <option value="listo">Listo expedición</option>
+    <option value="expedido">Expedido</option>
+  </select>
+</div>
+<div id="palets-lista"></div>
+</div>`;
+
+(function(){
+var _defPalets=[
+  {id:'PAL-001',fecha:'2026-04-01',loteId:'LOT-2026-041',producto:'Breva Colar',calibre:'40-45mm',tipo:'Calidad Extra',kg_neto:420,cajas:28,estado:'listo',ubicacion:'Cámara A — Posición 3',cliente:'Pierre Duval',pedidoId:'PED-051'},
+  {id:'PAL-002',fecha:'2026-04-01',loteId:'LOT-2026-041',producto:'Breva Colar',calibre:'40-45mm',tipo:'Primera',kg_neto:390,cajas:26,estado:'camara',ubicacion:'Cámara A — Posición 4',cliente:'',pedidoId:''},
+  {id:'PAL-003',fecha:'2026-04-03',loteId:'LOT-2026-043',producto:'Higo Colar ECO',calibre:'40-45mm',tipo:'Primera',kg_neto:510,cajas:34,estado:'confeccion',ubicacion:'Línea MAF — Zona 2',cliente:'Jan de Groot',pedidoId:'PED-052'},
+  {id:'PAL-004',fecha:'2026-04-01',loteId:'LOT-2026-042',producto:'Breva Cuello Dama',calibre:'35-40mm',tipo:'Primera',kg_neto:380,cajas:26,estado:'expedido',ubicacion:'Expedido',cliente:'Sarah Green',pedidoId:'PED-050'}
+];
+
+var palets=AgroStore.load('agri_palets',[]);
+if(!palets.length){palets=_defPalets;AgroStore.save('agri_palets',palets);}
+
+var estPalet={camara:{cls:'tag-blue',label:'❄️ Cámara'},confeccion:{cls:'tag-yellow',label:'🏭 Confección'},listo:{cls:'tag-green',label:'✅ Listo'},expedido:{cls:'tag-gray',label:'🚛 Expedido'}};
+
+function savePalets(){AgroStore.save('agri_palets',palets);}
+
+function renderPaletsStats(){
+  var el=document.getElementById('palets-stats');if(!el)return;
+  var camara=palets.filter(function(p){return p.estado==='camara';}).length;
+  var conf=palets.filter(function(p){return p.estado==='confeccion';}).length;
+  var listo=palets.filter(function(p){return p.estado==='listo';}).length;
+  var kgTotal=palets.reduce(function(s,p){return s+(p.kg_neto||0);},0);
+  el.innerHTML='<div class="stat-mini s-blue"><div class="stat-icon" style="background:rgba(59,130,246,.1);color:#3B82F6">❄️</div><div class="stat-body"><div class="stat-val">'+camara+'</div><div class="stat-label">En cámara</div></div></div>'+
+    '<div class="stat-mini s-gold"><div class="stat-icon" style="background:rgba(212,168,67,.1);color:var(--gold)">🏭</div><div class="stat-body"><div class="stat-val">'+conf+'</div><div class="stat-label">En confección</div></div></div>'+
+    '<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(44,110,73,.1);color:var(--accent)">✅</div><div class="stat-body"><div class="stat-val">'+listo+'</div><div class="stat-label">Listos para expedir</div></div></div>'+
+    '<div class="stat-mini s-coral"><div class="stat-icon" style="background:rgba(231,111,81,.1);color:var(--coral)">⚖️</div><div class="stat-body"><div class="stat-val">'+(kgTotal/1000).toFixed(1)+'t</div><div class="stat-label">Kg en stock</div></div></div>';
+}
+
+window.renderPalets=function(){
+  renderPaletsStats();
+  var buscar=((document.getElementById('pal-buscar')||{}).value||'').toLowerCase();
+  var est=(document.getElementById('pal-filtro-est')||{}).value||'';
+  var fil=palets.filter(function(p){
+    if(buscar&&(p.id+p.loteId+p.producto+p.cliente).toLowerCase().indexOf(buscar)<0)return false;
+    if(est&&p.estado!==est)return false;
+    return true;
+  }).sort(function(a,b){return b.fecha.localeCompare(a.fecha);});
+  var el=document.getElementById('palets-lista');if(!el)return;
+  if(!fil.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--gray)">No hay palets registrados</div>';return;}
+  var h='<div class="tbl-wrap"><table><tr><th>ID Palet</th><th>Fecha</th><th>Lote</th><th>Producto / Calibre</th><th>Tipo</th><th>Kg neto</th><th>Cajas</th><th>Ubicación</th><th>Cliente</th><th>Estado</th><th></th></tr>';
+  fil.forEach(function(p){
+    var st=estPalet[p.estado]||estPalet.camara;
+    h+='<tr>';
+    h+='<td><strong style="font-family:monospace;color:var(--primary)">'+p.id+'</strong></td>';
+    h+='<td>'+p.fecha+'</td>';
+    h+='<td style="font-family:monospace;font-size:11px;color:var(--gray)">'+p.loteId+'</td>';
+    h+='<td><div style="font-weight:600;font-size:13px">'+p.producto+'</div><span class="tag tag-blue" style="font-size:10px">'+p.calibre+'</span></td>';
+    h+='<td style="font-size:12px">'+p.tipo+'</td>';
+    h+='<td style="font-weight:600">'+p.kg_neto.toLocaleString('es-ES')+' kg</td>';
+    h+='<td style="text-align:center">'+p.cajas+'</td>';
+    h+='<td style="font-size:11px;color:var(--gray)">'+p.ubicacion+'</td>';
+    h+='<td style="font-size:12px">'+(p.cliente||'—')+'</td>';
+    h+='<td><span class="tag '+st.cls+'" style="font-size:11px">'+st.label+'</span></td>';
+    h+='<td><select onchange="cambiarEstadoPalet(\''+p.id+'\',this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:11px"><option value="">— Mover</option><option value="camara">Cámara</option><option value="confeccion">Confección</option><option value="listo">Listo</option><option value="expedido">Expedido</option></select></td>';
+    h+='</tr>';
+  });
+  h+='</table></div>';
+  el.innerHTML=h;
+};
+
+window.cambiarEstadoPalet=function(id,newEst){
+  if(!newEst)return;
+  var p=palets.find(function(x){return x.id===id;});if(!p)return;
+  p.estado=newEst;
+  if(newEst==='expedido')p.ubicacion='Expedido';
+  savePalets();renderPalets();notifySaved('Palet '+id+' → '+newEst);
+};
+
+window.nuevoPaletModal=function(){
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  var hoyStr=new Date().toISOString().slice(0,10);
+  var lotes=AgroStore.load('agri_lotes',[]);
+  var loteOpts=lotes.map(function(l){return '<option value="'+l.codigo+'">'+l.codigo+' — '+l.tipo+'</option>';}).join('');
+  md.innerHTML='<h2 style="margin-bottom:16px">📦 Nuevo Palet</h2>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+    '<div class="form-group"><label>Fecha *</label><input type="date" class="form-control" id="np-fecha" value="'+hoyStr+'"></div>'+
+    '<div class="form-group"><label>Lote origen</label><select class="form-control" id="np-lote"><option value="">Sin lote</option>'+loteOpts+'</select></div>'+
+    '<div class="form-group"><label>Producto / Variedad *</label><input class="form-control" id="np-prod" placeholder="Ej: Breva Colar"></div>'+
+    '<div class="form-group"><label>Calibre</label><input class="form-control" id="np-cal" placeholder="Ej: 40-45mm"></div>'+
+    '<div class="form-group"><label>Tipo calidad</label><select class="form-control" id="np-tipo"><option>Calidad Extra</option><option>Primera</option><option>Segunda</option></select></div>'+
+    '<div class="form-group"><label>Kg neto</label><input type="number" class="form-control" id="np-kg" placeholder="0"></div>'+
+    '<div class="form-group"><label>Nº cajas / bultos</label><input type="number" class="form-control" id="np-cajas" placeholder="0"></div>'+
+    '<div class="form-group"><label>Ubicación</label><input class="form-control" id="np-ubic" placeholder="Ej: Cámara A — Pos. 5"></div>'+
+    '<div class="form-group"><label>Estado inicial</label><select class="form-control" id="np-est"><option value="camara">❄️ En cámara</option><option value="confeccion">🏭 En confección</option><option value="listo">✅ Listo expedición</option></select></div>'+
+    '<div class="form-group"><label>Cliente asignado</label><input class="form-control" id="np-cli" placeholder="Opcional"></div>'+
+    '</div>'+
+    '<div class="btn-group" style="margin-top:14px"><button class="btn btn-primary" onclick="guardarPalet()">💾 Registrar Palet</button><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button></div>';
+  openModal('modal-pedido');
+};
+
+window.guardarPalet=function(){
+  var prod=document.getElementById('np-prod').value;if(!prod){alert('Introduce el producto');return;}
+  var maxN=palets.reduce(function(m,p){var n=parseInt(p.id.replace('PAL-',''))||0;return Math.max(m,n);},0);
+  palets.unshift({
+    id:'PAL-'+String(maxN+1).padStart(3,'0'),
+    fecha:document.getElementById('np-fecha').value,
+    loteId:document.getElementById('np-lote').value||'',
+    producto:prod,
+    calibre:document.getElementById('np-cal').value||'',
+    tipo:document.getElementById('np-tipo').value,
+    kg_neto:parseInt(document.getElementById('np-kg').value)||0,
+    cajas:parseInt(document.getElementById('np-cajas').value)||0,
+    ubicacion:document.getElementById('np-ubic').value||'Cámara',
+    estado:document.getElementById('np-est').value,
+    cliente:document.getElementById('np-cli').value||'',
+    pedidoId:''
+  });
+  savePalets();closeModal('modal-pedido');renderPalets();notifySaved('Palet registrado');
+};
+
+window._getPalets=function(){return palets;};
+setTimeout(function(){if(document.getElementById('palets-lista'))renderPalets();},400);
+var _spPal=showPage;showPage=function(id){_spPal(id);if(id==='palets')renderPalets();};
+})();
+
+
+// ==================== CONTROL RECEPCIÓN ====================
+M.innerHTML+=`<div class="page" id="page-ctrl-recepcion">
+<div class="header"><h1>📋 Control de Recepción</h1>
+  <button class="btn btn-primary" onclick="nuevoCtrlRecepModal()">+ Nuevo Control</button>
+</div>
+<div id="ctrl-rec-stats" class="stat-row"></div>
+<div id="ctrl-rec-lista"></div>
+</div>`;
+
+(function(){
+var _def=[
+  {id:'CR-001',fecha:'2026-04-01',entradaId:'ENT-001',finca:'El Rincón',producto:'Breva Colar',kg_declarados:2840,temp_recep:6.5,humedad:88,defectos_pct:1.2,presencia_plagas:false,documentacion:true,estado:'conforme',responsable:'María García',observaciones:'Producto en excelentes condiciones. Temperatura óptima.'},
+  {id:'CR-002',fecha:'2026-04-03',entradaId:'ENT-002',finca:'La Dehesa',producto:'Higo Colar ECO',kg_declarados:4100,temp_recep:8.2,humedad:85,defectos_pct:3.5,presencia_plagas:false,documentacion:true,estado:'condicionado',responsable:'José Martínez',observaciones:'Defectos algo elevados en partida Higo San Antonio. Separar segunda.'},
+  {id:'CR-003',fecha:'2026-04-07',entradaId:'ENT-003',finca:'Eco Granados',producto:'Granada Mollar',kg_declarados:6200,temp_recep:0,humedad:0,defectos_pct:0,presencia_plagas:false,documentacion:false,estado:'pendiente',responsable:'',observaciones:''}
+];
+
+var controles=AgroStore.load('agri_ctrl_recepcion',[]);
+if(!controles.length){controles=_def;AgroStore.save('agri_ctrl_recepcion',controles);}
+
+var estCtrl={pendiente:{cls:'tag-yellow',label:'⏳ Pendiente'},conforme:{cls:'tag-green',label:'✅ Conforme'},condicionado:{cls:'tag-blue',label:'⚠️ Condicionado'},rechazado:{cls:'tag-red',label:'❌ Rechazado'}};
+
+function saveCtrl(){AgroStore.save('agri_ctrl_recepcion',controles);}
+
+function renderCtrlStats(){
+  var el=document.getElementById('ctrl-rec-stats');if(!el)return;
+  var pend=controles.filter(function(c){return c.estado==='pendiente';}).length;
+  var conf=controles.filter(function(c){return c.estado==='conforme';}).length;
+  var cond=controles.filter(function(c){return c.estado==='condicionado';}).length;
+  var rech=controles.filter(function(c){return c.estado==='rechazado';}).length;
+  el.innerHTML='<div class="stat-mini s-gold"><div class="stat-icon" style="background:rgba(212,168,67,.1);color:var(--gold)">⏳</div><div class="stat-body"><div class="stat-val">'+pend+'</div><div class="stat-label">Pendientes</div></div></div>'+
+    '<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(44,110,73,.1);color:var(--accent)">✅</div><div class="stat-body"><div class="stat-val">'+conf+'</div><div class="stat-label">Conformes</div></div></div>'+
+    '<div class="stat-mini s-blue"><div class="stat-icon" style="background:rgba(59,130,246,.1);color:#3B82F6">⚠️</div><div class="stat-body"><div class="stat-val">'+cond+'</div><div class="stat-label">Condicionados</div></div></div>'+
+    '<div class="stat-mini s-coral"><div class="stat-icon" style="background:rgba(231,111,81,.1);color:var(--coral)">❌</div><div class="stat-body"><div class="stat-val">'+rech+'</div><div class="stat-label">Rechazados</div></div></div>';
+}
+
+window.renderCtrlRecepcion=function(){
+  renderCtrlStats();
+  var el=document.getElementById('ctrl-rec-lista');if(!el)return;
+  var sorted=controles.slice().sort(function(a,b){return b.fecha.localeCompare(a.fecha);});
+  var h='<div class="tbl-wrap"><table><tr><th>ID</th><th>Fecha</th><th>Entrada</th><th>Finca</th><th>Producto</th><th>Temp (°C)</th><th>Defectos %</th><th>Documentación</th><th>Estado</th><th>Responsable</th><th></th></tr>';
+  sorted.forEach(function(c){
+    var st=estCtrl[c.estado]||estCtrl.pendiente;
+    h+='<tr>';
+    h+='<td><strong style="font-family:monospace;color:var(--primary)">'+c.id+'</strong></td>';
+    h+='<td>'+c.fecha+'</td>';
+    h+='<td style="font-family:monospace;font-size:11px">'+c.entradaId+'</td>';
+    h+='<td style="font-weight:600">'+c.finca+'</td>';
+    h+='<td style="font-size:12px">'+c.producto+'</td>';
+    h+='<td style="text-align:center">'+(c.temp_recep?c.temp_recep+'°C':'—')+'</td>';
+    h+='<td style="text-align:center;color:'+(c.defectos_pct>5?'var(--coral)':c.defectos_pct>2?'var(--gold)':'var(--accent)')+'"><strong>'+(c.defectos_pct?c.defectos_pct+'%':'—')+'</strong></td>';
+    h+='<td style="text-align:center">'+(c.estado==='pendiente'?'—':(c.documentacion?'✅ Completa':'❌ Incompleta'))+'</td>';
+    h+='<td><span class="tag '+st.cls+'" style="font-size:11px">'+st.label+'</span></td>';
+    h+='<td style="font-size:12px">'+(c.responsable||'—')+'</td>';
+    h+='<td><button class="btn btn-sm btn-outline" onclick="verCtrlRecep(\''+c.id+'\')">Ver</button></td>';
+    h+='</tr>';
+  });
+  h+='</table></div>';
+  el.innerHTML=h;
+};
+
+window.verCtrlRecep=function(id){
+  var c=controles.find(function(x){return x.id===id;});if(!c)return;
+  var st=estCtrl[c.estado]||estCtrl.pendiente;
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  md.innerHTML='<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">'+
+    '<div><h2 style="margin:0">📋 '+c.id+'</h2><div class="modal-sub">'+c.finca+' — '+c.fecha+'</div></div>'+
+    '<span class="tag '+st.cls+'">'+st.label+'</span></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">'+
+    '<div style="padding:12px;background:rgba(0,0,0,.03);border-radius:8px;text-align:center"><div style="font-size:20px;font-weight:700;color:#3B82F6">'+(c.temp_recep||'—')+'°C</div><div style="font-size:11px;color:var(--gray)">Temperatura</div></div>'+
+    '<div style="padding:12px;background:rgba(0,0,0,.03);border-radius:8px;text-align:center"><div style="font-size:20px;font-weight:700;color:'+(c.defectos_pct>5?'var(--coral)':'var(--accent)')+'">'+(c.defectos_pct||0)+'%</div><div style="font-size:11px;color:var(--gray)">Defectos</div></div>'+
+    '<div style="padding:12px;background:rgba(0,0,0,.03);border-radius:8px;text-align:center"><div style="font-size:20px;font-weight:700">'+(c.documentacion?'✅':'❌')+'</div><div style="font-size:11px;color:var(--gray)">Documentación</div></div>'+
+    '</div>'+
+    (c.observaciones?'<div style="padding:10px;background:rgba(212,168,67,.06);border-left:3px solid var(--gold);border-radius:8px;font-size:12px;margin-bottom:14px"><strong>📝 Observaciones:</strong> '+c.observaciones+'</div>':'')+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+    (c.estado==='pendiente'?'<button class="btn btn-primary" onclick="resolverCtrl(\''+c.id+'\',\'conforme\')">✅ Conforme</button><button class="btn btn-outline" onclick="resolverCtrl(\''+c.id+'\',\'condicionado\')" style="color:var(--gold)">⚠️ Condicionado</button><button class="btn btn-outline" onclick="resolverCtrl(\''+c.id+'\',\'rechazado\')" style="color:var(--coral)">❌ Rechazar</button>':'')+
+    '<button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cerrar</button></div>';
+  openModal('modal-pedido');
+};
+
+window.resolverCtrl=function(id,est){
+  var c=controles.find(function(x){return x.id===id;});if(!c)return;
+  c.estado=est;c.responsable=c.responsable||(window.getCurrentUser&&window.getCurrentUser()?window.getCurrentUser().name:'Responsable');
+  saveCtrl();closeModal('modal-pedido');renderCtrlRecepcion();notifySaved('Control marcado como: '+est);
+};
+
+window.nuevoCtrlRecepModal=function(){
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  var hoyStr=new Date().toISOString().slice(0,10);
+  var entradas=window._getEntradas?window._getEntradas():[];
+  var entOpts=entradas.map(function(e){return '<option value="'+e.id+'">'+e.id+' — '+e.finca+'</option>';}).join('');
+  md.innerHTML='<h2 style="margin-bottom:16px">📋 Nuevo Control de Recepción</h2>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+    '<div class="form-group"><label>Fecha *</label><input type="date" class="form-control" id="cr-fecha" value="'+hoyStr+'"></div>'+
+    '<div class="form-group"><label>Entrada vinculada</label><select class="form-control" id="cr-ent"><option value="">Sin entrada</option>'+entOpts+'</select></div>'+
+    '<div class="form-group"><label>Finca origen *</label><input class="form-control" id="cr-finca" placeholder="Finca"></div>'+
+    '<div class="form-group"><label>Producto</label><input class="form-control" id="cr-prod" placeholder="Producto / variedad"></div>'+
+    '<div class="form-group"><label>Temperatura recepción (°C)</label><input type="number" class="form-control" id="cr-temp" step="0.1" placeholder="Ej: 6.5"></div>'+
+    '<div class="form-group"><label>Humedad (%)</label><input type="number" class="form-control" id="cr-hum" placeholder="Ej: 88"></div>'+
+    '<div class="form-group"><label>Defectos visuales (%)</label><input type="number" class="form-control" id="cr-def" step="0.1" value="0"></div>'+
+    '<div class="form-group"><label>Presencia plagas</label><select class="form-control" id="cr-plagas"><option value="0">No</option><option value="1">Sí — indicar en obs.</option></select></div>'+
+    '<div class="form-group"><label>Documentación completa</label><select class="form-control" id="cr-doc"><option value="1">Sí ✅</option><option value="0">No ❌</option></select></div>'+
+    '<div class="form-group"><label>Responsable</label><input class="form-control" id="cr-resp" placeholder="Nombre responsable"></div>'+
+    '</div>'+
+    '<div class="form-group" style="margin-top:8px"><label>Observaciones</label><textarea class="form-control" id="cr-obs" rows="2"></textarea></div>'+
+    '<div class="form-group"><label>Decisión</label><select class="form-control" id="cr-est"><option value="pendiente">⏳ Pendiente de revisión</option><option value="conforme">✅ Conforme</option><option value="condicionado">⚠️ Condicionado</option><option value="rechazado">❌ Rechazado</option></select></div>'+
+    '<div class="btn-group" style="margin-top:14px"><button class="btn btn-primary" onclick="guardarCtrlRecep()">💾 Guardar</button><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button></div>';
+  openModal('modal-pedido');
+};
+
+window.guardarCtrlRecep=function(){
+  var finca=document.getElementById('cr-finca').value;if(!finca){alert('Indica la finca');return;}
+  var maxN=controles.reduce(function(m,c){var n=parseInt(c.id.replace('CR-',''))||0;return Math.max(m,n);},0);
+  var entSel=document.getElementById('cr-ent');
+  var entradas=window._getEntradas?window._getEntradas():[];
+  var entId=(entSel&&entSel.value)||'';
+  var ent=entradas.find(function(e){return e.id===entId;});
+  controles.unshift({
+    id:'CR-'+String(maxN+1).padStart(3,'0'),
+    fecha:document.getElementById('cr-fecha').value,
+    entradaId:entId,
+    finca:ent?ent.finca:finca,
+    producto:document.getElementById('cr-prod').value||'Sin especificar',
+    kg_declarados:ent?ent.kg_bruto:0,
+    temp_recep:parseFloat(document.getElementById('cr-temp').value)||0,
+    humedad:parseFloat(document.getElementById('cr-hum').value)||0,
+    defectos_pct:parseFloat(document.getElementById('cr-def').value)||0,
+    presencia_plagas:document.getElementById('cr-plagas').value==='1',
+    documentacion:document.getElementById('cr-doc').value==='1',
+    estado:document.getElementById('cr-est').value,
+    responsable:document.getElementById('cr-resp').value||'',
+    observaciones:document.getElementById('cr-obs').value||''
+  });
+  saveCtrl();closeModal('modal-pedido');renderCtrlRecepcion();notifySaved('Control de recepción guardado');
+};
+
+setTimeout(function(){if(document.getElementById('ctrl-rec-lista'))renderCtrlRecepcion();},400);
+var _spCR=showPage;showPage=function(id){_spCR(id);if(id==='ctrl-recepcion')renderCtrlRecepcion();};
+})();
+
+
+// ==================== CONTROL AGUA ====================
+M.innerHTML+=`<div class="page" id="page-ctrl-agua">
+<div class="header"><h1>💧 Control de Agua</h1>
+  <button class="btn btn-primary" onclick="nuevoCtrlAguaModal()">+ Nuevo Análisis</button>
+</div>
+<div id="ctrl-agua-stats" class="stat-row"></div>
+<div id="ctrl-agua-lista"></div>
+</div>`;
+
+(function(){
+var _def=[
+  {id:'CA-001',fecha:'2026-04-07',hora:'07:30',zona:'Línea lavado principal',cloro_libre:0.8,cloro_total:1.1,ph:7.2,temperatura:15.2,turbidez:'Clara',resultado:'conforme',operario:'María García',observaciones:''},
+  {id:'CA-002',fecha:'2026-04-05',hora:'08:00',zona:'Zona de empaque Mesa 1',cloro_libre:0.4,cloro_total:0.6,ph:7.8,temperatura:16.0,turbidez:'Clara',resultado:'condicionado',operario:'José Martínez',observaciones:'Cloro libre bajo. Se añadió hipoclorito. Nueva medición OK a las 10h.'},
+  {id:'CA-003',fecha:'2026-04-03',hora:'07:15',zona:'Almacén frigorífico — condensados',cloro_libre:0.9,cloro_total:1.2,ph:7.0,temperatura:4.5,turbidez:'Clara',resultado:'conforme',operario:'María García',observaciones:''}
+];
+
+var registros=AgroStore.load('agri_ctrl_agua',[]);
+if(!registros.length){registros=_def;AgroStore.save('agri_ctrl_agua',registros);}
+
+var limites={cloro_libre:{min:0.5,max:2.0},cloro_total:{min:0.5,max:3.0},ph:{min:6.5,max:8.5}};
+var estAgua={conforme:{cls:'tag-green',label:'✅ Conforme'},condicionado:{cls:'tag-yellow',label:'⚠️ Condicionado'},no_conforme:{cls:'tag-red',label:'❌ No conforme'}};
+
+function saveAgua(){AgroStore.save('agri_ctrl_agua',registros);}
+
+function semaforo(val,min,max){
+  if(val<min||val>max)return 'color:var(--coral);font-weight:700';
+  if(val<min*1.2||val>max*0.9)return 'color:var(--gold);font-weight:600';
+  return 'color:var(--accent)';
+}
+
+function renderAguaStats(){
+  var el=document.getElementById('ctrl-agua-stats');if(!el)return;
+  var conf=registros.filter(function(r){return r.resultado==='conforme';}).length;
+  var cond=registros.filter(function(r){return r.resultado==='condicionado';}).length;
+  var noc=registros.filter(function(r){return r.resultado==='no_conforme';}).length;
+  el.innerHTML='<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(44,110,73,.1);color:var(--accent)">✅</div><div class="stat-body"><div class="stat-val">'+conf+'</div><div class="stat-label">Conformes</div></div></div>'+
+    '<div class="stat-mini s-gold"><div class="stat-icon" style="background:rgba(212,168,67,.1);color:var(--gold)">⚠️</div><div class="stat-body"><div class="stat-val">'+cond+'</div><div class="stat-label">Condicionados</div></div></div>'+
+    '<div class="stat-mini s-coral"><div class="stat-icon" style="background:rgba(231,111,81,.1);color:var(--coral)">❌</div><div class="stat-body"><div class="stat-val">'+noc+'</div><div class="stat-label">No conformes</div></div></div>'+
+    '<div class="stat-mini s-blue"><div class="stat-icon" style="background:rgba(59,130,246,.1);color:#3B82F6">📊</div><div class="stat-body"><div class="stat-val">'+registros.length+'</div><div class="stat-label">Análisis totales</div></div></div>';
+}
+
+window.renderCtrlAgua=function(){
+  renderAguaStats();
+  var el=document.getElementById('ctrl-agua-lista');if(!el)return;
+  var sorted=registros.slice().sort(function(a,b){return (b.fecha+b.hora).localeCompare(a.fecha+a.hora);});
+  var h='<div class="tbl-wrap"><table><tr><th>ID</th><th>Fecha</th><th>Hora</th><th>Zona</th><th>Cl libre (mg/L)</th><th>pH</th><th>Temp (°C)</th><th>Resultado</th><th>Operario</th><th></th></tr>';
+  sorted.forEach(function(r){
+    var st=estAgua[r.resultado]||estAgua.conforme;
+    h+='<tr>';
+    h+='<td><strong style="font-family:monospace;font-size:11px;color:var(--primary)">'+r.id+'</strong></td>';
+    h+='<td>'+r.fecha+'</td>';
+    h+='<td>'+r.hora+'</td>';
+    h+='<td style="font-weight:600;font-size:12px">'+r.zona+'</td>';
+    h+='<td style="text-align:center"><span style="'+semaforo(r.cloro_libre,limites.cloro_libre.min,limites.cloro_libre.max)+'">'+r.cloro_libre+'</span><br><span style="font-size:10px;color:var(--gray)">[0.5-2.0]</span></td>';
+    h+='<td style="text-align:center"><span style="'+semaforo(r.ph,limites.ph.min,limites.ph.max)+'">'+r.ph+'</span><br><span style="font-size:10px;color:var(--gray)">[6.5-8.5]</span></td>';
+    h+='<td style="text-align:center">'+r.temperatura+'°C</td>';
+    h+='<td><span class="tag '+st.cls+'" style="font-size:11px">'+st.label+'</span></td>';
+    h+='<td style="font-size:12px">'+r.operario+'</td>';
+    h+='<td>'+(r.observaciones?'<span title="'+r.observaciones+'" style="cursor:help">💬</span>':'')+'</td>';
+    h+='</tr>';
+  });
+  h+='</table></div>';
+  h+='<div style="margin-top:12px;padding:10px;background:rgba(59,130,246,.05);border-radius:8px;font-size:12px;border-left:3px solid #3B82F6">'+
+    '<strong>📋 Límites reglamentarios (RD 140/2003):</strong> Cloro libre: 0.5–2.0 mg/L · pH: 6.5–8.5 · Temperatura: sin límite definido para agua de proceso</div>';
+  el.innerHTML=h;
+};
+
+window.nuevoCtrlAguaModal=function(){
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  var hoyStr=new Date().toISOString().slice(0,10);
+  var horaStr=new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  var zonas=['Línea lavado principal','Zona de empaque Mesa 1','Zona de empaque Mesa 2','Almacén frigorífico — condensados','WC vestuarios','Zona de carga'];
+  md.innerHTML='<h2 style="margin-bottom:16px">💧 Nuevo Control de Agua</h2>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+    '<div class="form-group"><label>Fecha *</label><input type="date" class="form-control" id="ca-fecha" value="'+hoyStr+'"></div>'+
+    '<div class="form-group"><label>Hora *</label><input type="time" class="form-control" id="ca-hora" value="'+horaStr+'"></div>'+
+    '<div class="form-group"><label>Zona *</label><select class="form-control" id="ca-zona">'+zonas.map(function(z){return '<option>'+z+'</option>';}).join('')+'</select></div>'+
+    '<div class="form-group"><label>Operario</label><input class="form-control" id="ca-op" placeholder="Nombre operario"></div>'+
+    '<div class="form-group"><label>Cloro libre (mg/L) [0.5–2.0]</label><input type="number" class="form-control" id="ca-cl" step="0.1" value="0.8"></div>'+
+    '<div class="form-group"><label>Cloro total (mg/L)</label><input type="number" class="form-control" id="ca-ct" step="0.1" value="1.1"></div>'+
+    '<div class="form-group"><label>pH [6.5–8.5]</label><input type="number" class="form-control" id="ca-ph" step="0.1" value="7.2"></div>'+
+    '<div class="form-group"><label>Temperatura (°C)</label><input type="number" class="form-control" id="ca-temp" step="0.1"></div>'+
+    '<div class="form-group"><label>Turbidez</label><select class="form-control" id="ca-turb"><option>Clara</option><option>Ligeramente turbia</option><option>Turbia</option></select></div>'+
+    '<div class="form-group"><label>Resultado</label><select class="form-control" id="ca-res"><option value="conforme">✅ Conforme</option><option value="condicionado">⚠️ Condicionado</option><option value="no_conforme">❌ No conforme</option></select></div>'+
+    '</div>'+
+    '<div class="form-group" style="margin-top:8px"><label>Observaciones / Acción correctiva</label><textarea class="form-control" id="ca-obs" rows="2"></textarea></div>'+
+    '<div class="btn-group" style="margin-top:14px"><button class="btn btn-primary" onclick="guardarCtrlAgua()">💾 Guardar</button><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button></div>';
+  openModal('modal-pedido');
+};
+
+window.guardarCtrlAgua=function(){
+  var maxN=registros.reduce(function(m,r){var n=parseInt(r.id.replace('CA-',''))||0;return Math.max(m,n);},0);
+  var cl=parseFloat(document.getElementById('ca-cl').value)||0;
+  var ph=parseFloat(document.getElementById('ca-ph').value)||7;
+  var autoRes=document.getElementById('ca-res').value;
+  if(cl<0.5||cl>2.0||ph<6.5||ph>8.5)autoRes='no_conforme';
+  registros.unshift({
+    id:'CA-'+String(maxN+1).padStart(3,'0'),
+    fecha:document.getElementById('ca-fecha').value,
+    hora:document.getElementById('ca-hora').value,
+    zona:document.getElementById('ca-zona').value,
+    operario:document.getElementById('ca-op').value||'Sin asignar',
+    cloro_libre:cl,
+    cloro_total:parseFloat(document.getElementById('ca-ct').value)||0,
+    ph:ph,
+    temperatura:parseFloat(document.getElementById('ca-temp').value)||0,
+    turbidez:document.getElementById('ca-turb').value,
+    resultado:autoRes,
+    observaciones:document.getElementById('ca-obs').value||''
+  });
+  saveAgua();closeModal('modal-pedido');renderCtrlAgua();notifySaved('Control de agua guardado');
+};
+
+setTimeout(function(){if(document.getElementById('ctrl-agua-lista'))renderCtrlAgua();},400);
+var _spAgua=showPage;showPage=function(id){_spAgua(id);if(id==='ctrl-agua')renderCtrlAgua();};
+})();
+
+
+// ==================== LIMPIEZA E HIGIENE ====================
+M.innerHTML+=`<div class="page" id="page-ctrl-limpieza">
+<div class="header"><h1>🧹 Limpieza e Higiene</h1>
+  <button class="btn btn-primary" onclick="nuevaLimpiezaModal()">+ Registrar Limpieza</button>
+</div>
+<div id="limp-stats" class="stat-row"></div>
+<div class="tabs" style="margin:14px 0">
+  <button class="tab-btn active" data-group="limp" data-tab="ejecucion" onclick="showTab('limp','ejecucion')">🧹 Ejecución</button>
+  <button class="tab-btn" data-group="limp" data-tab="verificacion" onclick="showTab('limp','verificacion')">✅ Verificación</button>
+  <button class="tab-btn" data-group="limp" data-tab="plan" onclick="showTab('limp','plan')">📅 Plan de Limpieza</button>
+</div>
+<div class="tab-content active" data-group="limp" id="tab-limp-ejecucion"><div id="limp-lista"></div></div>
+<div class="tab-content" data-group="limp" id="tab-limp-verificacion"><div id="limp-verif-lista"></div></div>
+<div class="tab-content" data-group="limp" id="tab-limp-plan"><div id="limp-plan-content"></div></div>
+</div>`;
+
+(function(){
+var zonas=['Línea de confección','Zona de empaque','Cámara frigorífica A','Cámara frigorífica B','Zona de carga/descarga','Vestuarios','Aseos','Zona de residuos','Almacén insumos','Oficinas'];
+var frecuencias={diaria:'Diaria',semanal:'Semanal',quincenal:'Quincenal',mensual:'Mensual'};
+var productos_limp=['Hipoclorito sódico 5%','Detergente alcalino desincrustante','Desengrasante neutro pH7','Desinfectante amoniacal','Agua a presión'];
+
+var _defLimp=[
+  {id:'LMP-001',fecha:'2026-04-07',hora:'06:00',zona:'Línea de confección',tipo:'limpieza_desinfeccion',producto_usado:'Hipoclorito sódico 5%',concentracion:'200 ppm',tiempo_contacto:15,ejecutado_por:'José Martínez',verificado:true,verificado_por:'María García',hora_verif:'06:45',resultado_verif:'conforme',observaciones:''},
+  {id:'LMP-002',fecha:'2026-04-07',hora:'06:15',zona:'Zona de empaque',tipo:'limpieza_desinfeccion',producto_usado:'Hipoclorito sódico 5%',concentracion:'200 ppm',tiempo_contacto:15,ejecutado_por:'Fatima Zerouali',verificado:true,verificado_por:'María García',hora_verif:'07:00',resultado_verif:'conforme',observaciones:''},
+  {id:'LMP-003',fecha:'2026-04-05',hora:'14:00',zona:'Cámara frigorífica A',tipo:'limpieza_profunda',producto_usado:'Detergente alcalino desincrustante',concentracion:'2%',tiempo_contacto:30,ejecutado_por:'Hassan El Amrani',verificado:false,verificado_por:'',hora_verif:'',resultado_verif:'pendiente',observaciones:'Limpieza semanal. Vaciada previamente.'}
+];
+
+var limpiezas=AgroStore.load('agri_limpieza',[]);
+if(!limpiezas.length){limpiezas=_defLimp;AgroStore.save('agri_limpieza',limpiezas);}
+
+function saveLimp(){AgroStore.save('agri_limpieza',limpiezas);}
+
+function renderLimpStats(){
+  var el=document.getElementById('limp-stats');if(!el)return;
+  var hoyStr=new Date().toISOString().slice(0,10);
+  var hoyL=limpiezas.filter(function(l){return l.fecha===hoyStr;}).length;
+  var noVerif=limpiezas.filter(function(l){return !l.verificado;}).length;
+  el.innerHTML='<div class="stat-mini s-green"><div class="stat-icon" style="background:rgba(44,110,73,.1);color:var(--accent)">🧹</div><div class="stat-body"><div class="stat-val">'+hoyL+'</div><div class="stat-label">Hoy</div></div></div>'+
+    '<div class="stat-mini s-blue"><div class="stat-icon" style="background:rgba(59,130,246,.1);color:#3B82F6">📊</div><div class="stat-body"><div class="stat-val">'+limpiezas.length+'</div><div class="stat-label">Total registros</div></div></div>'+
+    '<div class="stat-mini s-coral"><div class="stat-icon" style="background:rgba(231,111,81,.1);color:var(--coral)">⚠️</div><div class="stat-body"><div class="stat-val">'+noVerif+'</div><div class="stat-label">Sin verificar</div></div></div>';
+}
+
+window.renderLimpieza=function(){
+  renderLimpStats();
+  var el=document.getElementById('limp-lista');if(!el)return;
+  var sorted=limpiezas.slice().sort(function(a,b){return (b.fecha+b.hora).localeCompare(a.fecha+a.hora);});
+  var h='<div class="tbl-wrap"><table><tr><th>ID</th><th>Fecha</th><th>Zona</th><th>Tipo</th><th>Producto</th><th>Ejecutado por</th><th>Verificado</th><th>Resultado</th><th></th></tr>';
+  sorted.forEach(function(l){
+    h+='<tr>';
+    h+='<td><strong style="font-family:monospace;font-size:11px;color:var(--primary)">'+l.id+'</strong></td>';
+    h+='<td>'+l.fecha+' '+l.hora+'</td>';
+    h+='<td style="font-weight:600;font-size:12px">'+l.zona+'</td>';
+    h+='<td><span class="tag tag-blue" style="font-size:10px">'+(l.tipo.replace('_',' '))+'</span></td>';
+    h+='<td style="font-size:11px;color:var(--gray)">'+l.producto_usado+'</td>';
+    h+='<td style="font-size:12px">'+l.ejecutado_por+'</td>';
+    h+='<td style="text-align:center">'+(l.verificado?'✅ '+l.verificado_por:'<span style="color:var(--gold)">⏳ Pendiente</span>')+'</td>';
+    h+='<td><span class="tag '+(l.resultado_verif==='conforme'?'tag-green':l.resultado_verif==='no_conforme'?'tag-red':'tag-yellow')+'" style="font-size:10px">'+l.resultado_verif+'</span></td>';
+    h+='<td>'+(!l.verificado?'<button class="btn btn-sm btn-primary" onclick="verificarLimpieza(\''+l.id+'\')">✅ Verificar</button>':'')+'</td>';
+    h+='</tr>';
+  });
+  h+='</table></div>';
+  el.innerHTML=h;
+  // Plan de limpieza
+  var plan=document.getElementById('limp-plan-content');if(plan){
+    var ph='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">';
+    zonas.forEach(function(zona){
+      var ultL=limpiezas.filter(function(l){return l.zona===zona;}).sort(function(a,b){return b.fecha.localeCompare(a.fecha);})[0];
+      ph+='<div class="chart-container" style="margin:0;padding:14px">';
+      ph+='<div style="font-weight:600;font-size:14px;margin-bottom:6px">🧹 '+zona+'</div>';
+      ph+='<div style="font-size:12px;color:var(--gray)">Frecuencia: <strong>Diaria</strong></div>';
+      if(ultL){
+        ph+='<div style="margin-top:6px;font-size:12px">Última limpieza: <strong>'+ultL.fecha+'</strong></div>';
+        ph+='<div style="font-size:11px;color:var(--gray)">Por: '+ultL.ejecutado_por+'</div>';
+        ph+='<div style="margin-top:6px"><span class="tag '+(ultL.verificado?'tag-green':'tag-yellow')+'" style="font-size:10px">'+(ultL.verificado?'✅ Verificada':'⏳ Sin verificar')+'</span></div>';
+      } else {
+        ph+='<div style="margin-top:8px;color:var(--coral);font-size:12px">⚠️ Sin registros</div>';
+      }
+      ph+='<button class="btn btn-sm btn-outline" onclick="nuevaLimpiezaZona(\''+zona+'\')" style="margin-top:8px;width:100%;font-size:11px">+ Registrar</button>';
+      ph+='</div>';
+    });
+    ph+='</div>';
+    plan.innerHTML=ph;
+  }
+};
+
+window.verificarLimpieza=function(id){
+  var l=limpiezas.find(function(x){return x.id===id;});if(!l)return;
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  md.innerHTML='<h2 style="margin-bottom:16px">✅ Verificar Limpieza '+l.id+'</h2>'+
+    '<div style="padding:10px;background:rgba(0,0,0,.03);border-radius:8px;margin-bottom:14px;font-size:13px">'+
+    '<div><strong>Zona:</strong> '+l.zona+'</div>'+
+    '<div><strong>Ejecutado por:</strong> '+l.ejecutado_por+' el '+l.fecha+' a las '+l.hora+'</div>'+
+    '<div><strong>Producto:</strong> '+l.producto_usado+' — Concentración: '+l.concentracion+'</div></div>'+
+    '<div class="form-group"><label>Verificado por *</label><input class="form-control" id="vl-by" placeholder="Nombre verificador"></div>'+
+    '<div class="form-group"><label>Hora verificación</label><input type="time" class="form-control" id="vl-hora" value="'+new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})+'"></div>'+
+    '<div class="form-group"><label>Resultado</label><select class="form-control" id="vl-res"><option value="conforme">✅ Conforme — limpieza correcta</option><option value="no_conforme">❌ No conforme — requiere re-limpieza</option></select></div>'+
+    '<div class="form-group"><label>Observaciones</label><textarea class="form-control" id="vl-obs" rows="2"></textarea></div>'+
+    '<input type="hidden" id="vl-id" value="'+l.id+'">'+
+    '<div class="btn-group" style="margin-top:14px"><button class="btn btn-primary" onclick="guardarVerificacion()">💾 Confirmar Verificación</button><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button></div>';
+  openModal('modal-pedido');
+};
+
+window.guardarVerificacion=function(){
+  var id=document.getElementById('vl-id').value;
+  var by=document.getElementById('vl-by').value;if(!by){alert('Indica quién verifica');return;}
+  var l=limpiezas.find(function(x){return x.id===id;});if(!l)return;
+  l.verificado=true;l.verificado_por=by;l.hora_verif=document.getElementById('vl-hora').value;
+  l.resultado_verif=document.getElementById('vl-res').value;
+  if(document.getElementById('vl-obs').value)l.observaciones+=' | Verif: '+document.getElementById('vl-obs').value;
+  saveLimp();closeModal('modal-pedido');renderLimpieza();notifySaved('Verificación guardada');
+};
+
+window.nuevaLimpiezaZona=function(zona){window.nuevaLimpiezaModal(zona);};
+
+window.nuevaLimpiezaModal=function(zonaPreset){
+  var md=document.getElementById('modal-pedido-content');if(!md)return;
+  var hoyStr=new Date().toISOString().slice(0,10);
+  var horaStr=new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  md.innerHTML='<h2 style="margin-bottom:16px">🧹 Nueva Limpieza / Higiene</h2>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+    '<div class="form-group"><label>Fecha *</label><input type="date" class="form-control" id="nl-fecha" value="'+hoyStr+'"></div>'+
+    '<div class="form-group"><label>Hora inicio</label><input type="time" class="form-control" id="nl-hora" value="'+horaStr+'"></div>'+
+    '<div class="form-group"><label>Zona *</label><select class="form-control" id="nl-zona">'+zonas.map(function(z){return '<option'+(z===zonaPreset?' selected':'')+'>'+z+'</option>';}).join('')+'</select></div>'+
+    '<div class="form-group"><label>Tipo</label><select class="form-control" id="nl-tipo"><option value="limpieza_desinfeccion">Limpieza + Desinfección</option><option value="limpieza_profunda">Limpieza profunda</option><option value="desinfeccion">Solo desinfección</option><option value="higiene_personal">Higiene personal</option></select></div>'+
+    '<div class="form-group"><label>Producto utilizado</label><select class="form-control" id="nl-prod">'+productos_limp.map(function(p){return '<option>'+p+'</option>';}).join('')+'</select></div>'+
+    '<div class="form-group"><label>Concentración</label><input class="form-control" id="nl-conc" placeholder="Ej: 200 ppm"></div>'+
+    '<div class="form-group"><label>Tiempo contacto (min)</label><input type="number" class="form-control" id="nl-tiempo" value="15"></div>'+
+    '<div class="form-group"><label>Ejecutado por *</label><input class="form-control" id="nl-by" placeholder="Nombre ejecutor"></div>'+
+    '</div>'+
+    '<div class="form-group" style="margin-top:8px"><label>Observaciones</label><textarea class="form-control" id="nl-obs" rows="2"></textarea></div>'+
+    '<div class="btn-group" style="margin-top:14px"><button class="btn btn-primary" onclick="guardarLimpieza()">💾 Guardar</button><button class="btn btn-outline" onclick="closeModal(\'modal-pedido\')">Cancelar</button></div>';
+  openModal('modal-pedido');
+};
+
+window.guardarLimpieza=function(){
+  var zona=document.getElementById('nl-zona').value;
+  var by=document.getElementById('nl-by').value;if(!by){alert('Indica quién realizó la limpieza');return;}
+  var maxN=limpiezas.reduce(function(m,l){var n=parseInt(l.id.replace('LMP-',''))||0;return Math.max(m,n);},0);
+  limpiezas.unshift({
+    id:'LMP-'+String(maxN+1).padStart(3,'0'),
+    fecha:document.getElementById('nl-fecha').value,
+    hora:document.getElementById('nl-hora').value,
+    zona:zona,
+    tipo:document.getElementById('nl-tipo').value,
+    producto_usado:document.getElementById('nl-prod').value,
+    concentracion:document.getElementById('nl-conc').value||'—',
+    tiempo_contacto:parseInt(document.getElementById('nl-tiempo').value)||0,
+    ejecutado_por:by,
+    verificado:false,verificado_por:'',hora_verif:'',resultado_verif:'pendiente',
+    observaciones:document.getElementById('nl-obs').value||''
+  });
+  saveLimp();closeModal('modal-pedido');renderLimpieza();notifySaved('Limpieza registrada');
+};
+
+// Control de liberación (simple, vinculada a entradas)
+window.renderCtrlLiberacion=function(){
+  var el=document.getElementById('ctrl-lib-lista');if(!el)return;
+  var entradas=window._getEntradas?window._getEntradas():[];
+  var lib=entradas.filter(function(e){return e.estado==='liberado'||e.estado==='rechazado';});
+  var pend=entradas.filter(function(e){return e.estado==='controlado';});
+  var pendAll=entradas.filter(function(e){return e.estado==='pendiente';});
+  var h='<div style="font-weight:700;margin-bottom:10px">🔍 Entradas pendientes de liberación ('+pend.length+')</div>';
+  if(pend.length){
+    h+='<div class="tbl-wrap"><table><tr><th>Entrada</th><th>Finca</th><th>Producto</th><th>Kg</th><th>Estado</th><th>Acción</th></tr>';
+    pend.forEach(function(e){
+      h+='<tr><td><strong style="font-family:monospace;color:var(--primary)">'+e.id+'</strong></td>';
+      h+='<td>'+e.finca+'</td>';
+      h+='<td>'+[...new Set(e.lineas.map(function(l){return l.producto;}))].join(', ')+'</td>';
+      h+='<td>'+e.kg_bruto.toLocaleString('es-ES')+' kg</td>';
+      h+='<td><span class="tag tag-blue" style="font-size:11px">🔍 Controlado</span></td>';
+      h+='<td style="display:flex;gap:4px"><button class="btn btn-sm btn-primary" onclick="liberarEntrada(\''+e.id+'\')">✅ Liberar</button><button class="btn btn-sm btn-outline" onclick="cambiarEstadoEntrada(\''+e.id+'\',\'rechazado\')" style="color:var(--coral)">❌ Rechazar</button></td></tr>';
+    });
+    h+='</table></div>';
+  } else {
+    h+='<div style="padding:20px;text-align:center;color:var(--gray)">No hay entradas pendientes de liberación</div>';
+  }
+  h+='<div style="font-weight:700;margin:16px 0 10px">✅ Historial de liberaciones ('+lib.length+')</div>';
+  if(lib.length){
+    h+='<div class="tbl-wrap"><table><tr><th>Entrada</th><th>Finca</th><th>Fecha</th><th>Estado</th></tr>';
+    lib.forEach(function(e){
+      h+='<tr><td><strong style="font-family:monospace;color:var(--primary)">'+e.id+'</strong></td><td>'+e.finca+'</td><td>'+e.fecha+'</td>';
+      h+='<td><span class="tag '+(e.estado==='liberado'?'tag-green':'tag-red')+'" style="font-size:11px">'+(e.estado==='liberado'?'✅ Liberado':'❌ Rechazado')+'</span></td></tr>';
+    });
+    h+='</table></div>';
+  }
+  el.innerHTML=h;
+};
+
+M.innerHTML+=`<div class="page" id="page-ctrl-liberacion">
+<div class="header"><h1>✅ Liberación de Producto</h1></div>
+<div id="ctrl-lib-lista"></div>
+</div>`;
+
+setTimeout(function(){if(document.getElementById('limp-lista'))renderLimpieza();if(document.getElementById('ctrl-lib-lista'))renderCtrlLiberacion();},500);
+var _spLimp=showPage;showPage=function(id){_spLimp(id);if(id==='ctrl-limpieza')renderLimpieza();if(id==='ctrl-liberacion')renderCtrlLiberacion();};
+})();
+
 </script>
+
+
+
 </body>
 </html>
